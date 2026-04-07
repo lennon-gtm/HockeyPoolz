@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
         displayName: decoded.name ?? decoded.email?.split('@')[0] ?? 'Player',
         avatarUrl: decoded.picture ?? null,
       },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatarUrl: true,
+        favoriteTeamId: true,
+        createdAt: true,
+      },
     })
 
     const needsOnboarding = !user.favoriteTeamId
@@ -37,7 +45,15 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { firebaseUid: decoded.uid },
-      include: { favoriteTeam: true },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatarUrl: true,
+        favoriteTeamId: true,
+        createdAt: true,
+        favoriteTeam: true,
+      },
     })
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -47,6 +63,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
+    console.error('GET /api/auth/me error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

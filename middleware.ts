@@ -10,7 +10,8 @@ export function middleware(request: NextRequest) {
   // API routes: check Authorization header
   if (pathname.startsWith('/api/')) {
     const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     return NextResponse.next()
