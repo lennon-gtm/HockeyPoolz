@@ -25,6 +25,11 @@ export default function LoginPage() {
       })
       const data = await res.json()
 
+      if (!res.ok) {
+        setError('Sign in failed. Please try again.')
+        return
+      }
+
       document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
 
       if (data.needsOnboarding) {

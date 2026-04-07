@@ -44,11 +44,13 @@ export default function OnboardingPage() {
     setLoading(true)
     try {
       const token = await auth.currentUser?.getIdToken()
-      await fetch('/api/auth/me', {
+      if (!token) { setError('Not signed in. Please reload and try again.'); return }
+      const res = await fetch('/api/auth/me', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ favoriteTeamId: selectedTeamId, displayName: teamName, avatarUrl: teamIcon }),
       })
+      if (!res.ok) { setError('Something went wrong. Please try again.'); return }
       router.push('/')
     } catch {
       setError('Something went wrong. Please try again.')

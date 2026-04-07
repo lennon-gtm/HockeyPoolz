@@ -7,14 +7,16 @@ interface League { id: string; name: string; status: string; members: { id: stri
 
 export default function HomePage() {
   const [leagues, setLeagues] = useState<League[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const token = await auth.currentUser?.getIdToken()
-      if (!token) return
+      if (!token) { setLoading(false); return }
       const res = await fetch('/api/leagues', { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json()
       setLeagues(data.leagues ?? [])
+      setLoading(false)
     }
     load()
   }, [])
@@ -27,7 +29,9 @@ export default function HomePage() {
           + Create League
         </Link>
       </div>
-      {leagues.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-16 text-gray-400 text-sm">Loading…</div>
+      ) : leagues.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">🏒</p>
           <p className="font-semibold">No leagues yet</p>

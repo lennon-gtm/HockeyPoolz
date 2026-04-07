@@ -16,6 +16,7 @@ export default function CreateLeaguePage() {
     setError('')
     try {
       const token = await auth.currentUser?.getIdToken()
+      if (!token) { setError('Not signed in. Please reload.'); return }
       const res = await fetch('/api/leagues', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

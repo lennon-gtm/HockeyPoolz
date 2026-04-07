@@ -22,9 +22,13 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch(`/api/leagues/${id}/scoring`)
-      .then(r => r.json())
-      .then(d => setSettings(d.settings))
+    async function load() {
+      const token = await auth.currentUser?.getIdToken()
+      fetch(`/api/leagues/${id}/scoring`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then(r => r.json()).then(d => setSettings(d.settings))
+    }
+    load()
   }, [id])
 
   async function save() {
@@ -33,6 +37,7 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
     setError('')
     try {
       const token = await auth.currentUser?.getIdToken()
+      if (!token) { setError('Not signed in. Please reload.'); return }
       const res = await fetch(`/api/leagues/${id}/scoring`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

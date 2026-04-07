@@ -26,6 +26,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
     setError('')
     try {
       const token = await auth.currentUser?.getIdToken()
+      if (!token) { setError('Not signed in. Please reload.'); return }
       const res = await fetch(`/api/leagues/${league.id}/join`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
