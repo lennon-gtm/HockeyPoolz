@@ -7,7 +7,7 @@ vi.mock('@/lib/firebase/admin', () => ({
   },
 }))
 
-import { verifyIdToken, AuthError } from '@/lib/auth'
+import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { adminAuth } from '@/lib/firebase/admin'
 
 describe('verifyIdToken', () => {
@@ -22,14 +22,26 @@ describe('verifyIdToken', () => {
     expect(adminAuth.verifyIdToken).toHaveBeenCalledWith('valid-token')
   })
 
-  it('throws AuthError when token is missing', async () => {
-    await expect(verifyIdToken('')).rejects.toThrow(AuthError)
-    await expect(verifyIdToken('')).rejects.toThrow('No token provided')
+  it('throws AuthError with "No token provided" when token is missing', async () => {
+    await expect(verifyIdToken('')).rejects.toThrow(new AuthError('No token provided'))
   })
 
-  it('throws AuthError when Firebase rejects the token', async () => {
+  it('throws AuthError with "Invalid token" when Firebase rejects', async () => {
     vi.mocked(adminAuth.verifyIdToken).mockRejectedValue(new Error('Token expired'))
-    await expect(verifyIdToken('bad-token')).rejects.toThrow(AuthError)
-    await expect(verifyIdToken('bad-token')).rejects.toThrow('Invalid token')
+    await expect(verifyIdToken('bad-token')).rejects.toThrow(new AuthError('Invalid token'))
+  })
+})
+
+describe('getBearerToken', () => {
+  it('extracts token from a valid Bearer header', () => {
+    expect(getBearerToken('Bearer abc123')).toBe('abc123')
+  })
+
+  it('returns empty string when header is null', () => {
+    expect(getBearerToken(null)).toBe('')
+  })
+
+  it('returns empty string when header does not start with Bearer', () => {
+    expect(getBearerToken('Basic abc123')).toBe('')
   })
 })

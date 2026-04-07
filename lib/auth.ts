@@ -12,7 +12,8 @@ export async function verifyIdToken(token: string): Promise<DecodedIdToken> {
   if (!token) throw new AuthError('No token provided')
   try {
     return await adminAuth.verifyIdToken(token)
-  } catch {
+  } catch (err) {
+    console.error('[verifyIdToken] Firebase rejection:', err)
     throw new AuthError('Invalid token')
   }
 }
