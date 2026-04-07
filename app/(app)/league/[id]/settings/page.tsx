@@ -23,10 +23,18 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
 
   useEffect(() => {
     async function load() {
-      const token = await auth.currentUser?.getIdToken()
-      fetch(`/api/leagues/${id}/scoring`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }).then(r => r.json()).then(d => setSettings(d.settings))
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        if (!token) { setError('Not signed in. Please reload.'); return }
+        const res = await fetch(`/api/leagues/${id}/scoring`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) { setError('Failed to load settings.'); return }
+        const data = await res.json()
+        setSettings(data.settings)
+      } catch {
+        setError('Failed to load settings.')
+      }
     }
     load()
   }, [id])
