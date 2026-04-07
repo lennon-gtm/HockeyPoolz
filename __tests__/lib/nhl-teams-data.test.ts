@@ -29,4 +29,11 @@ describe('NHL_TEAMS', () => {
     const ids = NHL_TEAMS.map(t => t.id)
     expect(new Set(ids).size).toBe(32)
   })
+
+  it('each division has exactly 8 teams', () => {
+    const divisions = ['Atlantic', 'Metropolitan', 'Central', 'Pacific']
+    for (const div of divisions) {
+      expect(NHL_TEAMS.filter(t => t.division === div)).toHaveLength(8)
+    }
+  })
 })
