@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json({ error: 'League name must be at least 2 characters' }, { status: 400 })
     }
-    if (!maxTeams || maxTeams < 2 || maxTeams > 20) {
+    if (!maxTeams || typeof maxTeams !== 'number' || maxTeams < 2 || maxTeams > 20) {
       return NextResponse.json({ error: 'Max teams must be between 2 and 20' }, { status: 400 })
     }
-    if (!playersPerTeam || playersPerTeam < 4 || playersPerTeam > 20) {
+    if (!playersPerTeam || typeof playersPerTeam !== 'number' || playersPerTeam < 4 || playersPerTeam > 20) {
       return NextResponse.json({ error: 'Players per team must be between 4 and 20' }, { status: 400 })
     }
 
