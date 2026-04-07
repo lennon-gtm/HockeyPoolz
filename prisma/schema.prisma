@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(uuid())
+  firebaseUid     String    @unique @map("firebase_uid")
+  email           String    @unique
+  displayName     String    @map("display_name")
+  avatarUrl       String?   @map("avatar_url")
+  favoriteTeamId  String?   @map("favorite_nhl_team_id")
+  isPlatformAdmin Boolean   @default(false) @map("is_platform_admin")
+  isBanned        Boolean   @default(false) @map("is_banned")
+  banType         BanType?  @map("ban_type")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  favoriteTeam         NhlTeam?       @relation(fields: [favoriteTeamId], references: [id])
+  leagueMembers        LeagueMember[]
+  commissionedLeagues  League[]       @relation("Commissioner")
+
+  @@map("users")
+}
+
+enum BanType {
+  soft
+  hard
+}
+
+model League {
+  id             String       @id @default(uuid())
+  commissionerId String       @map("commissioner_id")
+  name           String
+  inviteCode     String       @unique @map("invite_code")
+  status         LeagueStatus @default(setup)
+  maxTeams       Int          @map("max_teams")
+  playersPerTeam Int          @default(10) @map("players_per_team")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  commissioner    User             @relation("Commissioner", fields: [commissionerId], references: [id])
+  members         LeagueMember[]
+  scoringSettings ScoringSettings?
+  draft           Draft?
+  recaps          Recap[]
+
+  @@map("leagues")
+}
+
+enum LeagueStatus {
+  setup
+  draft
+  active
+  complete
+  frozen
+}
+
+model LeagueMember {
+  id                String            @id @default(uuid())
+  leagueId          String            @map("league_id")
+  userId            String            @map("user_id")
+  teamName          String            @map("team_name")
+  teamIcon          String?           @map("team_icon")
+  draftPosition     Int?              @map("draft_position")
+  autodraftEnabled  Boolean           @default(false) @map("autodraft_enabled")
+  autodraftStrategy AutodraftStrategy @default(adp) @map("autodraft_strategy")
+  totalScore        Decimal           @default(0) @db.Decimal(10, 2) @map("total_score")
+  joinedAt          DateTime          @default(now()) @map("joined_at")
+
+  league      League             @relation(fields: [leagueId], references: [id])
+  user        User               @relation(fields: [userId], references: [id])
+  draftPicks  DraftPick[]
+  wishlist    AutodraftWishlist[]
+  recaps      Recap[]
+
+  @@unique([leagueId, userId])
+  @@map("league_members")
+}
+
+enum AutodraftStrategy {
+  adp
+  wishlist
+}
+
+model ScoringSettings {
+  id          String  @id @default(uuid())
+  leagueId    String  @unique @map("league_id")
+  goals       Decimal @default(2.0) @db.Decimal(5, 2)
+  assists     Decimal @default(1.5) @db.Decimal(5, 2)
+  plusMinus   Decimal @default(0.5) @db.Decimal(5, 2) @map("plus_minus")
+  pim         Decimal @default(0.0) @db.Decimal(5, 2)
+  shots       Decimal @default(0.1) @db.Decimal(5, 2)
+  goalieWins  Decimal @default(3.0) @db.Decimal(5, 2) @map("goalie_wins")
+  goalieSaves Decimal @default(0.2) @db.Decimal(5, 2) @map("goalie_saves")
+  shutouts    Decimal @default(5.0) @db.Decimal(5, 2)
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@map("scoring_settings")
+}
+
+model Draft {
+  id                String      @id @default(uuid())
+  leagueId          String      @unique @map("league_id")
+  status            DraftStatus @default(pending)
+  currentPickNumber Int         @default(1) @map("current_pick_number")
+  pickTimeLimitSecs Int         @default(90) @map("pick_time_limit_secs")
+  isMock            Boolean     @default(false) @map("is_mock")
+  startedAt         DateTime?   @map("started_at")
+
+  league League      @relation(fields: [leagueId], references: [id])
+  picks  DraftPick[]
+
+  @@map("drafts")
+}
+
+enum DraftStatus {
+  pending
+  active
+  paused
+  complete
+}
+
+model DraftPick {
+  id             String   @id @default(uuid())
+  draftId        String   @map("draft_id")
+  leagueMemberId String   @map("league_member_id")
+  playerId       Int      @map("player_id")
+  round          Int
+  pickNumber     Int      @map("pick_number")
+  isAutoPick     Boolean  @default(false) @map("is_auto_pick")
+  isAutodraft    Boolean  @default(false) @map("is_autodraft")
+  pickedAt       DateTime @default(now()) @map("picked_at")
+
+  draft        Draft        @relation(fields: [draftId], references: [id])
+  leagueMember LeagueMember @relation(fields: [leagueMemberId], references: [id])
+  player       NhlPlayer    @relation(fields: [playerId], references: [id])
+
+  @@map("draft_picks")
+}
+
+model AutodraftWishlist {
+  id             String @id @default(uuid())
+  leagueMemberId String @map("league_member_id")
+  playerId       Int    @map("player_id")
+  rank           Int
+
+  leagueMember LeagueMember @relation(fields: [leagueMemberId], references: [id])
+  player       NhlPlayer    @relation(fields: [playerId], references: [id])
+
+  @@unique([leagueMemberId, playerId])
+  @@unique([leagueMemberId, rank])
+  @@map("autodraft_wishlist")
+}
+
+model Recap {
+  id             String   @id @default(uuid())
+  leagueId       String   @map("league_id")
+  leagueMemberId String   @map("league_member_id")
+  recapDate      DateTime @db.Date @map("recap_date")
+  content        String
+  standingChange Int      @map("standing_change")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  league       League       @relation(fields: [leagueId], references: [id])
+  leagueMember LeagueMember @relation(fields: [leagueMemberId], references: [id])
+
+  @@map("recaps")
+}
+
+model NhlTeam {
+  id             String     @id
+  name           String
+  city           String
+  abbreviation   String
+  logoUrl        String?    @map("logo_url")
+  conference     Conference
+  division       String
+  colorPrimary   String     @map("color_primary")
+  colorSecondary String     @map("color_secondary")
+  eliminatedAt   DateTime?  @map("eliminated_at")
+
+  players NhlPlayer[]
+  users   User[]
+
+  @@map("nhl_teams")
+}
+
+enum Conference {
+  east
+  west
+}
+
+model NhlPlayer {
+  id          Int       @id
+  teamId      String    @map("team_id")
+  name        String
+  position    Position
+  headshotUrl String?   @map("headshot_url")
+  adp         Decimal?  @db.Decimal(6, 2)
+
+  team            NhlTeam            @relation(fields: [teamId], references: [id])
+  gameStats       PlayerGameStats[]
+  draftPicks      DraftPick[]
+  wishlistEntries AutodraftWishlist[]
+
+  @@map("nhl_players")
+}
+
+enum Position {
+  C
+  LW
+  RW
+  D
+  G
+}
+
+model PlayerGameStats {
+  id           String   @id @default(uuid())
+  playerId     Int      @map("player_id")
+  gameId       String   @map("game_id")
+  gameDate     DateTime @db.Date @map("game_date")
+  goals        Int      @default(0)
+  assists      Int      @default(0)
+  plusMinus    Int      @default(0) @map("plus_minus")
+  pim          Int      @default(0)
+  shots        Int      @default(0)
+  goalieWins   Int      @default(0) @map("goalie_wins")
+  goalieSaves  Int      @default(0) @map("goalie_saves")
+  goalsAgainst Int      @default(0) @map("goals_against")
+  shutouts     Int      @default(0)
+
+  player NhlPlayer @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, gameId])
+  @@map("player_game_stats")
+}
