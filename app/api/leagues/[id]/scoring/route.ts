@@ -46,9 +46,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    const settings = await prisma.scoringSettings.update({
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 })
+    }
+
+    const settings = await prisma.scoringSettings.upsert({
       where: { leagueId: id },
-      data: updates,
+      update: updates,
+      create: { leagueId: id, ...updates },
     })
 
     return NextResponse.json({ settings })
