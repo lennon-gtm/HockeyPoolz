@@ -56,3 +56,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = getBearerToken(request.headers.get('authorization'))
+    const decoded = await verifyIdToken(token)
+    const user = await prisma.user.findUnique({ where: { firebaseUid: decoded.uid } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    const members = await prisma.leagueMember.findMany({
+      where: { userId: user.id },
+      include: {
+        league: {
+          include: { members: { select: { id: true } } },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    })
+
+    const leagues = members.map(m => m.league)
+    return NextResponse.json({ leagues })
+  } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })
+    console.error('GET /api/leagues error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

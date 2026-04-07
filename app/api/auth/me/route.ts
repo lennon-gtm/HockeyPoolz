@@ -7,14 +7,23 @@ export async function POST(request: NextRequest) {
     const token = getBearerToken(request.headers.get('authorization'))
     const decoded = await verifyIdToken(token)
 
+    const body = await request.json().catch(() => ({}))
+    const { favoriteTeamId, displayName: bodyDisplayName, avatarUrl: bodyAvatarUrl } = body
+
     const user = await prisma.user.upsert({
       where: { firebaseUid: decoded.uid },
-      update: { email: decoded.email ?? '' },
+      update: {
+        email: decoded.email ?? '',
+        ...(bodyDisplayName && { displayName: bodyDisplayName }),
+        ...(bodyAvatarUrl !== undefined && { avatarUrl: bodyAvatarUrl }),
+        ...(favoriteTeamId && { favoriteTeamId }),
+      },
       create: {
         firebaseUid: decoded.uid,
         email: decoded.email ?? '',
-        displayName: decoded.name ?? decoded.email?.split('@')[0] ?? 'Player',
-        avatarUrl: decoded.picture ?? null,
+        displayName: bodyDisplayName ?? decoded.name ?? decoded.email?.split('@')[0] ?? 'Player',
+        avatarUrl: bodyAvatarUrl ?? decoded.picture ?? null,
+        favoriteTeamId: favoriteTeamId ?? null,
       },
       select: {
         id: true,
@@ -26,7 +35,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const needsOnboarding = !user.favoriteTeamId
+    const needsOnboarding = !user.favoriteTeamId && !favoriteTeamId
 
     return NextResponse.json({ user, needsOnboarding })
   } catch (error) {
