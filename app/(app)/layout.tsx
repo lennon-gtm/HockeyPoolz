@@ -9,16 +9,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/login')
-        return
-      }
-      const token = await user.getIdToken()
-      document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
-      setChecking(false)
+    let unsub: (() => void) | undefined
+    auth.authStateReady().then(() => {
+      unsub = onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          router.push('/login')
+          return
+        }
+        const token = await user.getIdToken()
+        document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
+        setChecking(false)
+      })
     })
-    return unsub
+    return () => unsub?.()
   }, [router])
 
   if (checking) {
