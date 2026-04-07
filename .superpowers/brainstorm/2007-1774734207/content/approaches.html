@@ -1,0 +1,68 @@
+<h2>Three ways to build HockeyPoolz</h2>
+<p class="subtitle">Pick the foundation — this decision shapes everything else</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Next.js + Supabase <span style="font-size:12px;background:#22c55e;color:#fff;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600;">Recommended</span></h3>
+      <p><strong>One platform, everything included.</strong> Supabase handles auth (Google + Apple built-in), Postgres database, and real-time score updates. Next.js covers frontend and API in one codebase. Deploy to Vercel in minutes.</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Fastest path to Alpha</li>
+          <li>Google/Apple SSO out of the box</li>
+          <li>Real-time score sync built in</li>
+          <li>Scales to hundreds of leagues no problem</li>
+          <li>Stripe payment layer plugs in later easily</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Some Supabase lock-in (mitigated — it's open-source Postgres)</li>
+          <li>Advanced real-time at massive scale needs tuning</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>React SPA + Node.js API + PostgreSQL</h3>
+      <p><strong>Traditional, fully custom stack.</strong> Separate React frontend and Node.js/Express backend. Auth via Auth0. Real-time via Socket.io. Full control over every layer.</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>No platform lock-in</li>
+          <li>Maximum flexibility</li>
+          <li>Battle-tested patterns</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>More to build and maintain</li>
+          <li>Auth0 adds cost and complexity early</li>
+          <li>Real-time infra requires more setup</li>
+          <li>2–3x slower to reach Alpha</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Next.js + Dedicated Stats Microservice</h3>
+      <p><strong>Split the stats concern out early.</strong> Next.js app handles all user-facing features. A separate Node.js service polls the NHL API, caches in Redis, and pushes score updates. Most scalable architecture.</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Stats service swappable independently (NHL API → SportsRadar)</li>
+          <li>Best separation of concerns</li>
+          <li>Easiest to scale the stats layer separately</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Two services to deploy and maintain from day one</li>
+          <li>Premature for Alpha scale</li>
+          <li>More DevOps overhead</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

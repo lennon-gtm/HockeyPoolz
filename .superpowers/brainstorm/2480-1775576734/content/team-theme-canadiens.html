@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HockeyPoolz — Canadiens Theme</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 16px; }
+
+  .page-title { text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 32px; }
+
+  /* ─── ONBOARDING STEP ─── */
+  .onboarding-wrap { max-width: 480px; margin: 0 auto 48px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); overflow: hidden; }
+  .onboarding-header { background: #AF1E2D; padding: 20px 24px; }
+  .onboarding-header .logo { color: #fff; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
+  .onboarding-header .step { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 4px; }
+  .onboarding-body { padding: 24px; }
+  .onboarding-body h2 { color: #111; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .onboarding-body p { color: #666; font-size: 13px; margin-bottom: 20px; }
+  .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .team-chip { border: 2px solid #eee; border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .team-chip:hover { border-color: #AF1E2D; }
+  .team-chip.selected { border-color: #AF1E2D; background: #AF1E2D08; }
+  .team-chip .swatch { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 6px; }
+  .team-chip .name { font-size: 10px; font-weight: 600; color: #333; line-height: 1.2; }
+  .team-chip.selected .name { color: #AF1E2D; }
+  .preview-note { font-size: 11px; color: #888; text-align: center; margin-bottom: 16px; }
+  .btn-primary { width: 100%; background: #AF1E2D; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; }
+
+  /* ─── DASHBOARD ─── */
+  .dashboard-wrap { max-width: 820px; margin: 0 auto; }
+  .dash-label { text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 16px; }
+
+  .dash { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); overflow: hidden; }
+
+  /* Top nav */
+  .dash-nav { background: #fff; border-bottom: 3px solid #AF1E2D; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .dash-nav .brand { font-weight: 900; font-size: 16px; letter-spacing: 2px; color: #111; }
+  .dash-nav .brand span { color: #AF1E2D; }
+  .dash-nav .nav-links { display: flex; gap: 4px; }
+  .dash-nav .nav-link { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; }
+  .dash-nav .nav-link.active { background: #AF1E2D; color: #fff; }
+  .dash-nav .avatar { width: 34px; height: 34px; border-radius: 50%; background: #AF1E2D; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid #192168; }
+
+  .dash-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Recap card */
+  .recap-card { background: #fff; border: 2px solid #AF1E2D; border-radius: 12px; padding: 18px; grid-column: 1 / -1; }
+  .recap-card .label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #AF1E2D; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .recap-card .commentary { color: #222; font-size: 14px; line-height: 1.7; font-style: italic; border-left: 3px solid #192168; padding-left: 14px; margin-bottom: 12px; }
+  .recap-card .badges { display: flex; gap: 8px; }
+  .badge-red { background: #AF1E2D; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .badge-navy { background: #192168; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .badge-gray { background: #f0f0f0; color: #666; padding: 4px 12px; border-radius: 6px; font-size: 11px; }
+
+  /* Standings card */
+  .card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .card-title { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #192168; text-transform: uppercase; margin-bottom: 14px; }
+
+  .standing-row { display: flex; align-items: center; padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; }
+  .standing-row.me { background: #AF1E2D08; border: 1px solid #AF1E2D30; }
+  .standing-row .rank { font-size: 13px; font-weight: 800; color: #bbb; width: 22px; }
+  .standing-row.me .rank { color: #AF1E2D; }
+  .standing-row .icon { width: 30px; height: 30px; border-radius: 50%; margin: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .standing-row .team-name { flex: 1; font-size: 13px; font-weight: 600; color: #333; }
+  .standing-row.me .team-name { color: #111; font-weight: 700; }
+  .standing-row .score { font-size: 13px; font-weight: 700; color: #999; }
+  .standing-row.me .score { color: #AF1E2D; }
+
+  /* Roster mini */
+  .player-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+  .player-row:last-child { border-bottom: none; }
+  .player-num { width: 28px; height: 28px; border-radius: 50%; background: #192168; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; margin-right: 10px; }
+  .player-info { flex: 1; }
+  .player-info .pname { font-size: 13px; font-weight: 600; color: #222; }
+  .player-info .pmeta { font-size: 11px; color: #888; }
+  .player-pts { font-size: 13px; font-weight: 700; color: #AF1E2D; }
+  .player-row.eliminated .player-num { background: #ddd; }
+  .player-row.eliminated .pname { color: #aaa; text-decoration: line-through; }
+  .player-row.eliminated .player-pts { color: #ccc; }
+
+  /* Team theme strip */
+  .theme-strip { background: linear-gradient(90deg, #AF1E2D 0%, #192168 100%); height: 4px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">HockeyPoolz — Onboarding + Dashboard Preview (Montréal Canadiens Theme)</div>
+
+<!-- ── ONBOARDING ── -->
+<div class="onboarding-wrap">
+  <div class="onboarding-header">
+    <div class="logo">HOCKEYPOOLZ</div>
+    <div class="step">Step 3 of 3 — Personalize your team</div>
+  </div>
+  <div class="onboarding-body">
+    <h2>Pick your favourite NHL team</h2>
+    <p>Your dashboard will match their colours all playoff long.</p>
+    <div class="team-grid">
+      <div class="team-chip selected">
+        <div class="swatch" style="background:linear-gradient(135deg,#AF1E2D,#192168);"></div>
+        <div class="name">Montréal<br>Canadiens</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#003087,#FCB514);"></div>
+        <div class="name">Pittsburgh<br>Penguins</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#00205B,#CF4520);"></div>
+        <div class="name">New York<br>Rangers</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#002654,#FCB514);"></div>
+        <div class="name">Buffalo<br>Sabres</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#041E42,#C8102E);"></div>
+        <div class="name">Toronto<br>Maple Leafs</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#006847,#8B8B8B);"></div>
+        <div class="name">Dallas<br>Stars</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#FF4C00,#000000);"></div>
+        <div class="name">Philadelphia<br>Flyers</div>
+      </div>
+      <div class="team-chip">
+        <div class="swatch" style="background:linear-gradient(135deg,#B4975A,#010101);"></div>
+        <div class="name">Vegas<br>Golden Kts</div>
+      </div>
+    </div>
+    <p class="preview-note">✓ Montréal Canadiens selected — preview below</p>
+    <button class="btn-primary">Enter My League →</button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div class="dashboard-wrap">
+  <div class="dash-label">Your personalized dashboard — Canadiens theme</div>
+  <div class="dash">
+    <div class="theme-strip"></div>
+    <div class="dash-nav">
+      <div class="brand">HOCKEY<span>POOLZ</span></div>
+      <div class="nav-links">
+        <div class="nav-link active">Home</div>
+        <div class="nav-link">Standings</div>
+        <div class="nav-link">Roster</div>
+        <div class="nav-link">Draft</div>
+      </div>
+      <div class="avatar">🏒</div>
+    </div>
+
+    <div class="dash-body">
+
+      <!-- Morning Recap -->
+      <div class="recap-card">
+        <div class="label">🎙 Last Night's Recap — May 14</div>
+        <div class="commentary">
+          "Carey Price was a WALL last night — 38 saves, a shutout, and your squad jumped from 3rd to 1st overnight. Meanwhile, DavesDisasters had his two Leafs picks do absolutely nothing, which is historically on-brand for Toronto in the playoffs. The gap is now 14.5 points. Don't get comfortable, but maybe get comfortable."
+        </div>
+        <div class="badges">
+          <div class="badge-red">↑ MOVED TO 1ST</div>
+          <div class="badge-navy">🏒 2 Games Tonight</div>
+          <div class="badge-gray">MTL vs TBL · 7:00 PM ET</div>
+        </div>
+      </div>
+
+      <!-- Standings -->
+      <div class="card">
+        <div class="card-title">League Standings</div>
+
+        <div class="standing-row me">
+          <div class="rank">1</div>
+          <div class="icon" style="background:#AF1E2D10;">🏒</div>
+          <div class="team-name">BobsTeam</div>
+          <div class="score">142.5</div>
+        </div>
+        <div class="standing-row">
+          <div class="rank">2</div>
+          <div class="icon" style="background:#f5f5f5;">🦅</div>
+          <div class="team-name">SarahsSquad</div>
+          <div class="score">128.0</div>
+        </div>
+        <div class="standing-row">
+          <div class="rank">3</div>
+          <div class="icon" style="background:#f5f5f5;">🐺</div>
+          <div class="team-name">DavesDisasters</div>
+          <div class="score">119.5</div>
+        </div>
+        <div class="standing-row">
+          <div class="rank">4</div>
+          <div class="icon" style="background:#f5f5f5;">⚡</div>
+          <div class="team-name">MikesMarauders</div>
+          <div class="score">108.0</div>
+        </div>
+        <div class="standing-row">
+          <div class="rank">5</div>
+          <div class="icon" style="background:#f5f5f5;">🔥</div>
+          <div class="team-name">JensJuggernaut</div>
+          <div class="score">97.5</div>
+        </div>
+      </div>
+
+      <!-- My Roster -->
+      <div class="card">
+        <div class="card-title">My Roster — 142.5 pts</div>
+
+        <div class="player-row">
+          <div class="player-num">31</div>
+          <div class="player-info">
+            <div class="pname">Carey Price</div>
+            <div class="pmeta">G — MTL</div>
+          </div>
+          <div class="player-pts">64.0</div>
+        </div>
+        <div class="player-row">
+          <div class="player-num">97</div>
+          <div class="player-info">
+            <div class="pname">Connor McDavid</div>
+            <div class="pmeta">C — EDM</div>
+          </div>
+          <div class="player-pts">38.0</div>
+        </div>
+        <div class="player-row">
+          <div class="player-num">88</div>
+          <div class="player-info">
+            <div class="pname">David Pastrnak</div>
+            <div class="pmeta">RW — BOS</div>
+          </div>
+          <div class="player-pts">22.5</div>
+        </div>
+        <div class="player-row">
+          <div class="player-num">14</div>
+          <div class="player-info">
+            <div class="pname">Nick Suzuki</div>
+            <div class="pmeta">C — MTL</div>
+          </div>
+          <div class="player-pts">18.0</div>
+        </div>
+        <div class="player-row eliminated">
+          <div class="player-num">16</div>
+          <div class="player-info">
+            <div class="pname">Mitch Marner</div>
+            <div class="pmeta">RW — TOR ❌ Eliminated</div>
+          </div>
+          <div class="player-pts">0.0</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// selection helper for onboarding chips
+document.querySelectorAll('.team-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.team-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

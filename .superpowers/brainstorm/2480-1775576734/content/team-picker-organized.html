@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HockeyPoolz — Team Picker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 16px; }
+
+  .onboarding-wrap { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); overflow: hidden; }
+
+  /* Header — updates live with selected team colors */
+  .onboarding-header { background: #AF1E2D; padding: 20px 24px; transition: background 0.3s; }
+  .onboarding-header .logo { color: #fff; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
+  .onboarding-header .step { color: rgba(255,255,255,0.65); font-size: 12px; margin-top: 4px; }
+  .onboarding-header .selected-label { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; margin-top: 8px; min-height: 18px; }
+
+  .onboarding-body { padding: 24px; }
+  .onboarding-body h2 { color: #111; font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .onboarding-body .subtitle { color: #666; font-size: 13px; margin-bottom: 20px; }
+
+  /* Search */
+  .search-bar { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; color: #222; margin-bottom: 20px; outline: none; }
+  .search-bar:focus { border-color: #AF1E2D; }
+
+  /* Conference / Division layout */
+  .conference { margin-bottom: 20px; }
+  .conf-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; padding: 5px 12px; border-radius: 6px; display: inline-block; margin-bottom: 12px; }
+  .conf-east { background: #002654; }
+  .conf-west { background: #005A32; }
+
+  .division { margin-bottom: 14px; }
+  .div-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #999; margin-bottom: 8px; padding-left: 2px; border-left: 3px solid #ddd; padding-left: 8px; }
+
+  .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  .team-chip { border: 1.5px solid #eee; border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.15s; background: #fff; }
+  .team-chip:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .team-chip.selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, white); }
+  .team-chip.hidden { display: none; }
+
+  .swatch { width: 34px; height: 34px; border-radius: 50%; margin: 0 auto 6px; }
+  .team-chip .name { font-size: 10px; font-weight: 600; color: #444; line-height: 1.3; }
+  .team-chip.selected .name { color: var(--primary); font-weight: 700; }
+
+  .preview-note { font-size: 12px; color: #888; text-align: center; margin: 16px 0; min-height: 18px; }
+
+  .btn-primary { width: 100%; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; background: #AF1E2D; transition: background 0.3s; }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+  .no-results { text-align: center; color: #aaa; font-size: 13px; padding: 24px 0; display: none; }
+</style>
+</head>
+<body>
+
+<div class="onboarding-wrap">
+  <div class="onboarding-header" id="header">
+    <div class="logo">HOCKEYPOOLZ</div>
+    <div class="step">Step 3 of 3 — Personalize your team</div>
+    <div class="selected-label" id="selectedLabel">No team selected yet</div>
+  </div>
+
+  <div class="onboarding-body">
+    <h2>Pick your favourite NHL team</h2>
+    <p class="subtitle">Your dashboard will match their colours all playoff long.</p>
+
+    <input class="search-bar" id="search" placeholder="Search teams…" oninput="filterTeams(this.value)" />
+
+    <!-- EASTERN CONFERENCE -->
+    <div class="conference" id="conf-east">
+      <div class="conf-label conf-east">Eastern Conference</div>
+
+      <div class="division">
+        <div class="div-label">Atlantic Division</div>
+        <div class="team-grid">
+          <div class="team-chip" style="--primary:#FFB81C" data-name="Boston Bruins" data-p="#FFB81C" data-s="#010101" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#FFB81C,#010101)"></div>
+            <div class="name">Boston<br>Bruins</div>
+          </div>
+          <div class="team-chip" style="--primary:#002654" data-name="Buffalo Sabres" data-p="#002654" data-s="#FCB514" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#002654,#FCB514)"></div>
+            <div class="name">Buffalo<br>Sabres</div>
+          </div>
+          <div class="team-chip" style="--primary:#CE1126" data-name="Detroit Red Wings" data-p="#CE1126" data-s="#FFFFFF" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#CE1126,#777)"></div>
+            <div class="name">Detroit<br>Red Wings</div>
+          </div>
+          <div class="team-chip" style="--primary:#041E42" data-name="Florida Panthers" data-p="#041E42" data-s="#C8102E" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#041E42,#C8102E)"></div>
+            <div class="name">Florida<br>Panthers</div>
+          </div>
+          <div class="team-chip selected" style="--primary:#AF1E2D" data-name="Montréal Canadiens" data-p="#AF1E2D" data-s="#192168" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#AF1E2D,#192168)"></div>
+            <div class="name">Montréal<br>Canadiens</div>
+          </div>
+          <div class="team-chip" style="--primary:#C8102E" data-name="Ottawa Senators" data-p="#C8102E" data-s="#C69214" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#C8102E,#C69214)"></div>
+            <div class="name">Ottawa<br>Senators</div>
+          </div>
+          <div class="team-chip" style="--primary:#002868" data-name="Tampa Bay Lightning" data-p="#002868" data-s="#FFFFFF" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#002868,#6699CC)"></div>
+            <div class="name">Tampa Bay<br>Lightning</div>
+          </div>
+          <div class="team-chip" style="--primary:#00205B" data-name="Toronto Maple Leafs" data-p="#00205B" data-s="#FFFFFF" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#00205B,#6699CC)"></div>
+            <div class="name">Toronto<br>Maple Leafs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="division">
+        <div class="div-label">Metropolitan Division</div>
+        <div class="team-grid">
+          <div class="team-chip" style="--primary:#CC0000" data-name="Carolina Hurricanes" data-p="#CC0000" data-s="#000000" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#CC0000,#333)"></div>
+            <div class="name">Carolina<br>Hurricanes</div>
+          </div>
+          <div class="team-chip" style="--primary:#002654" data-name="Columbus Blue Jackets" data-p="#002654" data-s="#CE1126" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#002654,#CE1126)"></div>
+            <div class="name">Columbus<br>Blue Jackets</div>
+          </div>
+          <div class="team-chip" style="--primary:#CE1126" data-name="New Jersey Devils" data-p="#CE1126" data-s="#003366" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#CE1126,#003366)"></div>
+            <div class="name">New Jersey<br>Devils</div>
+          </div>
+          <div class="team-chip" style="--primary:#00539B" data-name="New York Islanders" data-p="#00539B" data-s="#F47D30" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#00539B,#F47D30)"></div>
+            <div class="name">NY<br>Islanders</div>
+          </div>
+          <div class="team-chip" style="--primary:#0038A8" data-name="New York Rangers" data-p="#0038A8" data-s="#CE1126" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#0038A8,#CE1126)"></div>
+            <div class="name">NY<br>Rangers</div>
+          </div>
+          <div class="team-chip" style="--primary:#F74902" data-name="Philadelphia Flyers" data-p="#F74902" data-s="#000000" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#F74902,#333)"></div>
+            <div class="name">Philadelphia<br>Flyers</div>
+          </div>
+          <div class="team-chip" style="--primary:#FCB514" data-name="Pittsburgh Penguins" data-p="#FCB514" data-s="#000000" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#FCB514,#111)"></div>
+            <div class="name">Pittsburgh<br>Penguins</div>
+          </div>
+          <div class="team-chip" style="--primary:#041E42" data-name="Washington Capitals" data-p="#041E42" data-s="#C8102E" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#C8102E,#041E42)"></div>
+            <div class="name">Washington<br>Capitals</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WESTERN CONFERENCE -->
+    <div class="conference" id="conf-west">
+      <div class="conf-label conf-west">Western Conference</div>
+
+      <div class="division">
+        <div class="div-label">Central Division</div>
+        <div class="team-grid">
+          <div class="team-chip" style="--primary:#CF0A2C" data-name="Chicago Blackhawks" data-p="#CF0A2C" data-s="#FF671B" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#CF0A2C,#FF671B)"></div>
+            <div class="name">Chicago<br>Blackhawks</div>
+          </div>
+          <div class="team-chip" style="--primary:#6F263D" data-name="Colorado Avalanche" data-p="#6F263D" data-s="#236192" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#6F263D,#236192)"></div>
+            <div class="name">Colorado<br>Avalanche</div>
+          </div>
+          <div class="team-chip" style="--primary:#006847" data-name="Dallas Stars" data-p="#006847" data-s="#8F8F8C" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#006847,#8F8F8C)"></div>
+            <div class="name">Dallas<br>Stars</div>
+          </div>
+          <div class="team-chip" style="--primary:#154734" data-name="Minnesota Wild" data-p="#154734" data-s="#A6192E" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#154734,#A6192E)"></div>
+            <div class="name">Minnesota<br>Wild</div>
+          </div>
+          <div class="team-chip" style="--primary:#FFB81C" data-name="Nashville Predators" data-p="#FFB81C" data-s="#041E42" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#FFB81C,#041E42)"></div>
+            <div class="name">Nashville<br>Predators</div>
+          </div>
+          <div class="team-chip" style="--primary:#002F87" data-name="St. Louis Blues" data-p="#002F87" data-s="#FCB514" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#002F87,#FCB514)"></div>
+            <div class="name">St. Louis<br>Blues</div>
+          </div>
+          <div class="team-chip" style="--primary:#6CACE4" data-name="Utah Hockey Club" data-p="#6CACE4" data-s="#010101" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#6CACE4,#222)"></div>
+            <div class="name">Utah<br>Hockey Club</div>
+          </div>
+          <div class="team-chip" style="--primary:#041E42" data-name="Winnipeg Jets" data-p="#041E42" data-s="#004C97" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#041E42,#004C97)"></div>
+            <div class="name">Winnipeg<br>Jets</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="division">
+        <div class="div-label">Pacific Division</div>
+        <div class="team-grid">
+          <div class="team-chip" style="--primary:#F47A38" data-name="Anaheim Ducks" data-p="#F47A38" data-s="#B09865" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#F47A38,#B09865)"></div>
+            <div class="name">Anaheim<br>Ducks</div>
+          </div>
+          <div class="team-chip" style="--primary:#C8102E" data-name="Calgary Flames" data-p="#C8102E" data-s="#F1BE48" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#C8102E,#F1BE48)"></div>
+            <div class="name">Calgary<br>Flames</div>
+          </div>
+          <div class="team-chip" style="--primary:#FF4C00" data-name="Edmonton Oilers" data-p="#FF4C00" data-s="#003087" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#FF4C00,#003087)"></div>
+            <div class="name">Edmonton<br>Oilers</div>
+          </div>
+          <div class="team-chip" style="--primary:#111111" data-name="Los Angeles Kings" data-p="#111111" data-s="#A2AAAD" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#333,#A2AAAD)"></div>
+            <div class="name">Los Angeles<br>Kings</div>
+          </div>
+          <div class="team-chip" style="--primary:#006D75" data-name="San Jose Sharks" data-p="#006D75" data-s="#EA7200" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#006D75,#EA7200)"></div>
+            <div class="name">San Jose<br>Sharks</div>
+          </div>
+          <div class="team-chip" style="--primary:#001628" data-name="Seattle Kraken" data-p="#001628" data-s="#99D9D9" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#001628,#99D9D9)"></div>
+            <div class="name">Seattle<br>Kraken</div>
+          </div>
+          <div class="team-chip" style="--primary:#00205B" data-name="Vancouver Canucks" data-p="#00205B" data-s="#00843D" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#00205B,#00843D)"></div>
+            <div class="name">Vancouver<br>Canucks</div>
+          </div>
+          <div class="team-chip" style="--primary:#B4975A" data-name="Vegas Golden Knights" data-p="#B4975A" data-s="#333F42" onclick="selectTeam(this)">
+            <div class="swatch" style="background:linear-gradient(135deg,#B4975A,#333F42)"></div>
+            <div class="name">Vegas<br>Golden Knights</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" id="noResults">No teams match your search.</div>
+
+    <p class="preview-note" id="previewNote">✓ Montréal Canadiens selected</p>
+    <button class="btn-primary" id="continueBtn">Enter My League →</button>
+  </div>
+</div>
+
+<script>
+  let selectedTeam = { name: 'Montréal Canadiens', primary: '#AF1E2D', secondary: '#192168' };
+
+  function selectTeam(el) {
+    document.querySelectorAll('.team-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTeam = {
+      name: el.dataset.name,
+      primary: el.dataset.p,
+      secondary: el.dataset.s
+    };
+    document.getElementById('header').style.background = selectedTeam.primary;
+    document.getElementById('selectedLabel').textContent = '✓ ' + selectedTeam.name + ' selected';
+    document.getElementById('previewNote').textContent = '✓ ' + selectedTeam.name + ' selected';
+    document.getElementById('continueBtn').style.background = selectedTeam.primary;
+    document.getElementById('search').style.borderColor = selectedTeam.primary;
+  }
+
+  function filterTeams(query) {
+    const q = query.toLowerCase().trim();
+    const chips = document.querySelectorAll('.team-chip');
+    let visibleCount = 0;
+    chips.forEach(chip => {
+      const match = chip.dataset.name.toLowerCase().includes(q);
+      chip.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+    document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>

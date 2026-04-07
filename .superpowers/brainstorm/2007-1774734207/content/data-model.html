@@ -1,0 +1,147 @@
+<h2>Section 2 — Data Model</h2>
+<p class="subtitle">Every table and how they connect. Supabase PostgreSQL.</p>
+
+<div style="max-width:900px;margin:0 auto;font-size:12px;font-family:monospace;">
+
+  <!-- Row 1: Users + Leagues -->
+  <div style="display:flex;gap:16px;margin-bottom:8px;">
+
+    <div style="flex:1;border:2px solid #ff6b00;border-radius:8px;overflow:hidden;">
+      <div style="background:#ff6b00;color:#000;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">USERS</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fff;">email</span> text unique</div>
+        <div><span style="color:#fff;">display_name</span> text</div>
+        <div><span style="color:#fff;">avatar_url</span> text</div>
+        <div><span style="color:#fff;">provider</span> google | apple</div>
+        <div><span style="color:#fff;">is_platform_admin</span> bool</div>
+        <div><span style="color:#888;">created_at</span> timestampz</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px solid #3b82f6;border-radius:8px;overflow:hidden;">
+      <div style="background:#3b82f6;color:#fff;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">LEAGUES</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">commissioner_id</span> → users</div>
+        <div><span style="color:#fff;">name</span> text</div>
+        <div><span style="color:#fff;">invite_code</span> text unique</div>
+        <div><span style="color:#fff;">status</span> setup | draft | active | complete</div>
+        <div><span style="color:#fff;">max_teams</span> int</div>
+        <div><span style="color:#888;">created_at</span> timestampz</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px solid #8b5cf6;border-radius:8px;overflow:hidden;">
+      <div style="background:#8b5cf6;color:#fff;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">LEAGUE_MEMBERS</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">league_id</span> → leagues</div>
+        <div><span style="color:#fbbf24;">user_id</span> → users</div>
+        <div><span style="color:#fff;">team_name</span> text</div>
+        <div><span style="color:#fff;">draft_position</span> int</div>
+        <div><span style="color:#fff;">total_score</span> decimal (cached)</div>
+        <div><span style="color:#888;">joined_at</span> timestampz</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;color:#555;margin:4px 0 8px;">↕ league_id links scoring, draft, and members</div>
+
+  <!-- Row 2: Scoring + Draft -->
+  <div style="display:flex;gap:16px;margin-bottom:8px;">
+
+    <div style="flex:1;border:2px solid #f59e0b;border-radius:8px;overflow:hidden;">
+      <div style="background:#f59e0b;color:#000;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">SCORING_SETTINGS</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">league_id</span> → leagues (1:1)</div>
+        <div><span style="color:#fff;">goals</span> decimal weight</div>
+        <div><span style="color:#fff;">assists</span> decimal weight</div>
+        <div><span style="color:#fff;">plus_minus</span> decimal weight</div>
+        <div><span style="color:#fff;">pim</span> decimal weight</div>
+        <div><span style="color:#fff;">shots</span> decimal weight</div>
+        <div><span style="color:#fff;">goalie_wins</span> decimal weight</div>
+        <div><span style="color:#fff;">goalie_saves</span> decimal weight</div>
+        <div><span style="color:#fff;">shutouts</span> decimal weight</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px solid #06b6d4;border-radius:8px;overflow:hidden;">
+      <div style="background:#06b6d4;color:#000;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">DRAFTS</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">league_id</span> → leagues (1:1)</div>
+        <div><span style="color:#fff;">status</span> pending | active | complete</div>
+        <div><span style="color:#fff;">current_pick_number</span> int</div>
+        <div><span style="color:#fff;">pick_time_limit_secs</span> int</div>
+        <div><span style="color:#888;">started_at</span> timestampz</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px solid #06b6d4;border-radius:8px;overflow:hidden;">
+      <div style="background:#0891b2;color:#fff;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">DRAFT_PICKS</div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">draft_id</span> → drafts</div>
+        <div><span style="color:#fbbf24;">league_member_id</span> → league_members</div>
+        <div><span style="color:#fbbf24;">player_id</span> → nhl_players</div>
+        <div><span style="color:#fff;">round</span> int</div>
+        <div><span style="color:#fff;">pick_number</span> int</div>
+        <div><span style="color:#888;">picked_at</span> timestampz</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;color:#555;margin:4px 0 8px;">↕ StatsService writes to nhl_players + player_game_stats</div>
+
+  <!-- Row 3: NHL Data (Stats Layer) -->
+  <div style="display:flex;gap:16px;margin-bottom:8px;">
+
+    <div style="flex:1;border:2px dashed #ff6b00;border-radius:8px;overflow:hidden;">
+      <div style="background:rgba(255,107,0,0.2);color:#ff9900;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">NHL_TEAMS <span style="opacity:0.6;">(StatsService)</span></div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> text (e.g. "TOR")</div>
+        <div><span style="color:#fff;">name</span> text</div>
+        <div><span style="color:#fff;">logo_url</span> text</div>
+        <div><span style="color:#fff;">conference</span> text</div>
+        <div><span style="color:#fff;">eliminated_at</span> timestampz | null</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px dashed #ff6b00;border-radius:8px;overflow:hidden;">
+      <div style="background:rgba(255,107,0,0.2);color:#ff9900;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">NHL_PLAYERS <span style="opacity:0.6;">(StatsService)</span></div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> int (NHL player ID)</div>
+        <div><span style="color:#fbbf24;">team_id</span> → nhl_teams</div>
+        <div><span style="color:#fff;">name</span> text</div>
+        <div><span style="color:#fff;">position</span> C|LW|RW|D|G</div>
+        <div><span style="color:#fff;">headshot_url</span> text</div>
+      </div>
+    </div>
+
+    <div style="flex:1;border:2px dashed #ff6b00;border-radius:8px;overflow:hidden;">
+      <div style="background:rgba(255,107,0,0.2);color:#ff9900;padding:8px 12px;font-weight:700;font-size:11px;letter-spacing:1px;">PLAYER_GAME_STATS <span style="opacity:0.6;">(StatsService)</span></div>
+      <div style="padding:12px;background:#111;line-height:2.2;">
+        <div><span style="color:#4ade80;">id</span> uuid PK</div>
+        <div><span style="color:#fbbf24;">player_id</span> → nhl_players</div>
+        <div><span style="color:#fff;">game_id</span> text (NHL game ID)</div>
+        <div><span style="color:#fff;">game_date</span> date</div>
+        <div><span style="color:#fff;">goals, assists, plus_minus</span></div>
+        <div><span style="color:#fff;">pim, shots</span></div>
+        <div><span style="color:#fff;">wins, saves, shutouts</span> (G)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div style="display:flex;gap:24px;margin-top:16px;padding:12px;border:1px solid #333;border-radius:6px;color:#888;font-size:11px;">
+    <div><span style="color:#fbbf24;">■</span> Foreign key</div>
+    <div><span style="color:#4ade80;">■</span> Primary key</div>
+    <div><span style="border:1px dashed #ff6b00;padding:1px 6px;border-radius:3px;color:#ff9900;">dashed orange</span> = owned by StatsService, never written by app logic</div>
+  </div>
+
+</div>

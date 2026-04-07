@@ -1,0 +1,71 @@
+<h2>Section 1 — System Architecture</h2>
+<p class="subtitle">How all the pieces connect. Review and confirm before we move to the data model.</p>
+
+<div class="mockup" style="max-width:800px;margin:0 auto;">
+  <div class="mockup-header">HockeyPoolz — System Overview</div>
+  <div class="mockup-body" style="padding:32px;font-family:monospace;font-size:13px;line-height:1.8;">
+
+    <!-- Browser Layer -->
+    <div style="border:2px solid #ff6b00;border-radius:8px;padding:16px;margin-bottom:16px;background:rgba(255,107,0,0.05);">
+      <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:12px;">BROWSER / CLIENT</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Next.js App<br><span style="color:#888;font-size:11px;">Pages + Components</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Supabase Client<br><span style="color:#888;font-size:11px;">Real-time subscriptions</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Auth UI<br><span style="color:#888;font-size:11px;">Google + Apple SSO</span></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:#555;margin:4px 0;">↕ HTTPS / WebSocket</div>
+
+    <!-- App Server Layer -->
+    <div style="border:2px solid #3b82f6;border-radius:8px;padding:16px;margin-bottom:16px;background:rgba(59,130,246,0.05);">
+      <div style="color:#60a5fa;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:12px;">APP SERVER — Next.js API Routes (Vercel)</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">League API<br><span style="color:#888;font-size:11px;">Create / join / manage</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Draft API<br><span style="color:#888;font-size:11px;">Snake draft engine</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Scoring API<br><span style="color:#888;font-size:11px;">Calc + rankings</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px; border:2px dashed #ff6b00;">StatsService<br><span style="color:#ff9900;font-size:11px;">⚡ Isolated module</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:10px 16px;border-radius:6px;color:#fff;font-size:12px;">Admin API<br><span style="color:#888;font-size:11px;">Platform operator</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-bottom:4px;">
+      <div style="flex:1;text-align:center;color:#555;">↕ Supabase SDK</div>
+      <div style="flex:0 0 180px;text-align:center;color:#ff9900;">↕ NHL API (upgradeable)</div>
+    </div>
+
+    <!-- Data + External Layer -->
+    <div style="display:flex;gap:16px;">
+      <div style="flex:1;border:2px solid #22c55e;border-radius:8px;padding:16px;background:rgba(34,197,94,0.05);">
+        <div style="color:#4ade80;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:12px;">SUPABASE</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#fff;font-size:12px;">PostgreSQL<br><span style="color:#888;font-size:11px;">All game data</span></div>
+          <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#fff;font-size:12px;">Realtime<br><span style="color:#888;font-size:11px;">Live score push</span></div>
+          <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#fff;font-size:12px;">Auth<br><span style="color:#888;font-size:11px;">Google + Apple</span></div>
+          <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#fff;font-size:12px;">Row-level security<br><span style="color:#888;font-size:11px;">League isolation</span></div>
+        </div>
+      </div>
+      <div style="flex:0 0 180px;border:2px dashed #ff6b00;border-radius:8px;padding:16px;background:rgba(255,107,0,0.05);">
+        <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:12px;">STATS SOURCE</div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#fff;font-size:12px;margin-bottom:8px;">NHL API (free)<br><span style="color:#4ade80;font-size:11px;">Alpha</span></div>
+        <div style="background:#1a1a1a;border:1px solid #333;padding:8px 12px;border-radius:6px;color:#888;font-size:12px;">SportsRadar<br><span style="color:#555;font-size:11px;">Swap at scale</span></div>
+      </div>
+    </div>
+
+    <!-- Future note -->
+    <div style="margin-top:16px;padding:12px;border:1px dashed #444;border-radius:6px;color:#666;font-size:11px;text-align:center;">
+      ⚡ At scale: StatsService extracts into its own process + Redis cache (Option C). Everything else stays unchanged.
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="max-width:800px;margin:24px auto 0;">
+  <h3>Key architectural decisions baked in</h3>
+  <ul style="line-height:2;">
+    <li><strong>Supabase Row-Level Security</strong> — each league's data is automatically isolated at the database level. League A can never see League B's data.</li>
+    <li><strong>StatsService module boundary</strong> — one interface, one place. NHL API calls never leak into components or other APIs.</li>
+    <li><strong>Vercel deployment</strong> — zero-config, scales automatically, free tier covers Alpha comfortably.</li>
+    <li><strong>Real-time via Supabase channels</strong> — standings update live when scores change. No polling needed.</li>
+  </ul>
+</div>

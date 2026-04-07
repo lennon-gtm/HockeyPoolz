@@ -1,0 +1,135 @@
+<h2>Section 3 — User Flows (v2)</h2>
+<p class="subtitle">Updated with all additions. Review before we move to screen layout.</p>
+
+<div style="max-width:860px;margin:0 auto;font-size:12px;">
+
+  <!-- Flow 1: New User -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">① NEW USER — JOINING A LEAGUE</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+      <div style="background:#1a1a1a;border:1px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">Receives invite link</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Landing page<br><span style="color:#888;font-size:10px;">League preview</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #f6820d;padding:8px 14px;border-radius:6px;color:#fff;">Sign in<br><span style="color:#f6820d;font-size:10px;">Google / Apple</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Set team name</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:2px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">Set team icon<br><span style="color:#ff9900;font-size:10px;">📷 Upload or pick emoji</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #22c55e;padding:8px 14px;border-radius:6px;color:#4ade80;">Lobby<br><span style="color:#888;font-size:10px;">Waiting for draft</span></div>
+    </div>
+    <div style="padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #ff6b00;color:#888;font-size:11px;margin-top:8px;">
+      Team icon: photo upload (stored as URL) or emoji picker as a fast fallback. Both show as the team avatar throughout the app.
+    </div>
+  </div>
+
+  <!-- Flow 2: Commissioner -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">② COMMISSIONER — CREATING A LEAGUE</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="background:#1a1a1a;border:1px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">Sign in</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Create league<br><span style="color:#888;font-size:10px;">Name + max teams</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:2px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">League settings<br><span style="color:#ff9900;font-size:10px;">Players per team + roster rules</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #f59e0b;padding:8px 14px;border-radius:6px;color:#fff;">Configure scoring<br><span style="color:#f59e0b;font-size:10px;">Set stat weights</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Share invite link</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Set draft order<br><span style="color:#888;font-size:10px;">Manual or randomize</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #22c55e;padding:8px 14px;border-radius:6px;color:#4ade80;">Start draft</div>
+    </div>
+    <div style="padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #ff6b00;color:#888;font-size:11px;">
+      Players per team: commissioner sets total roster size (e.g. 8 skaters + 2 goalies). Controls how many rounds the snake draft runs.
+    </div>
+  </div>
+
+  <!-- Flow 3: Draft Night -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">③ DRAFT NIGHT — SNAKE DRAFT</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="background:#1a1a1a;border:1px solid #22c55e;padding:8px 14px;border-radius:6px;color:#fff;">Draft room opens</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">On-the-clock picks<br><span style="color:#888;font-size:10px;">Timer per pick</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Browse + pick player<br><span style="color:#888;font-size:10px;">Filter by pos / team</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Snake reverses</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #22c55e;padding:8px 14px;border-radius:6px;color:#4ade80;">Draft complete</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #ff6b00;color:#888;font-size:11px;">
+        Auto-pick fires if timer expires — highest ranked available player is selected automatically.
+      </div>
+      <div style="flex:1;padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #f59e0b;color:#888;font-size:11px;">
+        <span style="color:#f59e0b;">⏸ Commissioner pause:</span> commissioner can pause/resume the draft clock at any time (e.g. someone disconnects).
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow 3b: Mock Draft -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">③b MOCK DRAFT — PRACTICE MODE <span style="background:#8b5cf6;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;margin-left:6px;">NEW</span></div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="background:#1a1a1a;border:1px solid #8b5cf6;padding:8px 14px;border-radius:6px;color:#fff;">Lobby → Run Mock Draft</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Solo or invite league<br><span style="color:#888;font-size:10px;">Absent slots = CPU auto-pick</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Full draft simulation<br><span style="color:#888;font-size:10px;">Same UI as real draft</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">View mock roster<br><span style="color:#888;font-size:10px;">Save or discard</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #8b5cf6;padding:8px 14px;border-radius:6px;color:#c4b5fd;">No impact on real draft</div>
+    </div>
+    <div style="padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #8b5cf6;color:#888;font-size:11px;">
+      Mock drafts use real playoff roster data. CPU picks by ADP (average draft position). Participants can run unlimited mocks before draft night.
+    </div>
+  </div>
+
+  <!-- Flow 4: Active Season -->
+  <div style="margin-bottom:28px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">④ ACTIVE PLAYOFFS — DAILY USE</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="background:#1a1a1a;border:1px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">Open app</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:2px solid #ff6b00;padding:8px 14px;border-radius:6px;color:#fff;">Morning Recap<br><span style="color:#ff9900;font-size:10px;">🎙 Sportscaster summary</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #3b82f6;padding:8px 14px;border-radius:6px;color:#fff;">Standings<br><span style="color:#60a5fa;font-size:10px;">My rank + scores</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">My Roster<br><span style="color:#888;font-size:10px;">Player stats breakdown</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Player detail<br><span style="color:#888;font-size:10px;">Game log + totals</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Compare rosters</div>
+    </div>
+    <div style="padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #ff6b00;color:#888;font-size:11px;">
+      <span style="color:#ff9900;">🎙 Morning Recap:</span> Generated each morning via Claude API. Covers last night's games, standout performers from the league, ranking changes, and trash-talk-friendly commentary. Personalized per participant — highlights <em>their</em> players. Delivered as a card on the home screen (push notification optional for Gold Master).
+    </div>
+  </div>
+
+  <!-- Flow 5: Platform Admin -->
+  <div style="margin-bottom:8px;">
+    <div style="color:#ff9900;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">⑤ PLATFORM ADMIN (YOU)</div>
+    <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="background:#1a1a1a;border:1px solid #8b5cf6;padding:8px 14px;border-radius:6px;color:#fff;">Admin login</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">All leagues overview<br><span style="color:#888;font-size:10px;">Status + member count</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">User lookup</div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:2px solid #ef4444;padding:8px 14px;border-radius:6px;color:#fff;">Ban user / league<br><span style="color:#ef4444;font-size:10px;">🚫 Hard or soft ban</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Stats sync status<br><span style="color:#888;font-size:10px;">Last NHL API pull</span></div>
+      <div style="color:#555;padding:0 8px;">→</div>
+      <div style="background:#1a1a1a;border:1px solid #333;padding:8px 14px;border-radius:6px;color:#fff;">Manual sync trigger</div>
+    </div>
+    <div style="padding:8px 14px;background:#1a1a1a;border-radius:6px;border-left:3px solid #ef4444;color:#888;font-size:11px;">
+      <span style="color:#ef4444;">Ban mechanics:</span> Soft ban = user suspended, can't join new leagues, existing league access revoked. Hard ban = account disabled, Firebase Auth blocked. League ban = league frozen, commissioner notified.
+    </div>
+  </div>
+
+</div>
