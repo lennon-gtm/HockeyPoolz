@@ -21,6 +21,7 @@ model User {
   favoriteTeam         NhlTeam?       @relation(fields: [favoriteTeamId], references: [id])
   leagueMembers        LeagueMember[]
   commissionedLeagues  League[]       @relation("Commissioner")
+  recaps               Recap[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model LeagueMember {
   autodraftEnabled  Boolean           @default(false) @map("autodraft_enabled")
   autodraftStrategy AutodraftStrategy @default(adp) @map("autodraft_strategy")
   totalScore        Decimal           @default(0) @db.Decimal(10, 2) @map("total_score")
+  scoreLastCalculatedAt DateTime?     @map("score_last_calculated_at")
   joinedAt          DateTime          @default(now()) @map("joined_at")
 
   league      League             @relation(fields: [leagueId], references: [id])
@@ -109,6 +111,7 @@ model Draft {
   pickTimeLimitSecs Int         @default(90) @map("pick_time_limit_secs")
   isMock            Boolean     @default(false) @map("is_mock")
   startedAt         DateTime?   @map("started_at")
+  completedAt       DateTime?   @map("completed_at")
 
   league League      @relation(fields: [leagueId], references: [id])
   picks  DraftPick[]
@@ -124,21 +127,27 @@ enum DraftStatus {
 }
 
 model DraftPick {
-  id             String   @id @default(uuid())
-  draftId        String   @map("draft_id")
-  leagueMemberId String   @map("league_member_id")
-  playerId       Int      @map("player_id")
+  id             String     @id @default(uuid())
+  draftId        String     @map("draft_id")
+  leagueMemberId String     @map("league_member_id")
+  playerId       Int        @map("player_id")
   round          Int
-  pickNumber     Int      @map("pick_number")
-  isAutoPick     Boolean  @default(false) @map("is_auto_pick")
-  isAutodraft    Boolean  @default(false) @map("is_autodraft")
-  pickedAt       DateTime @default(now()) @map("picked_at")
+  pickNumber     Int        @map("pick_number")
+  pickSource     PickSource @default(manual) @map("pick_source")
+  pickedAt       DateTime   @default(now()) @map("picked_at")
 
   draft        Draft        @relation(fields: [draftId], references: [id])
   leagueMember LeagueMember @relation(fields: [leagueMemberId], references: [id])
   player       NhlPlayer    @relation(fields: [playerId], references: [id])
 
+  @@unique([draftId, pickNumber])
   @@map("draft_picks")
+}
+
+enum PickSource {
+  manual
+  timed_autopick
+  autodraft
 }
 
 model AutodraftWishlist {
@@ -159,6 +168,7 @@ model Recap {
   id             String   @id @default(uuid())
   leagueId       String   @map("league_id")
   leagueMemberId String   @map("league_member_id")
+  userId         String   @map("user_id")
   recapDate      DateTime @db.Date @map("recap_date")
   content        String
   standingChange Int      @map("standing_change")
@@ -166,7 +176,9 @@ model Recap {
 
   league       League       @relation(fields: [leagueId], references: [id])
   leagueMember LeagueMember @relation(fields: [leagueMemberId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
 
+  @@unique([leagueMemberId, recapDate])
   @@map("recaps")
 }
 
@@ -200,6 +212,7 @@ model NhlPlayer {
   position    Position
   headshotUrl String?   @map("headshot_url")
   adp         Decimal?  @db.Decimal(6, 2)
+  isActive    Boolean   @default(true) @map("is_active")
 
   team            NhlTeam            @relation(fields: [teamId], references: [id])
   gameStats       PlayerGameStats[]
