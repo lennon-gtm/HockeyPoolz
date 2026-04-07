@@ -111,6 +111,7 @@ model Draft {
   pickTimeLimitSecs Int         @default(90) @map("pick_time_limit_secs")
   isMock            Boolean     @default(false) @map("is_mock")
   startedAt         DateTime?   @map("started_at")
+  pickDeadline      DateTime?   @map("pick_deadline")
   completedAt       DateTime?   @map("completed_at")
 
   league League      @relation(fields: [leagueId], references: [id])
