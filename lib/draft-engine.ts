@@ -49,6 +49,7 @@ export async function getAutoPickPlayerId(
 
   const best = await tx.nhlPlayer.findFirst({
     where: {
+      // notIn([]) generates invalid SQL in some Prisma versions; -1 matches no real player ID
       id: { notIn: draftedIds.size > 0 ? [...draftedIds] : [-1] },
       isActive: true,
     },

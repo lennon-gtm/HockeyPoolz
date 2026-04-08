@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { getPickerIndex, getRound, getTotalPicks } from '../../lib/draft-engine'
+import { vi } from 'vitest'
+import { getPickerIndex, getRound, getTotalPicks, getAutoPickPlayerId } from '../../lib/draft-engine'
 
 describe('getPickerIndex — snake draft order', () => {
   // 4-member league: positions 0,1,2,3
@@ -48,5 +49,54 @@ describe('getRound', () => {
     expect(getRound(5, 4)).toBe(2)
     expect(getRound(8, 4)).toBe(2)
     expect(getRound(9, 4)).toBe(3)
+  })
+})
+
+describe('getAutoPickPlayerId', () => {
+  function makeTx({
+    picks = [] as { playerId: number }[],
+    wishlist = [] as { playerId: number }[],
+    bestPlayer = null as { id: number } | null,
+  } = {}) {
+    return {
+      draftPick: { findMany: vi.fn().mockResolvedValue(picks) },
+      autodraftWishlist: { findMany: vi.fn().mockResolvedValue(wishlist) },
+      nhlPlayer: { findFirst: vi.fn().mockResolvedValue(bestPlayer) },
+    }
+  }
+
+  it('strategy=adp: returns best player by ADP without checking wishlist', async () => {
+    const tx = makeTx({ bestPlayer: { id: 42 } })
+    const result = await getAutoPickPlayerId('draft-1', 'member-1', 'adp', tx as never)
+    expect(result).toBe(42)
+    expect(tx.autodraftWishlist.findMany).not.toHaveBeenCalled()
+  })
+
+  it('strategy=wishlist: returns first available wishlist player', async () => {
+    const tx = makeTx({
+      picks: [{ playerId: 10 }],
+      wishlist: [{ playerId: 10 }, { playerId: 20 }], // 10 is drafted, 20 is available
+      bestPlayer: { id: 99 },
+    })
+    const result = await getAutoPickPlayerId('draft-1', 'member-1', 'wishlist', tx as never)
+    expect(result).toBe(20)
+    expect(tx.nhlPlayer.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('strategy=wishlist: falls back to ADP when all wishlist players are drafted', async () => {
+    const tx = makeTx({
+      picks: [{ playerId: 10 }, { playerId: 20 }],
+      wishlist: [{ playerId: 10 }, { playerId: 20 }],
+      bestPlayer: { id: 99 },
+    })
+    const result = await getAutoPickPlayerId('draft-1', 'member-1', 'wishlist', tx as never)
+    expect(result).toBe(99)
+  })
+
+  it('throws when no players are available', async () => {
+    const tx = makeTx({ bestPlayer: null })
+    await expect(
+      getAutoPickPlayerId('draft-1', 'member-1', 'adp', tx as never)
+    ).rejects.toThrow('No available players for auto-pick')
   })
 })
