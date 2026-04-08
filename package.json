@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "db:seed": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+    "db:seed": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "db:seed-players": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-players.ts"
   },
   "prisma": {
     "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

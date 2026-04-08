@@ -4,7 +4,7 @@ config({ path: '.env.local' })
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
 const TEAMS = ['EDM', 'COL', 'DAL', 'VGK', 'NSH', 'MIN', 'STL', 'LAK',
@@ -47,8 +47,7 @@ async function main() {
 
     for (const p of players) {
       const position = posMap[p.positionCode] ?? 'C'
-      const adpBonus = position === 'G' ? 100 : position === 'D' ? 50 : 0
-      const adp = adpCounter + adpBonus
+      const adp = adpCounter
 
       await prisma.nhlPlayer.upsert({
         where: { id: p.id },
