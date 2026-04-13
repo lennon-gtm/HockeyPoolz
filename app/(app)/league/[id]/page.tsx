@@ -32,6 +32,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const [startLoading, setStartLoading] = useState(false)
   const [autodraftLoading, setAutodraftLoading] = useState(false)
   const [error, setError] = useState('')
+  const [standings, setStandings] = useState<{ rank: number; memberId: string; teamName: string; teamIcon: string | null; userName: string; totalScore: number }[]>([])
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -47,8 +48,15 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       ])
 
       if (leagueRes.ok) {
-        const data = await leagueRes.json()
-        setLeague(data.league)
+        const leagueData = await leagueRes.json()
+        setLeague(leagueData.league)
+        if (leagueData.league.status === 'active' || leagueData.league.status === 'complete') {
+          const standingsRes = await fetch(`/api/leagues/${id}/standings`, { headers })
+          if (standingsRes.ok) {
+            const standingsData = await standingsRes.json()
+            setStandings(standingsData.standings)
+          }
+        }
       }
       if (meRes?.ok) {
         const data = await meRes.json()
@@ -221,8 +229,31 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* Members list (draft/active phase) */}
-      {league.status !== 'setup' && (
+      {/* Standings summary (active/complete phase) */}
+      {(league.status === 'active' || league.status === 'complete') && standings.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Standings</p>
+            <Link href={`/league/${id}/standings`} className="text-xs text-orange-500 font-bold hover:text-orange-700">
+              View Full Standings →
+            </Link>
+          </div>
+          {standings.map(s => (
+            <div key={s.memberId} className="flex items-center gap-3 p-3 border-b border-gray-100">
+              <span className="text-sm font-black text-gray-400 w-6 text-right">{s.rank}</span>
+              <span className="text-xl">{s.teamIcon ?? '🏒'}</span>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{s.teamName}</p>
+                <p className="text-xs text-gray-400">{s.userName}</p>
+              </div>
+              <span className="text-sm font-bold text-orange-500">{s.totalScore.toFixed(1)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Members list (draft phase only) */}
+      {league.status === 'draft' && (
         <>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Teams ({league.members.length})</p>
           {sortedMembers.map(m => (
