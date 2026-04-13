@@ -3,6 +3,8 @@
  * No other file should call the NHL API directly.
  */
 
+import { prisma } from './prisma'
+
 const NHL_API_BASE = 'https://api-web.nhle.com/v1'
 
 // --- Types ---
@@ -219,4 +221,286 @@ export async function fetchTeamRoster(teamAbbrev: string): Promise<{
     }
   }
   return players
+}
+
+// --- Database sync functions ---
+
+/** Map NHL API position code to Prisma Position enum. */
+function mapPosition(code: string): 'C' | 'LW' | 'RW' | 'D' | 'G' {
+  const map: Record<string, 'C' | 'LW' | 'RW' | 'D' | 'G'> = {
+    C: 'C', L: 'LW', R: 'RW', D: 'D', G: 'G',
+  }
+  return map[code] ?? 'C'
+}
+
+/** Sync rosters for all non-eliminated teams. */
+export async function syncRosters(): Promise<{ teamsUpdated: number; playersUpserted: number }> {
+  const teams = await prisma.nhlTeam.findMany({
+    where: { eliminatedAt: null },
+    select: { id: true, abbreviation: true },
+  })
+
+  let playersUpserted = 0
+  for (const team of teams) {
+    try {
+      const roster = await fetchTeamRoster(team.abbreviation)
+      for (const p of roster) {
+        await prisma.nhlPlayer.upsert({
+          where: { id: p.id },
+          update: {
+            name: `${p.firstName} ${p.lastName}`,
+            position: mapPosition(p.positionCode),
+            headshotUrl: p.headshot || null,
+            teamId: team.id,
+            isActive: true,
+          },
+          create: {
+            id: p.id,
+            teamId: team.id,
+            name: `${p.firstName} ${p.lastName}`,
+            position: mapPosition(p.positionCode),
+            headshotUrl: p.headshot || null,
+            isActive: true,
+          },
+        })
+        playersUpserted++
+      }
+    } catch (err) {
+      console.error(`Failed to sync roster for ${team.abbreviation}:`, err)
+    }
+  }
+
+  return { teamsUpdated: teams.length, playersUpserted }
+}
+
+/** Get all drafted player IDs across active leagues, excluding eliminated teams. */
+async function getDraftedPlayerIds(): Promise<Set<number>> {
+  const picks = await prisma.draftPick.findMany({
+    where: {
+      draft: { league: { status: 'active' } },
+      player: { team: { eliminatedAt: null } },
+    },
+    select: { playerId: true },
+    distinct: ['playerId'],
+  })
+  return new Set(picks.map(p => p.playerId))
+}
+
+/** Sync game stats for a given date. */
+export async function syncGameStats(date: string): Promise<SyncResult> {
+  const result: SyncResult = { gamesProcessed: 0, playersUpdated: 0, errors: [] }
+
+  let games: NhlGameSummary[]
+  try {
+    games = await fetchCompletedPlayoffGames(date)
+  } catch (err) {
+    result.errors.push(`Failed to fetch games for ${date}: ${err}`)
+    return result
+  }
+
+  const draftedPlayerIds = await getDraftedPlayerIds()
+
+  for (const game of games) {
+    try {
+      const { skaters, goalies } = await fetchBoxScore(game.id)
+
+      // Upsert skater stats from box score
+      for (const s of skaters) {
+        await prisma.playerGameStats.upsert({
+          where: { playerId_gameId: { playerId: s.playerId, gameId: String(game.id) } },
+          update: {
+            goals: s.goals ?? 0,
+            assists: s.assists ?? 0,
+            plusMinus: s.plusMinus ?? 0,
+            pim: s.pim ?? 0,
+            shots: s.sog ?? 0,
+            hits: s.hits ?? 0,
+            blockedShots: s.blockedShots ?? 0,
+            powerPlayGoals: s.powerPlayGoals ?? 0,
+          },
+          create: {
+            playerId: s.playerId,
+            gameId: String(game.id),
+            gameDate: new Date(date),
+            goals: s.goals ?? 0,
+            assists: s.assists ?? 0,
+            plusMinus: s.plusMinus ?? 0,
+            pim: s.pim ?? 0,
+            shots: s.sog ?? 0,
+            hits: s.hits ?? 0,
+            blockedShots: s.blockedShots ?? 0,
+            powerPlayGoals: s.powerPlayGoals ?? 0,
+          },
+        })
+        result.playersUpdated++
+      }
+
+      // Upsert goalie stats from box score
+      for (const g of goalies) {
+        await prisma.playerGameStats.upsert({
+          where: { playerId_gameId: { playerId: g.playerId, gameId: String(game.id) } },
+          update: {
+            goalieWins: g.decision === 'W' ? 1 : 0,
+            goalieSaves: g.saves ?? 0,
+            goalsAgainst: g.goalsAgainst ?? 0,
+            shutouts: (g.goalsAgainst === 0 && g.starter) ? 1 : 0,
+            savePct: g.savePctg ? Number(g.savePctg) : 0,
+          },
+          create: {
+            playerId: g.playerId,
+            gameId: String(game.id),
+            gameDate: new Date(date),
+            goalieWins: g.decision === 'W' ? 1 : 0,
+            goalieSaves: g.saves ?? 0,
+            goalsAgainst: g.goalsAgainst ?? 0,
+            shutouts: (g.goalsAgainst === 0 && g.starter) ? 1 : 0,
+            savePct: g.savePctg ? Number(g.savePctg) : 0,
+          },
+        })
+        result.playersUpdated++
+      }
+
+      result.gamesProcessed++
+    } catch (err) {
+      result.errors.push(`Failed to process game ${game.id}: ${err}`)
+    }
+  }
+
+  // Fetch extended stats from player game logs for drafted players only
+  for (const playerId of draftedPlayerIds) {
+    try {
+      const gameLog = await fetchPlayerGameLog(playerId)
+      for (const entry of gameLog) {
+        const existing = await prisma.playerGameStats.findUnique({
+          where: { playerId_gameId: { playerId, gameId: String(entry.gameId) } },
+        })
+        if (existing) {
+          await prisma.playerGameStats.update({
+            where: { playerId_gameId: { playerId, gameId: String(entry.gameId) } },
+            data: {
+              powerPlayPoints: entry.powerPlayPoints ?? 0,
+              shorthandedGoals: entry.shorthandedGoals ?? 0,
+              shorthandedPoints: entry.shorthandedPoints ?? 0,
+              gameWinningGoals: entry.gameWinningGoals ?? 0,
+              overtimeGoals: entry.otGoals ?? 0,
+              ...(entry.shutouts !== undefined ? { shutouts: entry.shutouts } : {}),
+            },
+          })
+        }
+      }
+    } catch (err) {
+      result.errors.push(`Failed to fetch game log for player ${playerId}: ${err}`)
+    }
+  }
+
+  return result
+}
+
+/** Check the playoff bracket and mark eliminated teams. */
+export async function checkEliminations(): Promise<string[]> {
+  const bracket = await fetchPlayoffBracket()
+  const newlyEliminated: string[] = []
+
+  for (const entry of bracket) {
+    const team = await prisma.nhlTeam.findFirst({
+      where: {
+        abbreviation: entry.losingTeamAbbrev,
+        eliminatedAt: null,
+      },
+    })
+    if (team) {
+      await prisma.nhlTeam.update({
+        where: { id: team.id },
+        data: { eliminatedAt: new Date() },
+      })
+      newlyEliminated.push(team.abbreviation)
+    }
+  }
+
+  return newlyEliminated
+}
+
+/** Recalculate scores for all members in a league. */
+export async function recalculateScores(leagueId: string): Promise<void> {
+  const settings = await prisma.scoringSettings.findUnique({ where: { leagueId } })
+  if (!settings) return
+
+  const weights: ScoringWeights = {
+    goals: Number(settings.goals),
+    assists: Number(settings.assists),
+    plusMinus: Number(settings.plusMinus),
+    pim: Number(settings.pim),
+    shots: Number(settings.shots),
+    hits: Number(settings.hits),
+    blockedShots: Number(settings.blockedShots),
+    powerPlayGoals: Number(settings.powerPlayGoals),
+    powerPlayPoints: Number(settings.powerPlayPoints),
+    shorthandedGoals: Number(settings.shorthandedGoals),
+    shorthandedPoints: Number(settings.shorthandedPoints),
+    gameWinningGoals: Number(settings.gameWinningGoals),
+    overtimeGoals: Number(settings.overtimeGoals),
+    goalieWins: Number(settings.goalieWins),
+    goalieSaves: Number(settings.goalieSaves),
+    shutouts: Number(settings.shutouts),
+    goalsAgainst: Number(settings.goalsAgainst),
+  }
+
+  const members = await prisma.leagueMember.findMany({
+    where: { leagueId },
+    include: {
+      draftPicks: {
+        include: {
+          player: {
+            include: { team: { select: { eliminatedAt: true } } },
+          },
+        },
+      },
+    },
+  })
+
+  for (const member of members) {
+    const allGameStats: GameStats[] = []
+
+    for (const pick of member.draftPicks) {
+      const eliminatedAt = pick.player.team.eliminatedAt
+      const gameStats = await prisma.playerGameStats.findMany({
+        where: {
+          playerId: pick.playerId,
+          ...(eliminatedAt ? { gameDate: { lte: eliminatedAt } } : {}),
+        },
+      })
+
+      for (const gs of gameStats) {
+        allGameStats.push({
+          goals: gs.goals,
+          assists: gs.assists,
+          plusMinus: gs.plusMinus,
+          pim: gs.pim,
+          shots: gs.shots,
+          hits: gs.hits,
+          blockedShots: gs.blockedShots,
+          powerPlayGoals: gs.powerPlayGoals,
+          powerPlayPoints: gs.powerPlayPoints,
+          shorthandedGoals: gs.shorthandedGoals,
+          shorthandedPoints: gs.shorthandedPoints,
+          gameWinningGoals: gs.gameWinningGoals,
+          overtimeGoals: gs.overtimeGoals,
+          goalieWins: gs.goalieWins,
+          goalieSaves: gs.goalieSaves,
+          shutouts: gs.shutouts,
+          goalsAgainst: gs.goalsAgainst,
+        })
+      }
+    }
+
+    const totalScore = calculateMemberScore(allGameStats, weights)
+
+    await prisma.leagueMember.update({
+      where: { id: member.id },
+      data: {
+        totalScore,
+        scoreLastCalculatedAt: new Date(),
+      },
+    })
+  }
 }
