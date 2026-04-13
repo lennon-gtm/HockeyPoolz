@@ -97,6 +97,15 @@ model ScoringSettings {
   goalieWins  Decimal @default(3.0) @db.Decimal(5, 2) @map("goalie_wins")
   goalieSaves Decimal @default(0.2) @db.Decimal(5, 2) @map("goalie_saves")
   shutouts    Decimal @default(5.0) @db.Decimal(5, 2)
+  hits              Decimal @default(0.0) @db.Decimal(5, 2)
+  blockedShots      Decimal @default(0.0) @db.Decimal(5, 2) @map("blocked_shots")
+  powerPlayGoals    Decimal @default(0.5) @db.Decimal(5, 2) @map("power_play_goals")
+  powerPlayPoints   Decimal @default(0.0) @db.Decimal(5, 2) @map("power_play_points")
+  shorthandedGoals  Decimal @default(0.0) @db.Decimal(5, 2) @map("shorthanded_goals")
+  shorthandedPoints Decimal @default(0.0) @db.Decimal(5, 2) @map("shorthanded_points")
+  gameWinningGoals  Decimal @default(1.0) @db.Decimal(5, 2) @map("game_winning_goals")
+  overtimeGoals     Decimal @default(1.0) @db.Decimal(5, 2) @map("overtime_goals")
+  goalsAgainst      Decimal @default(0.0) @db.Decimal(5, 2) @map("goals_against")
 
   league League @relation(fields: [leagueId], references: [id])
 
@@ -245,6 +254,15 @@ model PlayerGameStats {
   goalieSaves  Int      @default(0) @map("goalie_saves")
   goalsAgainst Int      @default(0) @map("goals_against")
   shutouts     Int      @default(0)
+  hits              Int      @default(0)
+  blockedShots      Int      @default(0) @map("blocked_shots")
+  powerPlayGoals    Int      @default(0) @map("power_play_goals")
+  powerPlayPoints   Int      @default(0) @map("power_play_points")
+  shorthandedGoals  Int      @default(0) @map("shorthanded_goals")
+  shorthandedPoints Int      @default(0) @map("shorthanded_points")
+  gameWinningGoals  Int      @default(0) @map("game_winning_goals")
+  overtimeGoals     Int      @default(0) @map("overtime_goals")
+  savePct           Decimal  @default(0) @db.Decimal(5, 4) @map("save_pct")
 
   player NhlPlayer @relation(fields: [playerId], references: [id])
 

@@ -45,3 +45,6 @@ next-env.d.ts
 
 .vercel
 .claude/settings.json
+
+# worktrees
+.worktrees/

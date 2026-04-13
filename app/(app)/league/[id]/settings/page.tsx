@@ -6,11 +6,22 @@ import { auth } from '@/lib/firebase/client'
 interface ScoringSettings {
   goals: number; assists: number; plusMinus: number; pim: number
   shots: number; goalieWins: number; goalieSaves: number; shutouts: number
+  hits: number; blockedShots: number; powerPlayGoals: number; powerPlayPoints: number
+  shorthandedGoals: number; shorthandedPoints: number; gameWinningGoals: number
+  overtimeGoals: number; goalsAgainst: number
 }
 
-const FIELD_LABELS: Record<keyof ScoringSettings, string> = {
+const SKATER_LABELS: Record<string, string> = {
   goals: 'Goals', assists: 'Assists', plusMinus: '+/-', pim: 'Penalty Minutes',
-  shots: 'Shots on Goal', goalieWins: 'Goalie Wins', goalieSaves: 'Goalie Saves', shutouts: 'Shutouts',
+  shots: 'Shots on Goal', hits: 'Hits', blockedShots: 'Blocked Shots',
+  powerPlayGoals: 'Power Play Goals', powerPlayPoints: 'Power Play Points',
+  shorthandedGoals: 'Shorthanded Goals', shorthandedPoints: 'Shorthanded Points',
+  gameWinningGoals: 'Game-Winning Goals', overtimeGoals: 'Overtime Goals',
+}
+
+const GOALIE_LABELS: Record<string, string> = {
+  goalieWins: 'Wins', goalieSaves: 'Saves', shutouts: 'Shutouts',
+  goalsAgainst: 'Goals Against (penalty)',
 }
 
 export default function ScoringSettingsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -69,15 +80,32 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
       <button onClick={() => router.back()} className="text-sm text-gray-400 mb-4 hover:text-gray-600">← Back</button>
       <h1 className="text-2xl font-black tracking-widest mb-6">Scoring Settings</h1>
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-      {(Object.keys(FIELD_LABELS) as (keyof ScoringSettings)[]).map(field => (
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Skater Categories</p>
+      {Object.entries(SKATER_LABELS).map(([field, label]) => (
         <div key={field} className="mb-5">
           <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-semibold">{FIELD_LABELS[field]}</label>
-            <span className="text-sm font-bold text-orange-500">{Number(settings[field]).toFixed(1)} pts</span>
+            <label className="text-sm font-semibold">{label}</label>
+            <span className="text-sm font-bold text-orange-500">{Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts</span>
           </div>
           <input
             type="range" min={0} max={10} step={0.5}
-            value={Number(settings[field])}
+            value={Number(settings[field as keyof ScoringSettings])}
+            onChange={e => setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
+            className="w-full accent-orange-500"
+          />
+        </div>
+      ))}
+
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-8">Goalie Categories</p>
+      {Object.entries(GOALIE_LABELS).map(([field, label]) => (
+        <div key={field} className="mb-5">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-semibold">{label}</label>
+            <span className="text-sm font-bold text-orange-500">{Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts</span>
+          </div>
+          <input
+            type="range" min={0} max={10} step={0.5}
+            value={Number(settings[field as keyof ScoringSettings])}
             onChange={e => setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
             className="w-full accent-orange-500"
           />
