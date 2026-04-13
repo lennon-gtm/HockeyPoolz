@@ -33,7 +33,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const allowedFields = ['goals', 'assists', 'plusMinus', 'pim', 'shots', 'goalieWins', 'goalieSaves', 'shutouts']
+    const allowedFields = [
+      'goals', 'assists', 'plusMinus', 'pim', 'shots',
+      'goalieWins', 'goalieSaves', 'shutouts',
+      'hits', 'blockedShots', 'powerPlayGoals', 'powerPlayPoints',
+      'shorthandedGoals', 'shorthandedPoints', 'gameWinningGoals',
+      'overtimeGoals', 'goalsAgainst',
+    ]
     const updates: Record<string, number> = {}
 
     for (const field of allowedFields) {
