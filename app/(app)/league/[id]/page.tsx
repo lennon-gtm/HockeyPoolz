@@ -82,7 +82,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
 
   const isCommissioner = myUserId === league.commissionerId
   const myMember = league.members.find(m => m.user.id === myUserId)
-  const inviteUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${league.inviteCode}`
+  const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/join/${league.inviteCode}`
   const allHavePositions = league.members.every(m => m.draftPosition !== null)
   const sortedMembers = [...league.members].sort((a, b) => (a.draftPosition ?? 999) - (b.draftPosition ?? 999))
 

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         leagueId: league.id,
         userId: user.id,
         teamName: user.displayName,
-        teamIcon: user.avatarUrl,
+        teamIcon: null,
       },
     })
 
