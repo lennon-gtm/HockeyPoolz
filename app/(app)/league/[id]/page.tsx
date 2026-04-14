@@ -33,6 +33,8 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const [autodraftLoading, setAutodraftLoading] = useState(false)
   const [error, setError] = useState('')
   const [standings, setStandings] = useState<{ rank: number; memberId: string; teamName: string; teamIcon: string | null; userName: string; totalScore: number }[]>([])
+  const [recap, setRecap] = useState<{ id: string; recapDate: string; content: string; standingChange: number; createdAt: string } | null>(null)
+  const [recapExpanded, setRecapExpanded] = useState(false)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -55,6 +57,12 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           if (standingsRes.ok) {
             const standingsData = await standingsRes.json()
             setStandings(standingsData.standings)
+          }
+          // Fetch latest recap
+          const recapRes = await fetch(`/api/leagues/${id}/recaps`, { headers })
+          if (recapRes.ok) {
+            const recapData = await recapRes.json()
+            setRecap(recapData.recap)
           }
         }
       }
@@ -226,6 +234,41 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
               <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${myMember.autodraftEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Morning Recap card */}
+      {recap && (league.status === 'active' || league.status === 'complete') && (
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Morning Recap</p>
+              <span className="text-xs text-gray-400">{new Date(recap.recapDate).toLocaleDateString()}</span>
+            </div>
+            {recap.standingChange !== 0 && (
+              <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                recap.standingChange > 0
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {recap.standingChange > 0 ? '▲' : '▼'} {Math.abs(recap.standingChange)}
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-gray-700 leading-relaxed">
+            {recapExpanded
+              ? recap.content
+              : recap.content.split('\n\n')[0]
+            }
+          </div>
+          {recap.content.includes('\n\n') && (
+            <button
+              onClick={() => setRecapExpanded(!recapExpanded)}
+              className="text-xs text-orange-500 font-bold mt-2 hover:text-orange-700"
+            >
+              {recapExpanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
         </div>
       )}
 
