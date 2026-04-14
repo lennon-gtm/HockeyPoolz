@@ -84,7 +84,7 @@ export function TeamSetupForm({ initialValues, submitLabel, loading, onSubmit }:
       .filter(t => !search || t.city.toLowerCase().includes(search.toLowerCase()) || t.name.toLowerCase().includes(search.toLowerCase()))
 
   const selectedTeam = nhlTeams.find(t => t.id === favoriteTeamId)
-  const iconIsUrl = teamIcon?.startsWith('http') ?? false
+  const iconIsUrl = teamIcon?.startsWith('https://') ?? false
 
   return (
     <div>

@@ -43,25 +43,15 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
         const token = await auth.currentUser?.getIdToken()
         if (!token) { setError('Not signed in.'); return }
 
-        // Fetch standings and current user ID in parallel
-        const [standingsRes, meRes] = await Promise.all([
-          fetch(`/api/leagues/${id}/standings`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
-        ])
+        const standingsRes = await fetch(`/api/leagues/${id}/standings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
 
         if (!standingsRes.ok) { setError('Failed to load standings.'); return }
         const data = await standingsRes.json()
         setStandings(data.standings)
         setScoringSettings(data.scoringSettings)
-
-        if (meRes.ok) {
-          const meData = await meRes.json()
-          // meData.user.id is the DB user id; match standings by displayName
-          const myEntry = (data.standings as MemberStanding[]).find(
-            (s) => s.userName === meData.user?.displayName
-          )
-          if (myEntry) setMyMemberId(myEntry.memberId)
-        }
+        setMyMemberId(data.myMemberId ?? null)
       } catch {
         setError('Failed to load standings.')
       }

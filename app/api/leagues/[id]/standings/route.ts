@@ -112,7 +112,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     })
 
-    return NextResponse.json({ standings, scoringSettings: settings })
+    return NextResponse.json({ standings, scoringSettings: settings, myMemberId: membership.id })
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })
     console.error('GET /api/leagues/[id]/standings error:', error)

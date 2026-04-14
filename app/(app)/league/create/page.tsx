@@ -48,6 +48,7 @@ export default function CreateLeaguePage() {
   const [error, setError] = useState('')
 
   async function createLeague() {
+    setLeague(null)
     setLoading(true)
     setError('')
     try {
