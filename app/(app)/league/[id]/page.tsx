@@ -4,6 +4,11 @@ import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+function safeIcon(icon: string | null): string {
+  if (!icon || icon.startsWith('http')) return '🏒'
+  return icon
+}
+
 interface Member {
   id: string; teamName: string; teamIcon: string | null
   draftPosition: number | null; autodraftEnabled: boolean
@@ -205,7 +210,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
               <span className="text-sm font-black text-gray-400 w-6 text-right">
                 {m.draftPosition ?? '—'}
               </span>
-              <span className="text-xl">{m.teamIcon ?? '🏒'}</span>
+              <span className="text-xl">{safeIcon(m.teamIcon)}</span>
               <div className="flex-1">
                 <p className="font-semibold text-sm">{m.teamName}</p>
                 <p className="text-xs text-gray-400">{m.user.displayName}</p>
@@ -284,7 +289,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           {standings.map(s => (
             <div key={s.memberId} className="flex items-center gap-3 p-3 border-b border-gray-100">
               <span className="text-sm font-black text-gray-400 w-6 text-right">{s.rank}</span>
-              <span className="text-xl">{s.teamIcon ?? '🏒'}</span>
+              <span className="text-xl">{safeIcon(s.teamIcon)}</span>
               <div className="flex-1">
                 <p className="font-semibold text-sm">{s.teamName}</p>
                 <p className="text-xs text-gray-400">{s.userName}</p>
@@ -301,7 +306,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Teams ({league.members.length})</p>
           {sortedMembers.map(m => (
             <div key={m.id} className="flex items-center gap-3 p-3 border-b border-gray-100">
-              <span className="text-2xl">{m.teamIcon ?? '🏒'}</span>
+              <span className="text-2xl">{safeIcon(m.teamIcon)}</span>
               <div>
                 <p className="font-semibold text-sm">{m.teamName}</p>
                 <p className="text-xs text-gray-400">{m.user.displayName}</p>

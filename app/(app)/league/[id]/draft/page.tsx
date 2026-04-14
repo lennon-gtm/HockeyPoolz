@@ -3,6 +3,11 @@ import { useState, useEffect, useCallback, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 
+function safeIcon(icon: string | null): string {
+  if (!icon || icon.startsWith('http')) return '🏒'
+  return icon
+}
+
 interface Player {
   id: number; name: string; position: string; teamId: string; headshotUrl: string | null
   team?: { id: string; name: string; colorPrimary: string }
@@ -180,7 +185,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
             <div>
               <span className="text-xs text-gray-500">On the clock: </span>
               <span className="font-bold text-sm">
-                {currentPicker.teamIcon ?? '🏒'} {currentPicker.teamName}
+                {safeIcon(currentPicker.teamIcon)} {currentPicker.teamName}
                 {currentPicker.isMe && ' (YOU)'}
                 {currentPicker.autodraftEnabled && ' 🤖'}
               </span>

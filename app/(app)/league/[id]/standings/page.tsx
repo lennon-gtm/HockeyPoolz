@@ -4,6 +4,11 @@ import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+function safeIcon(icon: string | null): string {
+  if (!icon || icon.startsWith('http')) return '🏒'
+  return icon
+}
+
 interface PlayerStanding {
   playerId: number; name: string; position: string; teamAbbrev: string
   headshotUrl: string | null; totalPoints: number; isEliminated: boolean
@@ -105,7 +110,7 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
             className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left"
           >
             <span className="text-lg font-black text-gray-300 w-8 text-right">{member.rank}</span>
-            <span className="text-2xl">{member.teamIcon ?? '🏒'}</span>
+            <span className="text-2xl">{safeIcon(member.teamIcon)}</span>
             <div className="flex-1">
               <p className="font-bold text-sm">{member.teamName}</p>
               <p className="text-xs text-gray-400">{member.userName}</p>
