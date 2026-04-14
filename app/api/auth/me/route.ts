@@ -10,7 +10,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const { favoriteTeamId, displayName: bodyDisplayName, avatarUrl: bodyAvatarUrl } = body
 
-    const user = await prisma.user.upsert({
+    const select = {
+      id: true,
+      email: true,
+      displayName: true,
+      avatarUrl: true,
+      favoriteTeamId: true,
+      createdAt: true,
+    }
+
+    // Try upsert by firebaseUid first
+    let user = await prisma.user.upsert({
       where: { firebaseUid: decoded.uid },
       update: {
         email: decoded.email ?? '',
@@ -25,14 +35,23 @@ export async function POST(request: NextRequest) {
         avatarUrl: bodyAvatarUrl ?? decoded.picture ?? null,
         favoriteTeamId: favoriteTeamId ?? null,
       },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        avatarUrl: true,
-        favoriteTeamId: true,
-        createdAt: true,
-      },
+      select,
+    }).catch(async (err) => {
+      // If a user with this email already exists under a different firebaseUid
+      // (e.g. user deleted their Firebase account and re-registered), re-link it
+      if (err?.code === 'P2002') {
+        return prisma.user.update({
+          where: { email: decoded.email ?? '' },
+          data: {
+            firebaseUid: decoded.uid,
+            ...(bodyDisplayName && { displayName: bodyDisplayName }),
+            ...(bodyAvatarUrl !== undefined && { avatarUrl: bodyAvatarUrl }),
+            ...(favoriteTeamId && { favoriteTeamId }),
+          },
+          select,
+        })
+      }
+      throw err
     })
 
     return NextResponse.json({ user })
