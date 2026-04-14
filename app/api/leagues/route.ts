@@ -39,16 +39,6 @@ export async function POST(request: NextRequest) {
       include: { scoringSettings: true },
     })
 
-    // Commissioner auto-joins as first member
-    await prisma.leagueMember.create({
-      data: {
-        leagueId: league.id,
-        userId: user.id,
-        teamName: user.displayName,
-        teamIcon: null,
-      },
-    })
-
     return NextResponse.json({ league }, { status: 201 })
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })

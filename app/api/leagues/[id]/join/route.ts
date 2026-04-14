@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
     if (user.isBanned) return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
 
-    const { teamName, teamIcon, inviteCode } = await request.json()
+    const { teamName, teamIcon, favoriteTeamId, inviteCode } = await request.json()
 
     const league = await prisma.league.findUnique({ where: { id } })
     if (!league) return NextResponse.json({ error: 'League not found' }, { status: 404 })
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         userId: user.id,
         teamName: teamName.trim(),
         teamIcon: teamIcon ?? null,
+        favoriteTeamId: favoriteTeamId ?? null,
       },
     })
 

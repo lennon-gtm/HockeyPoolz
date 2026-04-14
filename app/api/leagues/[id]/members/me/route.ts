@@ -29,6 +29,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.teamIcon = body.teamIcon ?? null
     }
 
+    if (body.favoriteTeamId !== undefined) {
+      updates.favoriteTeamId = body.favoriteTeamId ?? null
+    }
+
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 })
     }
