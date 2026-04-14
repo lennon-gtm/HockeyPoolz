@@ -32,11 +32,7 @@ export default function LoginPage() {
 
       document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
 
-      if (data.needsOnboarding) {
-        router.push('/onboarding')
-      } else {
-        router.push('/')
-      }
+      router.push('/')
     } catch {
       setError('Sign in failed. Please try again.')
     } finally {
