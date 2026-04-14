@@ -4,15 +4,20 @@ import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-function safeIcon(icon: string | null): string {
-  if (!icon || icon.startsWith('http')) return '🏒'
-  return icon
+function TeamIcon({ icon, size = 'md' }: { icon: string | null; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClass = size === 'sm' ? 'w-6 h-6 text-base' : size === 'lg' ? 'w-10 h-10 text-2xl' : 'w-8 h-8 text-xl'
+  if (icon?.startsWith('http')) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" className={`${sizeClass} rounded-full object-cover`} />
+  }
+  return <span className={size === 'lg' ? 'text-2xl' : 'text-xl'}>{icon || '🏒'}</span>
 }
 
 interface Member {
   id: string; teamName: string; teamIcon: string | null
   draftPosition: number | null; autodraftEnabled: boolean
   user: { displayName: string; id: string }
+  favoriteTeam?: { colorPrimary: string; colorSecondary: string; name: string } | null
 }
 interface LeagueDetail {
   id: string; name: string; inviteCode: string; status: string
@@ -87,6 +92,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
 
   const isCommissioner = myUserId === league.commissionerId
   const myMember = league.members.find(m => m.user.id === myUserId)
+  const myColor = myMember?.favoriteTeam?.colorPrimary ?? '#FF6B00'
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')}/join/${league.inviteCode}`
   const allHavePositions = league.members.every(m => m.draftPosition !== null)
   const sortedMembers = [...league.members].sort((a, b) => (a.draftPosition ?? 999) - (b.draftPosition ?? 999))
@@ -164,7 +170,9 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const draftActive = draft?.status === 'active' || draft?.status === 'paused'
 
   return (
-    <div className="min-h-screen bg-white p-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-white max-w-lg mx-auto">
+      <div className="h-1" style={{ backgroundColor: myColor }} />
+      <div className="p-6">
       <h1 className="text-2xl font-black mb-1">{league.name}</h1>
       <p className="text-gray-500 text-sm mb-6">{league.members.length}/{league.maxTeams} teams · {league.playersPerTeam} players per team</p>
 
@@ -175,7 +183,8 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 mb-6">
           <p className="font-bold text-orange-800 text-sm">Draft is {draft!.status}!</p>
           <Link href={`/league/${id}/draft`}
-            className="mt-2 inline-block bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600 transition">
+            style={{ backgroundColor: myColor }}
+            className="mt-2 inline-block text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition">
             Go to Draft Room →
           </Link>
         </div>
@@ -187,7 +196,8 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invite Link</p>
           <p className="text-sm text-gray-600 break-all mb-3">{inviteUrl}</p>
           <button onClick={copyLink}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600 transition">
+            style={{ backgroundColor: myColor }}
+            className="text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition">
             {copied ? '✓ Copied!' : 'Copy Link'}
           </button>
         </div>
@@ -210,7 +220,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
               <span className="text-sm font-black text-gray-400 w-6 text-right">
                 {m.draftPosition ?? '—'}
               </span>
-              <span className="text-xl">{safeIcon(m.teamIcon)}</span>
+              <TeamIcon icon={m.teamIcon} />
               <div className="flex-1">
                 <p className="font-semibold text-sm">{m.teamName}</p>
                 <p className="text-xs text-gray-400">{m.user.displayName}</p>
@@ -289,7 +299,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           {standings.map(s => (
             <div key={s.memberId} className="flex items-center gap-3 p-3 border-b border-gray-100">
               <span className="text-sm font-black text-gray-400 w-6 text-right">{s.rank}</span>
-              <span className="text-xl">{safeIcon(s.teamIcon)}</span>
+              <TeamIcon icon={s.teamIcon} />
               <div className="flex-1">
                 <p className="font-semibold text-sm">{s.teamName}</p>
                 <p className="text-xs text-gray-400">{s.userName}</p>
@@ -306,7 +316,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Teams ({league.members.length})</p>
           {sortedMembers.map(m => (
             <div key={m.id} className="flex items-center gap-3 p-3 border-b border-gray-100">
-              <span className="text-2xl">{safeIcon(m.teamIcon)}</span>
+              <TeamIcon icon={m.teamIcon} size="lg" />
               <div>
                 <p className="font-semibold text-sm">{m.teamName}</p>
                 <p className="text-xs text-gray-400">{m.user.displayName}</p>
@@ -326,12 +336,14 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           <button
             onClick={createAndStartDraft}
             disabled={startLoading || !allHavePositions}
-            className="flex-1 py-3 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 disabled:opacity-50 transition"
+            style={{ backgroundColor: myColor }}
+            className="flex-1 py-3 text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
             title={!allHavePositions ? 'Randomize draft order first' : ''}
           >
             {startLoading ? 'Starting…' : '🚀 Start Draft'}
           </button>
         )}
+      </div>
       </div>
     </div>
   )

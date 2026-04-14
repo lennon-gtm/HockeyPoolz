@@ -10,7 +10,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       include: {
         commissioner: { select: { displayName: true, avatarUrl: true } },
         members: {
-          include: { user: { select: { displayName: true, avatarUrl: true } } },
+          include: {
+            user: { select: { id: true, displayName: true, avatarUrl: true } },
+            favoriteTeam: { select: { colorPrimary: true, colorSecondary: true, name: true } },
+          },
         },
         scoringSettings: true,
       },
