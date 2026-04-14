@@ -3,9 +3,12 @@ import { useState, useEffect, useCallback, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 
-function safeIcon(icon: string | null): string {
-  if (!icon || icon.startsWith('http')) return '🏒'
-  return icon
+function TeamIcon({ icon }: { icon: string | null }) {
+  if (icon?.startsWith('http')) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" className="w-6 h-6 rounded-full object-cover" />
+  }
+  return <span className="text-base">{icon || '🏒'}</span>
 }
 
 interface Player {
@@ -27,7 +30,10 @@ interface DraftState {
     id: string; status: string; currentPickNumber: number; totalPicks: number
     pickDeadline: string | null; pickTimeLimitSecs: number; isMock: boolean
   } | null
-  currentPicker: { leagueMemberId: string; teamName: string; teamIcon: string | null; isMe: boolean; autodraftEnabled: boolean } | null
+  currentPicker: {
+    leagueMemberId: string; teamName: string; teamIcon: string | null
+    isMe: boolean; autodraftEnabled: boolean; colorPrimary: string | null
+  } | null
   picks: Pick[]
   members: MemberSummary[]
   myLeagueMemberId: string | null
@@ -149,6 +155,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const myPicks = picks.filter(p => p.leagueMemberId === myLeagueMemberId)
   const timerPct = secondsLeft !== null ? (secondsLeft / draft.pickTimeLimitSecs) * 100 : 100
   const timerColor = secondsLeft !== null && secondsLeft <= 15 ? '#ef4444' : '#f97316'
+  const pickerColor = currentPicker?.colorPrimary ?? '#FF6B00'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,33 +187,39 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
       {/* Current pick + timer */}
       {currentPicker && draft.status === 'active' && (
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <span className="text-xs text-gray-500">On the clock: </span>
-              <span className="font-bold text-sm">
-                {safeIcon(currentPicker.teamIcon)} {currentPicker.teamName}
-                {currentPicker.isMe && ' (YOU)'}
-                {currentPicker.autodraftEnabled && ' 🤖'}
-              </span>
+        <div className="px-4 py-3">
+          <div
+            style={{ backgroundColor: pickerColor + '20', borderColor: pickerColor }}
+            className="border-2 rounded-xl p-4 mb-2"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">On the clock: </span>
+                <TeamIcon icon={currentPicker.teamIcon} />
+                <span className="font-bold text-sm">
+                  {currentPicker.teamName}
+                  {currentPicker.isMe && ' (YOU)'}
+                  {currentPicker.autodraftEnabled && ' 🤖'}
+                </span>
+              </div>
+              {secondsLeft !== null && (
+                <span className="font-black text-xl" style={{ color: timerColor }}>
+                  {secondsLeft}s
+                </span>
+              )}
             </div>
             {secondsLeft !== null && (
-              <span className="font-black text-xl" style={{ color: timerColor }}>
-                {secondsLeft}s
-              </span>
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${timerPct}%`, backgroundColor: timerColor }}
+                />
+              </div>
+            )}
+            {isMyTurn && (
+              <p className="text-xs font-bold mt-2" style={{ color: pickerColor }}>⬇ Your pick — select a player below</p>
             )}
           </div>
-          {secondsLeft !== null && (
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${timerPct}%`, backgroundColor: timerColor }}
-              />
-            </div>
-          )}
-          {isMyTurn && (
-            <p className="text-xs text-orange-600 font-bold mt-2">⬇ Your pick — select a player below</p>
-          )}
         </div>
       )}
 
@@ -247,8 +260,11 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                 <p className="text-xs text-gray-400">{player.teamId} · {player.position}</p>
               </div>
               {isMyTurn && !pickLoading && (
-                <button onClick={() => makePick(player.id)}
-                  className="text-xs bg-orange-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-orange-600 flex-shrink-0">
+                <button
+                  onClick={() => makePick(player.id)}
+                  className="text-xs text-white px-3 py-1 rounded-lg font-bold flex-shrink-0"
+                  style={{ backgroundColor: pickerColor }}
+                >
                   Draft
                 </button>
               )}

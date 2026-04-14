@@ -40,6 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       where: { leagueId: id },
       include: {
         user: { select: { displayName: true } },
+        favoriteTeam: { select: { colorPrimary: true } },
         draftPicks: {
           include: {
             player: {
@@ -106,6 +107,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         userName: member.user.displayName,
         totalScore: Number(member.totalScore),
         scoreLastCalculatedAt: member.scoreLastCalculatedAt,
+        colorPrimary: member.favoriteTeam?.colorPrimary ?? null,
         players,
       }
     })

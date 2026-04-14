@@ -27,7 +27,10 @@ export async function GET(
 
     const members = await prisma.leagueMember.findMany({
       where: { leagueId },
-      include: { user: { select: { displayName: true } } },
+      include: {
+        user: { select: { displayName: true } },
+        favoriteTeam: { select: { colorPrimary: true } },
+      },
       orderBy: { draftPosition: 'asc' },
     })
 
@@ -54,6 +57,7 @@ export async function GET(
           draftPosition: picker.draftPosition,
           autodraftEnabled: picker.autodraftEnabled,
           isMe: picker.id === myMember.id,
+          colorPrimary: picker.favoriteTeam?.colorPrimary ?? null,
         }
       }
     }

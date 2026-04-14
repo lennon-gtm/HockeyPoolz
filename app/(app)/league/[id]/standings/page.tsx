@@ -4,9 +4,12 @@ import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-function safeIcon(icon: string | null): string {
-  if (!icon || icon.startsWith('http')) return '🏒'
-  return icon
+function TeamIcon({ icon }: { icon: string | null }) {
+  if (icon?.startsWith('http')) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" className="w-6 h-6 rounded-full object-cover" />
+  }
+  return <span className="text-base">{icon || '🏒'}</span>
 }
 
 interface PlayerStanding {
@@ -17,6 +20,7 @@ interface PlayerStanding {
 interface MemberStanding {
   rank: number; memberId: string; teamName: string; teamIcon: string | null
   userName: string; totalScore: number; scoreLastCalculatedAt: string | null
+  colorPrimary: string | null
   players: PlayerStanding[]
 }
 interface ScoringSettings {
@@ -31,19 +35,33 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
   const [expandedMember, setExpandedMember] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [error, setError] = useState('')
+  const [myMemberId, setMyMemberId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       try {
         const token = await auth.currentUser?.getIdToken()
         if (!token) { setError('Not signed in.'); return }
-        const res = await fetch(`/api/leagues/${id}/standings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!res.ok) { setError('Failed to load standings.'); return }
-        const data = await res.json()
+
+        // Fetch standings and current user ID in parallel
+        const [standingsRes, meRes] = await Promise.all([
+          fetch(`/api/leagues/${id}/standings`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
+        ])
+
+        if (!standingsRes.ok) { setError('Failed to load standings.'); return }
+        const data = await standingsRes.json()
         setStandings(data.standings)
         setScoringSettings(data.scoringSettings)
+
+        if (meRes.ok) {
+          const meData = await meRes.json()
+          // meData.user.id is the DB user id; match standings by displayName
+          const myEntry = (data.standings as MemberStanding[]).find(
+            (s) => s.userName === meData.user?.displayName
+          )
+          if (myEntry) setMyMemberId(myEntry.memberId)
+        }
       } catch {
         setError('Failed to load standings.')
       }
@@ -103,52 +121,59 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
       )}
 
       {/* Leaderboard */}
-      {standings.map(member => (
-        <div key={member.memberId} className="border-b border-gray-100">
-          <button
-            onClick={() => setExpandedMember(expandedMember === member.memberId ? null : member.memberId)}
-            className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left"
+      {standings.map(member => {
+        const isMe = member.memberId === myMemberId
+        return (
+          <div
+            key={member.memberId}
+            className="border-b border-gray-100"
+            style={isMe ? { borderLeft: `4px solid ${member.colorPrimary ?? '#FF6B00'}` } : undefined}
           >
-            <span className="text-lg font-black text-gray-300 w-8 text-right">{member.rank}</span>
-            <span className="text-2xl">{safeIcon(member.teamIcon)}</span>
-            <div className="flex-1">
-              <p className="font-bold text-sm">{member.teamName}</p>
-              <p className="text-xs text-gray-400">{member.userName}</p>
-            </div>
-            <span className="text-lg font-black text-orange-500">{member.totalScore.toFixed(1)}</span>
-          </button>
+            <button
+              onClick={() => setExpandedMember(expandedMember === member.memberId ? null : member.memberId)}
+              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left"
+            >
+              <span className="text-lg font-black text-gray-300 w-8 text-right">{member.rank}</span>
+              <TeamIcon icon={member.teamIcon} />
+              <div className="flex-1">
+                <p className="font-bold text-sm">{member.teamName}</p>
+                <p className="text-xs text-gray-400">{member.userName}</p>
+              </div>
+              <span className="text-lg font-black text-orange-500">{member.totalScore.toFixed(1)}</span>
+            </button>
 
-          {/* Expanded roster */}
-          {expandedMember === member.memberId && (
-            <div className="px-4 pb-4">
-              {member.players
-                .sort((a, b) => b.totalPoints - a.totalPoints)
-                .map(player => (
-                  <Link
-                    key={player.playerId}
-                    href={`/league/${id}/players/${player.playerId}`}
-                    className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    {player.headshotUrl ? (
-                      <img src={player.headshotUrl} alt="" className="w-8 h-8 rounded-full bg-gray-100" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-200" />
-                    )}
-                    <div className="flex-1">
-                      <p className={`text-sm font-semibold ${player.isEliminated ? 'text-gray-400 line-through' : ''}`}>
-                        {player.name}
-                      </p>
-                      <p className="text-xs text-gray-400">{player.position} · {player.teamAbbrev}</p>
-                    </div>
-                    <span className={`text-sm font-bold ${player.isEliminated ? 'text-gray-400' : 'text-orange-500'}`}>
-                      {player.totalPoints.toFixed(1)}
-                    </span>
-                  </Link>
-                ))}
-            </div>
-          )}
-        </div>
-      ))}
+            {/* Expanded roster */}
+            {expandedMember === member.memberId && (
+              <div className="px-4 pb-4">
+                {member.players
+                  .sort((a, b) => b.totalPoints - a.totalPoints)
+                  .map(player => (
+                    <Link
+                      key={player.playerId}
+                      href={`/league/${id}/players/${player.playerId}`}
+                      className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      {player.headshotUrl ? (
+                        <img src={player.headshotUrl} alt="" className="w-8 h-8 rounded-full bg-gray-100" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200" />
+                      )}
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${player.isEliminated ? 'text-gray-400 line-through' : ''}`}>
+                          {player.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{player.position} · {player.teamAbbrev}</p>
+                      </div>
+                      <span className={`text-sm font-bold ${player.isEliminated ? 'text-gray-400' : 'text-orange-500'}`}>
+                        {player.totalPoints.toFixed(1)}
+                      </span>
+                    </Link>
+                  ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
