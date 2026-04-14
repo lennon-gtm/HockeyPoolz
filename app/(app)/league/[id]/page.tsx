@@ -190,19 +190,6 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* Invite link */}
-      {league.status === 'setup' && (
-        <div className="bg-gray-50 rounded-xl p-4 mb-6">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invite Link</p>
-          <p className="text-sm text-gray-600 break-all mb-3">{inviteUrl}</p>
-          <button onClick={copyLink}
-            style={{ backgroundColor: myColor }}
-            className="text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition">
-            {copied ? '✓ Copied!' : 'Copy Link'}
-          </button>
-        </div>
-      )}
-
       {/* Draft order (setup phase) */}
       {league.status === 'setup' && (
         <div className="mb-6">
@@ -344,6 +331,19 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           </button>
         )}
       </div>
+
+      {/* Invite link — below action buttons */}
+      {league.status === 'setup' && (
+        <div className="bg-gray-50 rounded-xl p-4 mt-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invite Link</p>
+          <p className="text-sm text-gray-600 break-all mb-3">{inviteUrl}</p>
+          <button onClick={copyLink}
+            style={{ backgroundColor: myColor }}
+            className="text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition">
+            {copied ? '✓ Copied!' : 'Copy Link'}
+          </button>
+        </div>
+      )}
       </div>
     </div>
   )

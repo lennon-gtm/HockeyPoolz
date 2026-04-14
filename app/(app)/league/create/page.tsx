@@ -127,9 +127,22 @@ export default function CreateLeaguePage() {
   return (
     <div className="min-h-screen bg-white p-6 max-w-lg mx-auto">
       <h1 className="text-2xl font-black tracking-widest mb-1">Create League</h1>
-      <p className="text-xs text-gray-400 mb-6">
-        Step {step === 'settings' ? 1 : step === 'invite' ? 2 : step === 'scoring' ? 3 : 4} of 4
-      </p>
+      <div className="flex items-center gap-2 mb-6">
+        {(['settings', 'invite', 'scoring', 'team-setup'] as Step[]).map((s, i) => {
+          const labels: Record<Step, string> = { settings: 'League Settings', invite: 'Invite Link', scoring: 'Scoring', 'team-setup': 'Your Team' }
+          const stepIndex = ['settings', 'invite', 'scoring', 'team-setup'].indexOf(step)
+          const done = i < stepIndex
+          const active = s === step
+          return (
+            <div key={s} className="flex items-center gap-1">
+              {i > 0 && <div className={`h-px w-4 ${done || active ? 'bg-orange-400' : 'bg-gray-200'}`} />}
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${active ? 'bg-orange-500 text-white' : done ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>
+                {labels[s]}
+              </span>
+            </div>
+          )
+        })}
+      </div>
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       {step === 'settings' && (
