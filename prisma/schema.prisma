@@ -18,7 +18,7 @@ model User {
   banType         BanType?  @map("ban_type")
   createdAt       DateTime  @default(now()) @map("created_at")
 
-  favoriteTeam         NhlTeam?       @relation(fields: [favoriteTeamId], references: [id])
+  favoriteTeam         NhlTeam?       @relation("UserFavoriteTeam", fields: [favoriteTeamId], references: [id])
   leagueMembers        LeagueMember[]
   commissionedLeagues  League[]       @relation("Commissioner")
   recaps               Recap[]
@@ -64,6 +64,7 @@ model LeagueMember {
   userId            String            @map("user_id")
   teamName          String            @map("team_name")
   teamIcon          String?           @map("team_icon")
+  favoriteTeamId    String?           @map("favorite_nhl_team_id")
   draftPosition     Int?              @map("draft_position")
   autodraftEnabled  Boolean           @default(false) @map("autodraft_enabled")
   autodraftStrategy AutodraftStrategy @default(adp) @map("autodraft_strategy")
@@ -71,9 +72,10 @@ model LeagueMember {
   scoreLastCalculatedAt DateTime?     @map("score_last_calculated_at")
   joinedAt          DateTime          @default(now()) @map("joined_at")
 
-  league      League             @relation(fields: [leagueId], references: [id])
-  user        User               @relation(fields: [userId], references: [id])
-  draftPicks  DraftPick[]
+  league       League              @relation(fields: [leagueId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
+  favoriteTeam NhlTeam?            @relation("LeagueMemberFavoriteTeam", fields: [favoriteTeamId], references: [id])
+  draftPicks   DraftPick[]
   wishlist    AutodraftWishlist[]
   recaps      Recap[]
 
@@ -204,8 +206,9 @@ model NhlTeam {
   colorSecondary String     @map("color_secondary")
   eliminatedAt   DateTime?  @map("eliminated_at")
 
-  players NhlPlayer[]
-  users   User[]
+  players       NhlPlayer[]
+  users         User[]          @relation("UserFavoriteTeam")
+  leagueMembers LeagueMember[]  @relation("LeagueMemberFavoriteTeam")
 
   @@map("nhl_teams")
 }
