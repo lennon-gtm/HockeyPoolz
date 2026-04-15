@@ -45,10 +45,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const players = await prisma.nhlPlayer.findMany({
+  const { searchParams } = new URL(request.url)
+  const offset = parseInt(searchParams.get('offset') ?? '0', 10)
+  const limit = parseInt(searchParams.get('limit') ?? '50', 10)
+
+  const allPlayers = await prisma.nhlPlayer.findMany({
     where: { isActive: true, team: { playoffQualified: true } },
     select: { id: true, name: true },
+    orderBy: { id: 'asc' },
   })
+
+  const players = allPlayers.slice(offset, offset + limit)
+  const totalPlayers = allPlayers.length
 
   let playersProcessed = 0
   let gamesUpserted = 0
@@ -113,10 +121,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const nextOffset = offset + limit
+  const hasMore = nextOffset < totalPlayers
+
   return NextResponse.json({
     success: true,
     playersProcessed,
     gamesUpserted,
     errors,
+    offset,
+    limit,
+    totalPlayers,
+    nextOffset: hasMore ? nextOffset : null,
+    done: !hasMore,
   })
 }
