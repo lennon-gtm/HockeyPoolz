@@ -60,8 +60,8 @@ describe('GET /api/leagues/[id]/draft/rankings', () => {
   })
 
   it('returns 401 when auth fails', async () => {
-    const { verifyIdToken } = await import('@/lib/auth')
-    vi.mocked(verifyIdToken).mockRejectedValueOnce(new Error('bad token'))
+    const { verifyIdToken, AuthError } = await import('@/lib/auth')
+    vi.mocked(verifyIdToken).mockRejectedValueOnce(new AuthError('bad token'))
     const { GET } = await import('@/app/api/leagues/[id]/draft/rankings/route')
     const res = await GET(makeReq('league-1'), ctx('league-1'))
     expect(res.status).toBe(401)

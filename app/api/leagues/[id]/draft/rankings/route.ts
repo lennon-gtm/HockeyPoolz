@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyIdToken, getBearerToken } from '@/lib/auth'
+import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
@@ -83,17 +83,10 @@ export async function GET(
   try {
     const { id: leagueId } = await params
 
-    let decoded: Awaited<ReturnType<typeof verifyIdToken>>
-    try {
-      const token = getBearerToken(request.headers.get('authorization'))
-      decoded = await verifyIdToken(token)
-    } catch {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    const token = getBearerToken(request.headers.get('authorization'))
+    const decoded = await verifyIdToken(token)
     const user = await prisma.user.findUnique({ where: { firebaseUid: decoded.uid } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    if (user.isBanned) return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
 
     const member = await prisma.leagueMember.findUnique({
       where: { leagueId_userId: { leagueId, userId: user.id } },
@@ -180,11 +173,12 @@ export async function GET(
     })
 
     const sorted = mode === 'adp'
-      ? ranked.sort((a, b) => (a.adp ? Number(a.adp) : 9999) - (b.adp ? Number(b.adp) : 9999))
+      ? ranked.sort((a, b) => (a.adp != null ? Number(a.adp) : 9999) - (b.adp != null ? Number(b.adp) : 9999))
       : ranked.sort((a, b) => b.proj - a.proj)
 
     return NextResponse.json({ players: sorted })
   } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })
     console.error('GET /api/leagues/[id]/draft/rankings error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
