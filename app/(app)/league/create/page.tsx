@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase/client'
 import { TeamSetupForm, type TeamSetupValues } from '@/components/team-setup-form'
+import { RosterSliders, type RosterValues } from '@/components/roster-sliders'
 
 type Step = 'settings' | 'invite' | 'scoring' | 'team-setup'
 
@@ -37,7 +38,11 @@ export default function CreateLeaguePage() {
   // Step 1 state
   const [name, setName] = useState('')
   const [maxTeams, setMaxTeams] = useState(8)
-  const [playersPerTeam, setPlayersPerTeam] = useState(10)
+  const [roster, setRoster] = useState<RosterValues>({
+    rosterForwards: 9,
+    rosterDefense: 4,
+    rosterGoalies: 2,
+  })
 
   // Step 3 state
   const [scoring, setScoring] = useState<ScoringSettings | null>(null)
@@ -57,7 +62,7 @@ export default function CreateLeaguePage() {
       const res = await fetch('/api/leagues', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, maxTeams, playersPerTeam }),
+        body: JSON.stringify({ name, maxTeams, ...roster }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error); return }
@@ -155,9 +160,10 @@ export default function CreateLeaguePage() {
           <label className="block text-sm font-semibold mb-1">Max Teams ({maxTeams})</label>
           <input type="range" min={2} max={20} value={maxTeams} onChange={e => setMaxTeams(+e.target.value)}
             className="w-full mb-4 accent-orange-500" />
-          <label className="block text-sm font-semibold mb-1">Players per Team ({playersPerTeam})</label>
-          <input type="range" min={4} max={20} value={playersPerTeam} onChange={e => setPlayersPerTeam(+e.target.value)}
-            className="w-full mb-6 accent-orange-500" />
+          <label className="block text-sm font-semibold mb-2">Roster</label>
+          <div className="mb-6">
+            <RosterSliders value={roster} onChange={setRoster} />
+          </div>
           <button onClick={createLeague} disabled={loading || !name.trim()}
             className="w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-40">
             {loading ? 'Creating…' : 'Create League →'}
