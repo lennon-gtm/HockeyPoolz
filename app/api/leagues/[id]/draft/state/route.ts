@@ -73,6 +73,9 @@ export async function GET(
       isCommissioner: league.commissionerId === m.userId,
     }))
 
+    const myMemberRow = members.find(m => m.id === myMember.id)
+    const myColor = myMemberRow?.favoriteTeam?.colorPrimary ?? null
+
     return NextResponse.json({
       draft: {
         id: draft.id,
@@ -83,6 +86,7 @@ export async function GET(
         pickTimeLimitSecs: draft.pickTimeLimitSecs,
         isMock: draft.isMock,
         startedAt: draft.startedAt?.toISOString() ?? null,
+        scheduledStartAt: draft.scheduledStartAt?.toISOString() ?? null,
       },
       currentPicker,
       picks: picks.map(p => ({
@@ -98,6 +102,7 @@ export async function GET(
       members: memberSummaries,
       myLeagueMemberId: myMember.id,
       isCommissioner: league.commissionerId === user.id,
+      myColor,
     })
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })

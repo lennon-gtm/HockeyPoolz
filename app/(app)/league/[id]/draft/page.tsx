@@ -29,6 +29,7 @@ interface DraftState {
   draft: {
     id: string; status: string; currentPickNumber: number; totalPicks: number
     pickDeadline: string | null; pickTimeLimitSecs: number; isMock: boolean
+    scheduledStartAt: string | null
   } | null
   currentPicker: {
     leagueMemberId: string; teamName: string; teamIcon: string | null
@@ -38,6 +39,7 @@ interface DraftState {
   members: MemberSummary[]
   myLeagueMemberId: string | null
   isCommissioner: boolean
+  myColor: string | null
 }
 
 const POSITIONS = ['All', 'C', 'LW', 'RW', 'D', 'G']
@@ -52,6 +54,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [pickLoading, setPickLoading] = useState(false)
   const [error, setError] = useState('')
+  const [preDraftTab, setPreDraftTab] = useState<'rankings' | 'wishlist'>('rankings')
+  const [autodraftEnabled, setAutodraftEnabled] = useState(false)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -63,7 +67,6 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     if (!res.ok) return
     const data: DraftState = await res.json()
     setState(data)
-    if (data.draft?.status === 'complete') router.push(`/league/${leagueId}`)
   }, [leagueId, router])
 
   const fetchPlayers = useCallback(async () => {
@@ -148,7 +151,31 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   }
 
   if (!state) return <div className="p-6 text-gray-400 text-sm">Loading draft…</div>
-  if (!state.draft) return <div className="p-6 text-gray-400 text-sm">Draft not started yet.</div>
+  if (!state.draft || state.draft.status === 'pending') {
+    return (
+      <PreDraft
+        leagueId={leagueId}
+        draft={state.draft}
+        myColor={state.myColor ?? '#FF6B00'}
+        preDraftTab={preDraftTab}
+        setPreDraftTab={setPreDraftTab}
+        autodraftEnabled={autodraftEnabled}
+        setAutodraftEnabled={setAutodraftEnabled}
+      />
+    )
+  }
+
+  if (state.draft.status === 'complete') {
+    return (
+      <PostDraft
+        draft={state.draft}
+        picks={state.picks}
+        members={state.members}
+        myLeagueMemberId={state.myLeagueMemberId}
+        myColor={state.myColor ?? '#FF6B00'}
+      />
+    )
+  }
 
   const { draft, currentPicker, picks, members, myLeagueMemberId, isCommissioner } = state
   const isMyTurn = currentPicker?.isMe && draft.status === 'active'
@@ -318,6 +345,168 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
       </div>
+    </div>
+  )
+}
+
+// ── Interfaces ────────────────────────────────────────────────────────────────
+
+interface RankedPlayer {
+  id: number; name: string; position: string; adp: number | null; headshotUrl: string | null
+  team: { id: string; name: string; colorPrimary: string } | null
+  totals: { goals: number; assists: number; plusMinus: number; pim: number; shots: number
+            goalieWins: number; goalieSaves: number; goalsAgainst: number; shutouts: number }
+  proj: number
+}
+
+interface WishlistEntry {
+  id: string; playerId: number; rank: number
+  player: { id: number; name: string; position: string; adp: number | null
+            team: { id: string; name: string } | null; proj?: number }
+}
+
+interface PreDraftProps {
+  leagueId: string
+  draft: DraftState['draft']
+  myColor: string
+  preDraftTab: 'rankings' | 'wishlist'
+  setPreDraftTab: (t: 'rankings' | 'wishlist') => void
+  autodraftEnabled: boolean
+  setAutodraftEnabled: (v: boolean) => void
+}
+
+interface PostDraftProps {
+  draft: NonNullable<DraftState['draft']>
+  picks: Pick[]
+  members: MemberSummary[]
+  myLeagueMemberId: string | null
+  myColor: string
+}
+
+// ── PreDraft ──────────────────────────────────────────────────────────────────
+
+function PreDraft({
+  leagueId, draft, myColor,
+  preDraftTab, setPreDraftTab,
+  autodraftEnabled, setAutodraftEnabled,
+}: PreDraftProps) {
+  const [wishlistCount, setWishlistCount] = useState(0)
+  const [countdown, setCountdown] = useState('TBD')
+
+  useEffect(() => {
+    if (!draft?.scheduledStartAt) { setCountdown('TBD'); return }
+    function tick() {
+      const ms = new Date(draft!.scheduledStartAt!).getTime() - Date.now()
+      if (ms <= 0) { setCountdown('Starting soon'); return }
+      const d = Math.floor(ms / 86400000)
+      const h = Math.floor((ms % 86400000) / 3600000)
+      const m = Math.floor((ms % 3600000) / 60000)
+      setCountdown(d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`)
+    }
+    tick()
+    const interval = setInterval(tick, 30000)
+    return () => clearInterval(interval)
+  }, [draft?.scheduledStartAt])
+
+  useEffect(() => {
+    async function loadCount() {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setWishlistCount(data.wishlist?.length ?? 0)
+      }
+    }
+    loadCount()
+  }, [leagueId])
+
+  async function toggleAutodraft(enabled: boolean) {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    await fetch(`/api/leagues/${leagueId}/draft/settings`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autodraftEnabled: enabled }),
+    })
+    setAutodraftEnabled(enabled)
+  }
+
+  const draftDateStr = draft?.scheduledStartAt
+    ? new Date(draft.scheduledStartAt).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      })
+    : null
+
+  return (
+    <div className="bg-white min-h-screen">
+      <div className="p-4 max-w-xl mx-auto">
+        {/* Countdown card */}
+        <div
+          className="rounded-xl p-4 mb-4 flex items-center justify-between"
+          style={{ backgroundColor: myColor + '18', borderLeft: `3px solid ${myColor}` }}
+        >
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#98989e] mb-0.5">Draft Starts In</p>
+            <p className="text-2xl font-black tracking-tight text-[#121212]">{countdown}</p>
+            {draftDateStr && <p className="text-xs text-[#98989e] font-semibold mt-0.5">{draftDateStr}</p>}
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#98989e] mb-1">Autodraft</p>
+            <button
+              onClick={() => toggleAutodraft(!autodraftEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autodraftEnabled ? 'bg-orange-500' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autodraftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <p className="text-[9px] text-[#98989e] mt-0.5">{autodraftEnabled ? "On — we'll pick by ADP" : 'Off'}</p>
+          </div>
+        </div>
+
+        {/* Sub-tabs */}
+        <div className="flex border-b border-[#eeeeee] mb-4">
+          {(['rankings', 'wishlist'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setPreDraftTab(tab)}
+              className={`px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
+                preDraftTab === tab ? 'border-b-2 text-[#121212]' : 'text-[#98989e] hover:text-[#515151]'
+              }`}
+              style={preDraftTab === tab ? { borderBottomColor: myColor } : {}}
+            >
+              {tab === 'rankings' ? 'RANKINGS' : 'MY WISHLIST'}
+              {tab === 'wishlist' && wishlistCount > 0 && (
+                <span
+                  className="text-[9px] font-bold text-white rounded-full w-4 h-4 flex items-center justify-center"
+                  style={{ backgroundColor: myColor }}
+                >
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content — filled in Tasks 3 and 4 */}
+        {preDraftTab === 'rankings' && (
+          <p className="text-sm text-[#98989e] py-4">Rankings loading…</p>
+        )}
+        {preDraftTab === 'wishlist' && (
+          <p className="text-sm text-[#98989e] py-4">Wishlist loading…</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── PostDraft stub (filled in Task 6) ─────────────────────────────────────────
+
+function PostDraft({ draft: _draft, picks: _picks, members: _members, myLeagueMemberId: _myLeagueMemberId, myColor: _myColor }: PostDraftProps) {
+  return (
+    <div className="bg-white min-h-screen p-4 max-w-xl mx-auto">
+      <p className="text-sm text-[#98989e]">Draft complete. History loading…</p>
     </div>
   )
 }
