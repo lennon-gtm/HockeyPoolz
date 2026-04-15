@@ -6,7 +6,7 @@ import { TeamSetupForm, type TeamSetupValues } from '@/components/team-setup-for
 
 interface League { id: string; name: string; commissioner: { displayName: string }; members: { id: string }[]; maxTeams: number }
 
-type Step = 'welcome' | 'team-setup'
+type Step = 'welcome' | 'team-setup' | 'pending'
 
 export default function JoinPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params)
@@ -37,6 +37,10 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Failed to join league'); return }
+      if (data.status === 'pending') {
+        setStep('pending')
+        return
+      }
       router.push(`/league/${league.id}`)
     } catch {
       setError('Failed to join league')
@@ -85,6 +89,18 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
             ← Back
           </button>
         </>
+      )}
+
+      {step === 'pending' && (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center text-3xl">⏳</div>
+          <h2 className="text-lg font-black tracking-tight text-[#121212] mb-2">Request sent!</h2>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            Your request to join <span className="font-bold text-[#121212]">{league.name}</span> has been sent to the commissioner.
+            You&apos;ll get access once it&apos;s approved.
+          </p>
+          <p className="text-xs text-gray-400 mt-4">You can close this page.</p>
+        </div>
       )}
     </div>
   )
