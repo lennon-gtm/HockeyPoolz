@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { syncRosters, syncGameStats, checkEliminations, recalculateScores } from '@/lib/stats-service'
+import { syncRosters, syncGameStats, checkEliminations, recalculateScores, writeMemberDailyScores } from '@/lib/stats-service'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
@@ -41,12 +41,20 @@ export async function POST(request: NextRequest) {
       await recalculateScores(league.id)
     }
 
+    // 5. Write yesterday's daily scores per member (powers YDAY columns)
+    const dailyResults = []
+    for (const league of activeLeagues) {
+      const count = await writeMemberDailyScores(league.id, formatDate(yesterday))
+      dailyResults.push({ leagueId: league.id, membersScored: count })
+    }
+
     return NextResponse.json({
       success: true,
       rosters: rosterResult,
       stats: statsResults,
       eliminations: newEliminations,
       leaguesScored: activeLeagues.length,
+      dailyScores: dailyResults,
     })
   } catch (error) {
     console.error('Cron sync-stats error:', error)
