@@ -667,7 +667,12 @@ function PreDraft({
                 <table className="text-xs w-full">
                   <thead>
                     <tr className="bg-[#f8f8f8] text-[#98989e]">
-                      <th className="sticky left-0 z-20 bg-[#f8f8f8] px-3 py-2 text-left font-bold uppercase tracking-widest text-[10px] min-w-[160px] border-r border-[#eeeeee]">Player</th>
+                      <th className="sticky left-0 z-20 bg-[#f8f8f8] px-3 py-2 text-left font-bold uppercase tracking-widest text-[10px] min-w-[160px] border-r border-[#eeeeee]">
+                        <span>Player</span>
+                        <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, background: '#fff7ed', color: '#f97316', fontWeight: 700, fontSize: 9, letterSpacing: '1px', textTransform: 'uppercase', verticalAlign: 'middle' }}>
+                          2025-26 RS
+                        </span>
+                      </th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px] bg-[#eef3ff] text-[#0042bb] whitespace-nowrap">{rankMode === 'scoring' ? 'PROJ ↓' : 'ADP ↓'}</th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">G</th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">A</th>
