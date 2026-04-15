@@ -821,9 +821,10 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
   const [search, setSearch] = useState('')
   const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set([1, 2]))
 
-  const totalRounds = picks.length > 0 ? Math.max(...picks.map(p => p.round)) : 0
-  const firstPick = picks[0]
-  const lastPick = picks[picks.length - 1]
+  const sortedPicks = [...picks].sort((a, b) => a.pickNumber - b.pickNumber)
+  const totalRounds = sortedPicks.length > 0 ? Math.max(...sortedPicks.map(p => p.round)) : 0
+  const firstPick = sortedPicks[0]
+  const lastPick = sortedPicks[sortedPicks.length - 1]
 
   let durationStr = ''
   if (firstPick && lastPick) {
@@ -840,11 +841,11 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
       : '—'
 
   const filteredPicks = search
-    ? picks.filter(p =>
+    ? sortedPicks.filter(p =>
         p.player.name.toLowerCase().includes(search.toLowerCase()) ||
         p.teamName.toLowerCase().includes(search.toLowerCase())
       )
-    : picks
+    : sortedPicks
 
   // Group by round
   const rounds: Record<number, Pick[]> = {}
