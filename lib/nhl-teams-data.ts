@@ -7,7 +7,13 @@ export interface NhlTeamData {
   division: string
   colorPrimary: string
   colorSecondary: string
+  playoffQualified?: boolean
 }
+
+const PLAYOFF_2026 = new Set([
+  'COL', 'CAR', 'DAL', 'BUF', 'TBL', 'MTL', 'MIN', 'BOS',
+  'PIT', 'PHI', 'VGK', 'OTT', 'UTA', 'EDM', 'ANA', 'LAK',
+])
 
 export const NHL_TEAMS: NhlTeamData[] = [
   // Eastern — Atlantic
@@ -46,4 +52,4 @@ export const NHL_TEAMS: NhlTeamData[] = [
   { id: 'SEA', name: 'Kraken',        city: 'Seattle',      conference: 'west', division: 'Pacific',      colorPrimary: '#001628', colorSecondary: '#99D9D9' },
   { id: 'VAN', name: 'Canucks',       city: 'Vancouver',    conference: 'west', division: 'Pacific',      colorPrimary: '#00205B', colorSecondary: '#00843D' },
   { id: 'VGK', name: 'Golden Knights', city: 'Vegas',       conference: 'west', division: 'Pacific',      colorPrimary: '#B4975A', colorSecondary: '#333F42' },
-]
+].map(t => ({ ...t, playoffQualified: PLAYOFF_2026.has(t.id) })) as NhlTeamData[]

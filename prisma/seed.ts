@@ -22,6 +22,7 @@ async function main() {
           division: team.division,
           colorPrimary: team.colorPrimary,
           colorSecondary: team.colorSecondary,
+          playoffQualified: team.playoffQualified ?? false,
         },
         create: {
           id: team.id,
@@ -32,6 +33,7 @@ async function main() {
           division: team.division,
           colorPrimary: team.colorPrimary,
           colorSecondary: team.colorSecondary,
+          playoffQualified: team.playoffQualified ?? false,
         },
       })
     )
