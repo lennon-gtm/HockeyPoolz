@@ -815,12 +815,148 @@ function PreDraft({
   )
 }
 
-// ── PostDraft stub (filled in Task 6) ─────────────────────────────────────────
+// ── PostDraft ─────────────────────────────────────────────────────────────────
 
-function PostDraft({ draft: _draft, picks: _picks, members: _members, myLeagueMemberId: _myLeagueMemberId, myColor: _myColor }: PostDraftProps) {
+function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDraftProps) {
+  const [search, setSearch] = useState('')
+  const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set([1, 2]))
+
+  const totalRounds = picks.length > 0 ? Math.max(...picks.map(p => p.round)) : 0
+  const firstPick = picks[0]
+  const lastPick = picks[picks.length - 1]
+
+  let durationStr = ''
+  if (firstPick && lastPick) {
+    const ms = new Date(lastPick.pickedAt).getTime() - new Date(firstPick.pickedAt).getTime()
+    const mins = Math.floor(ms / 60000)
+    const secs = Math.floor((ms % 60000) / 1000)
+    durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+  }
+
+  const draftDate = draft.scheduledStartAt
+    ? new Date(draft.scheduledStartAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : firstPick
+      ? new Date(firstPick.pickedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : '—'
+
+  const filteredPicks = search
+    ? picks.filter(p =>
+        p.player.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.teamName.toLowerCase().includes(search.toLowerCase())
+      )
+    : picks
+
+  // Group by round
+  const rounds: Record<number, Pick[]> = {}
+  for (const p of filteredPicks) {
+    if (!rounds[p.round]) rounds[p.round] = []
+    rounds[p.round].push(p)
+  }
+  const roundNumbers = Object.keys(rounds).map(Number).sort((a, b) => a - b)
+  const collapsedPickCount = filteredPicks.filter(p => p.round > 2).length
+  const lateRounds = roundNumbers.filter(r => r > 2)
+  const allLateExpanded = lateRounds.length > 0 && lateRounds.every(r => expandedRounds.has(r))
+
+  function expandAllLate() {
+    setExpandedRounds(prev => { const s = new Set(prev); lateRounds.forEach(r => s.add(r)); return s })
+  }
+
+  function renderPick(pick: Pick) {
+    const isMe = pick.leagueMemberId === myLeagueMemberId
+    const isAuto = pick.pickSource !== 'manual'
+    let timeTaken = ''
+    if (firstPick) {
+      const ms = new Date(pick.pickedAt).getTime() - new Date(firstPick.pickedAt).getTime()
+      const s = Math.floor(ms / 1000) % 60
+      const m = Math.floor(ms / 60000)
+      timeTaken = m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `0:${String(s).padStart(2, '0')}`
+    }
+    return (
+      <div key={pick.pickNumber}
+        className="flex items-center gap-3 py-3 border-b border-[#f5f5f5]"
+        style={isMe ? { borderLeft: `3px solid ${myColor}`, backgroundColor: myColor + '10', paddingLeft: '10px' } : {}}
+      >
+        <span className="text-[10px] text-[#98989e] font-bold w-6 flex-shrink-0">#{pick.pickNumber}</span>
+        <TeamIcon icon={pick.teamIcon} size="md" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-bold text-[#121212] truncate">{pick.player.name}</span>
+            <PositionBadge position={pick.player.position === 'G' ? 'G' : pick.player.position === 'D' ? 'D' : 'F'} />
+          </div>
+          <span className="text-[10px] text-[#98989e]">{pick.teamName} · {pick.player.teamId}</span>
+        </div>
+        <div className="flex-shrink-0">
+          {isMe && (
+            <span className="text-[9px] font-black px-2 py-0.5 rounded"
+              style={{ backgroundColor: myColor + '20', color: myColor }}>YOU</span>
+          )}
+          {!isMe && isAuto && (
+            <span className="text-[9px] font-black text-[#0042bb] bg-[#eef3ff] px-2 py-0.5 rounded">AUTO</span>
+          )}
+          {!isMe && !isAuto && timeTaken && (
+            <span className="text-[10px] text-[#98989e]">{timeTaken}</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="bg-white min-h-screen p-4 max-w-xl mx-auto">
-      <p className="text-sm text-[#98989e]">Draft complete. History loading…</p>
+    <div className="bg-white min-h-screen">
+      <div className="p-4 max-w-xl mx-auto">
+        {/* Summary card */}
+        <div className="bg-[#1a1a1a] rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-black text-white bg-[#2db944] px-2 py-0.5 rounded uppercase tracking-wider">COMPLETE</span>
+            <span className="text-[10px] text-[#98989e] font-semibold">{draftDate}</span>
+          </div>
+          <p className="text-sm font-bold text-white">
+            {picks.length} picks · {members.length} teams · {totalRounds} rounds
+          </p>
+          {durationStr && <p className="text-[10px] text-[#98989e] mt-0.5">Draft took {durationStr}</p>}
+        </div>
+
+        {/* Search */}
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search picks…"
+          className="w-full border border-[#eeeeee] rounded-lg px-3 py-2 text-sm mb-4"
+        />
+
+        {/* Rounds */}
+        {roundNumbers.map(round => {
+          const roundPicks = rounds[round] ?? []
+          const isLate = round > 2
+          const isExpanded = expandedRounds.has(round)
+
+          // Show collapse toggle before first late round (when not searching)
+          if (isLate && !search && round === lateRounds[0] && !allLateExpanded) {
+            return (
+              <button key={`expand-${round}`}
+                onClick={expandAllLate}
+                className="w-full text-xs font-bold text-[#98989e] border border-dashed border-[#eeeeee] rounded-xl py-3 mb-3 hover:border-gray-300 hover:text-[#515151] transition">
+                Show Rounds 3 – {totalRounds} ({collapsedPickCount} more picks) ▾
+              </button>
+            )
+          }
+
+          if (isLate && !search && !isExpanded) return null
+
+          return (
+            <div key={round} className="mb-3">
+              <div className="mb-2">
+                <span className="text-[9px] font-black text-white bg-[#1a1a1a] px-3 py-1 rounded-full uppercase tracking-wider">
+                  ROUND {round}
+                </span>
+              </div>
+              {roundPicks.map(pick => renderPick(pick))}
+            </div>
+          )
+        })}
+
+        {filteredPicks.length === 0 && (
+          <p className="text-sm text-[#98989e] text-center py-6">No picks match your search.</p>
+        )}
+      </div>
     </div>
   )
 }
