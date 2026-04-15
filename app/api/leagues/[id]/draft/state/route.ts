@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getPickerIndex, getTotalPicks } from '@/lib/draft-engine'
+import { rosterTotal } from '@/lib/roster'
 
 export async function GET(
   request: NextRequest,
@@ -43,7 +44,7 @@ export async function GET(
       orderBy: { pickNumber: 'asc' },
     })
 
-    const totalPicks = getTotalPicks(members.length, league.playersPerTeam)
+    const totalPicks = getTotalPicks(members.length, rosterTotal(league))
 
     let currentPicker = null
     if (draft.status === 'active' || draft.status === 'paused') {

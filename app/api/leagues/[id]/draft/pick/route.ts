@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getPickerIndex, getRound, getTotalPicks, getAutoPickPlayerId } from '@/lib/draft-engine'
+import { rosterTotal } from '@/lib/roster'
 
 export async function POST(
   request: NextRequest,
@@ -35,7 +36,7 @@ export async function POST(
       where: { leagueId },
       orderBy: { draftPosition: 'asc' },
     })
-    const totalPicks = getTotalPicks(allMembers.length, league.playersPerTeam)
+    const totalPicks = getTotalPicks(allMembers.length, rosterTotal(league))
     if (draft.currentPickNumber > totalPicks) {
       return NextResponse.json({ error: 'Draft is already complete' }, { status: 400 })
     }
