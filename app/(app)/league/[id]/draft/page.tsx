@@ -70,7 +70,10 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     const data: DraftState = await res.json()
     setState(data)
     const myMemberData = data.members.find(m => m.leagueMemberId === data.myLeagueMemberId)
-    if (myMemberData) setLiveAutodraft(myMemberData.autodraftEnabled)
+    if (myMemberData) {
+      setLiveAutodraft(myMemberData.autodraftEnabled)
+      setAutodraftEnabled(myMemberData.autodraftEnabled)
+    }
   }, [leagueId])
 
   const fetchPlayers = useCallback(async () => {
