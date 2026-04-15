@@ -181,4 +181,34 @@ describe('writeMemberDailyScores', () => {
     const call = mockPrismaForDaily.memberDailyScore.upsert.mock.calls[0][0]
     expect(Number(call.create.fpts)).toBeCloseTo(0)
   })
+
+  it('includes stats for players whose team was eliminated on the game date itself', async () => {
+    const eliminatedSameDay = new Date('2026-04-14')
+    mockPrismaForDaily.leagueMember.findMany.mockResolvedValue([
+      {
+        id: 'member-1',
+        draftPicks: [
+          {
+            playerId: 1,
+            player: {
+              team: { eliminatedAt: eliminatedSameDay },
+              gameStats: [
+                {
+                  goals: 2, assists: 0, plusMinus: 0, pim: 0, shots: 0,
+                  hits: 0, blockedShots: 0, powerPlayGoals: 0, powerPlayPoints: 0,
+                  shorthandedGoals: 0, shorthandedPoints: 0, gameWinningGoals: 0,
+                  overtimeGoals: 0, goalieWins: 0, goalieSaves: 0, shutouts: 0,
+                  goalsAgainst: 0,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ])
+    await writeMemberDailyScores('league-1', '2026-04-14')
+    const call = mockPrismaForDaily.memberDailyScore.upsert.mock.calls[0][0]
+    // goals: 2*2.0 = 4.0 (team eliminated same day — stats count)
+    expect(Number(call.create.fpts)).toBeCloseTo(4.0)
+  })
 })

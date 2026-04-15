@@ -449,7 +449,8 @@ export async function writeMemberDailyScores(leagueId: string, date: string): Pr
     goalsAgainst: Number(settings.goalsAgainst),
   }
 
-  const gameDate = new Date(date)
+  const [year, month, day] = (date as string).split('-').map(Number)
+  const gameDate = new Date(Date.UTC(year, month - 1, day))
 
   const members = await prisma.leagueMember.findMany({
     where: { leagueId },
