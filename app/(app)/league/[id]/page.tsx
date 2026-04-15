@@ -37,6 +37,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const [startLoading, setStartLoading] = useState(false)
   const [autodraftLoading, setAutodraftLoading] = useState(false)
   const [error, setError] = useState('')
+  const [pendingCount, setPendingCount] = useState(0)
   const [standings, setStandings] = useState<{ rank: number; memberId: string; teamName: string; teamIcon: string | null; userName: string; totalScore: number }[]>([])
   const [recap, setRecap] = useState<{ id: string; recapDate: string; content: string; standingChange: number; createdAt: string } | null>(null)
   const [recapExpanded, setRecapExpanded] = useState(false)
@@ -78,6 +79,15 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       if (draftRes.ok) {
         const data = await draftRes.json()
         setDraft(data.draft)
+      }
+
+      // Fetch pending join requests count (commissioner-only — endpoint returns 403 otherwise)
+      if (leagueRes.ok) {
+        const pendingRes = await fetch(`/api/leagues/${id}/join-requests`, { headers })
+        if (pendingRes.ok) {
+          const pendingData = await pendingRes.json()
+          setPendingCount(pendingData.count ?? 0)
+        }
       }
     }
     load()
@@ -192,6 +202,18 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       )}
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+      {isCommissioner && pendingCount > 0 && league.status === 'setup' && (
+        <Link
+          href={`/league/${id}/join-requests`}
+          className="block bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-4 hover:bg-orange-100 transition"
+        >
+          <p className="text-sm font-bold text-[#121212]">
+            🔔 {pendingCount} {pendingCount === 1 ? 'person is' : 'people are'} waiting to join
+          </p>
+          <p className="text-xs text-[#515151] mt-0.5">Tap to review →</p>
+        </Link>
+      )}
 
       {/* Draft status banner */}
       {draftActive && (
