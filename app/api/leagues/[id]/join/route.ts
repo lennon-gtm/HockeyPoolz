@@ -31,8 +31,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Team name is required' }, { status: 400 })
     }
 
-    const member = await prisma.leagueMember.create({
-      data: {
+    // Commissioner bypasses approval — creates their own LeagueMember directly
+    if (user.id === league.commissionerId) {
+      const member = await prisma.leagueMember.create({
+        data: {
+          leagueId: league.id,
+          userId: user.id,
+          teamName: teamName.trim(),
+          teamIcon: teamIcon ?? null,
+          favoriteTeamId: favoriteTeamId ?? null,
+        },
+      })
+      return NextResponse.json({ status: 'approved', member }, { status: 201 })
+    }
+
+    // Non-commissioner: create a pending request (or update the existing one)
+    const pending = await prisma.pendingJoinRequest.upsert({
+      where: { leagueId_userId: { leagueId: league.id, userId: user.id } },
+      update: {
+        teamName: teamName.trim(),
+        teamIcon: teamIcon ?? null,
+        favoriteTeamId: favoriteTeamId ?? null,
+      },
+      create: {
         leagueId: league.id,
         userId: user.id,
         teamName: teamName.trim(),
@@ -40,8 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         favoriteTeamId: favoriteTeamId ?? null,
       },
     })
-
-    return NextResponse.json({ member }, { status: 201 })
+    return NextResponse.json({ status: 'pending', request: pending }, { status: 202 })
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })
     console.error('POST /api/leagues/[id]/join error:', error)
