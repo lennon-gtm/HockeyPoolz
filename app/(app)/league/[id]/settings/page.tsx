@@ -28,6 +28,7 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
   const { id } = use(params)
   const router = useRouter()
   const [settings, setSettings] = useState<ScoringSettings | null>(null)
+  const [isCommissioner, setIsCommissioner] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -37,12 +38,28 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
       try {
         const token = await auth.currentUser?.getIdToken()
         if (!token) { setError('Not signed in. Please reload.'); return }
-        const res = await fetch(`/api/leagues/${id}/scoring`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!res.ok) { setError('Failed to load settings.'); return }
-        const data = await res.json()
-        setSettings(data.settings)
+
+        const [scoringRes, leagueRes, meRes] = await Promise.all([
+          fetch(`/api/leagues/${id}/scoring`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`/api/leagues/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ])
+
+        if (!scoringRes.ok) { setError('Failed to load settings.'); return }
+        const scoringData = await scoringRes.json()
+        setSettings(scoringData.settings)
+
+        if (leagueRes.ok && meRes.ok) {
+          const leagueData = await leagueRes.json()
+          const meData = await meRes.json()
+          setIsCommissioner(leagueData.league?.commissionerId === meData.user?.id)
+        }
       } catch {
         setError('Failed to load settings.')
       }
@@ -51,7 +68,7 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
   }, [id])
 
   async function save() {
-    if (!settings) return
+    if (!settings || !isCommissioner) return
     setSaving(true)
     setError('')
     try {
@@ -78,20 +95,32 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
   return (
     <div className="min-h-screen bg-white p-6 max-w-lg mx-auto">
       <button onClick={() => router.back()} className="text-sm text-gray-400 mb-4 hover:text-gray-600">← Back</button>
-      <h1 className="text-2xl font-black tracking-widest mb-6">Scoring Settings</h1>
+      <h1 className="text-2xl font-black tracking-widest mb-2">Scoring Settings</h1>
+
+      {!isCommissioner && (
+        <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
+          <span className="text-base">🔒</span>
+          <span className="text-xs text-gray-500 font-semibold">Commissioner controls scoring settings</span>
+        </div>
+      )}
+
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Skater Categories</p>
       {Object.entries(SKATER_LABELS).map(([field, label]) => (
         <div key={field} className="mb-5">
           <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-semibold">{label}</label>
-            <span className="text-sm font-bold text-orange-500">{Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts</span>
+            <label className={`text-sm font-semibold ${!isCommissioner ? 'text-gray-400' : ''}`}>{label}</label>
+            <span className={`text-sm font-bold ${isCommissioner ? 'text-orange-500' : 'text-gray-400'}`}>
+              {Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts
+            </span>
           </div>
           <input
             type="range" min={0} max={10} step={0.5}
             value={Number(settings[field as keyof ScoringSettings])}
-            onChange={e => setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
-            className="w-full accent-orange-500"
+            onChange={e => isCommissioner && setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
+            disabled={!isCommissioner}
+            className={`w-full ${isCommissioner ? 'accent-orange-500' : 'accent-gray-300 opacity-50 cursor-not-allowed'}`}
           />
         </div>
       ))}
@@ -100,21 +129,27 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
       {Object.entries(GOALIE_LABELS).map(([field, label]) => (
         <div key={field} className="mb-5">
           <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-semibold">{label}</label>
-            <span className="text-sm font-bold text-orange-500">{Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts</span>
+            <label className={`text-sm font-semibold ${!isCommissioner ? 'text-gray-400' : ''}`}>{label}</label>
+            <span className={`text-sm font-bold ${isCommissioner ? 'text-orange-500' : 'text-gray-400'}`}>
+              {Number(settings[field as keyof ScoringSettings]).toFixed(1)} pts
+            </span>
           </div>
           <input
             type="range" min={0} max={10} step={0.5}
             value={Number(settings[field as keyof ScoringSettings])}
-            onChange={e => setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
-            className="w-full accent-orange-500"
+            onChange={e => isCommissioner && setSettings(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
+            disabled={!isCommissioner}
+            className={`w-full ${isCommissioner ? 'accent-orange-500' : 'accent-gray-300 opacity-50 cursor-not-allowed'}`}
           />
         </div>
       ))}
-      <button onClick={save} disabled={saving}
-        className="w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-40 mt-2">
-        {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Settings'}
-      </button>
+
+      {isCommissioner && (
+        <button onClick={save} disabled={saving}
+          className="w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-40 mt-2">
+          {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Settings'}
+        </button>
+      )}
     </div>
   )
 }
