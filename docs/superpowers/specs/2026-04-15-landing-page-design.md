@@ -57,8 +57,8 @@ The page is a single `100vh` flex column, `overflow: hidden`. No scroll.
 ### Heading
 - Fredoka, ~58px, `line-height: 1.08`, dark `#1a1a1a`
 - Line 1: "Your Pool."
-- Line 2: "Your Players." — "Players" in orange `#f97316`
-- Line 3: "Your Nonna."
+- Line 2: "Your Players."
+- Line 3: "Your Nonna." — "Nonna." in amber-gold `#d4a017`
 
 ### Subtext
 - "Pick your NHL playoff roster, compete with friends, and track every goal live."
