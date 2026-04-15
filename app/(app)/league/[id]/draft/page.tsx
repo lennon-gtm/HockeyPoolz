@@ -2,14 +2,7 @@
 import { useState, useEffect, useCallback, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
-
-function TeamIcon({ icon }: { icon: string | null }) {
-  if (icon?.startsWith('http')) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={icon} alt="" className="w-6 h-6 rounded-full object-cover" />
-  }
-  return <span className="text-base">{icon || '🏒'}</span>
-}
+import { TeamIcon } from '@/components/team-icon'
 
 interface Player {
   id: number; name: string; position: string; teamId: string; headshotUrl: string | null

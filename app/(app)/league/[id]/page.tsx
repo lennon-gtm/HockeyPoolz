@@ -3,15 +3,7 @@ import { useState, useEffect, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-function TeamIcon({ icon, size = 'md' }: { icon: string | null; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClass = size === 'sm' ? 'w-6 h-6 text-base' : size === 'lg' ? 'w-10 h-10 text-2xl' : 'w-8 h-8 text-xl'
-  if (icon?.startsWith('http')) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={icon} alt="" className={`${sizeClass} rounded-full object-cover`} />
-  }
-  return <span className={size === 'lg' ? 'text-2xl' : 'text-xl'}>{icon || '🏒'}</span>
-}
+import { TeamIcon } from '@/components/team-icon'
 
 interface Member {
   id: string; teamName: string; teamIcon: string | null
