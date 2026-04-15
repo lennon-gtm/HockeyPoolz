@@ -82,6 +82,7 @@ model LeagueMember {
   draftPicks   DraftPick[]
   wishlist    AutodraftWishlist[]
   recaps      Recap[]
+  dailyScores MemberDailyScore[]
 
   @@unique([leagueId, userId])
   @@map("league_members")
@@ -197,6 +198,19 @@ model Recap {
 
   @@unique([leagueMemberId, recapDate])
   @@map("recaps")
+}
+
+model MemberDailyScore {
+  id        String   @id @default(uuid())
+  memberId  String   @map("member_id")
+  gameDate  DateTime @db.Date @map("game_date")
+  fpts      Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  member LeagueMember @relation(fields: [memberId], references: [id])
+
+  @@unique([memberId, gameDate])
+  @@map("member_daily_scores")
 }
 
 model NhlTeam {
