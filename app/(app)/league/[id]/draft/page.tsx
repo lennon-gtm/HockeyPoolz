@@ -398,6 +398,8 @@ function PreDraft({
   const [rankPlayers, setRankPlayers] = useState<RankedPlayer[]>([])
   const [rankLoading, setRankLoading] = useState(false)
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set())
+  const [wishlist, setWishlist] = useState<WishlistEntry[]>([])
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!draft?.scheduledStartAt) { setCountdown('TBD'); return }
@@ -429,6 +431,37 @@ function PreDraft({
     }
     loadCount()
   }, [leagueId])
+
+  async function loadWishlist() {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    const res = await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const entries: WishlistEntry[] = data.wishlist ?? []
+    setWishlist(entries)
+    setWishlistIds(new Set(entries.map(e => e.playerId)))
+    setWishlistCount(entries.length)
+  }
+
+  async function saveWishlistOrder(reordered: WishlistEntry[]) {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        wishlist: reordered.map((e, i) => ({ playerId: e.playerId, rank: i + 1 })),
+      }),
+    })
+  }
+
+  useEffect(() => {
+    if (preDraftTab === 'wishlist') loadWishlist()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preDraftTab, leagueId])
 
   useEffect(() => {
     if (preDraftTab !== 'rankings') return
@@ -664,7 +697,78 @@ function PreDraft({
           </div>
         )}
         {preDraftTab === 'wishlist' && (
-          <p className="text-sm text-[#98989e] py-4">Wishlist loading…</p>
+          <div>
+            {wishlist.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-[#98989e] mb-4">No players on your wishlist yet.</p>
+                <button onClick={() => setPreDraftTab('rankings')}
+                  className="text-xs font-bold border-2 border-dashed border-[#eeeeee] rounded-xl px-6 py-3 text-[#98989e] hover:border-gray-300 hover:text-[#515151] transition">
+                  ➕ Add players from Rankings
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-[10px] text-[#98989e] font-semibold mb-3">
+                  Drag to reorder. Autodraft picks in this order, skipping players already taken.
+                </p>
+                {wishlist.map((entry, i) => {
+                  const isTop = i === 0
+                  return (
+                    <div key={entry.id}
+                      draggable
+                      onDragStart={() => setDragIndex(i)}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={() => {
+                        if (dragIndex === null || dragIndex === i) return
+                        const reordered = [...wishlist]
+                        const [moved] = reordered.splice(dragIndex, 1)
+                        reordered.splice(i, 0, moved)
+                        setWishlist(reordered)
+                        setDragIndex(null)
+                        saveWishlistOrder(reordered)
+                      }}
+                      onDragEnd={() => setDragIndex(null)}
+                      className={`flex items-center gap-3 py-3 border-b border-[#f5f5f5] cursor-grab select-none ${isTop ? 'bg-[#fff8f8]' : ''}`}
+                      style={isTop ? { borderLeft: `3px solid ${myColor}`, paddingLeft: '12px' } : {}}
+                    >
+                      <span className="text-[#d1d5db] text-base leading-none flex-shrink-0">⋮⋮</span>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
+                        style={{ backgroundColor: isTop ? myColor : '#f0f0f0', color: isTop ? '#fff' : '#98989e' }}>
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-bold text-[#121212] truncate">{entry.player.name}</span>
+                          <PositionBadge position={entry.player.position === 'G' ? 'G' : entry.player.position === 'D' ? 'D' : 'F'} />
+                        </div>
+                        <span className="text-[10px] text-[#98989e]">{entry.player.team?.id ?? '—'}</span>
+                      </div>
+                      <div className="flex gap-4 items-center flex-shrink-0">
+                        {entry.player.proj !== undefined && (
+                          <div className="text-right">
+                            <div className="text-[10px] font-black bg-[#eef3ff] text-[#0042bb] px-2 py-0.5 rounded">{entry.player.proj.toFixed(1)}</div>
+                            <div className="text-[9px] text-[#98989e] font-semibold text-center">PROJ</div>
+                          </div>
+                        )}
+                        <div className="text-right">
+                          <div className="text-xs font-bold text-[#121212]">{entry.player.adp?.toFixed(1) ?? '—'}</div>
+                          <div className="text-[9px] text-[#98989e] font-semibold">ADP</div>
+                        </div>
+                        <button onClick={() => toggleWishlist(entry.playerId)}
+                          className="text-[#98989e] hover:text-red-400 text-sm font-bold transition">
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+                <button onClick={() => setPreDraftTab('rankings')}
+                  className="mt-4 w-full text-xs font-bold border-2 border-dashed border-[#eeeeee] rounded-xl px-4 py-3 text-[#98989e] hover:border-gray-300 hover:text-[#515151] transition">
+                  ➕ Add players from Rankings
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
