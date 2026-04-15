@@ -420,6 +420,97 @@ export async function checkEliminations(): Promise<string[]> {
   return newlyEliminated
 }
 
+/**
+ * For a given league and date string ('YYYY-MM-DD'), sum each member's
+ * drafted players' game stats for that date and upsert one MemberDailyScore row
+ * per member. Returns the number of rows upserted.
+ */
+export async function writeMemberDailyScores(leagueId: string, date: string): Promise<number> {
+  const settings = await prisma.scoringSettings.findUnique({ where: { leagueId } })
+  if (!settings) return 0
+
+  const weights: ScoringWeights = {
+    goals: Number(settings.goals),
+    assists: Number(settings.assists),
+    plusMinus: Number(settings.plusMinus),
+    pim: Number(settings.pim),
+    shots: Number(settings.shots),
+    hits: Number(settings.hits),
+    blockedShots: Number(settings.blockedShots),
+    powerPlayGoals: Number(settings.powerPlayGoals),
+    powerPlayPoints: Number(settings.powerPlayPoints),
+    shorthandedGoals: Number(settings.shorthandedGoals),
+    shorthandedPoints: Number(settings.shorthandedPoints),
+    gameWinningGoals: Number(settings.gameWinningGoals),
+    overtimeGoals: Number(settings.overtimeGoals),
+    goalieWins: Number(settings.goalieWins),
+    goalieSaves: Number(settings.goalieSaves),
+    shutouts: Number(settings.shutouts),
+    goalsAgainst: Number(settings.goalsAgainst),
+  }
+
+  const gameDate = new Date(date)
+
+  const members = await prisma.leagueMember.findMany({
+    where: { leagueId },
+    include: {
+      draftPicks: {
+        include: {
+          player: {
+            include: {
+              team: { select: { eliminatedAt: true } },
+              gameStats: { where: { gameDate } },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  let written = 0
+  for (const member of members) {
+    const dayStats: GameStats[] = []
+
+    for (const pick of member.draftPicks) {
+      const eliminatedAt = pick.player.team.eliminatedAt
+      // Skip players whose team was eliminated before this game date
+      if (eliminatedAt && eliminatedAt < gameDate) continue
+
+      for (const gs of pick.player.gameStats) {
+        dayStats.push({
+          goals: gs.goals,
+          assists: gs.assists,
+          plusMinus: gs.plusMinus,
+          pim: gs.pim,
+          shots: gs.shots,
+          hits: gs.hits,
+          blockedShots: gs.blockedShots,
+          powerPlayGoals: gs.powerPlayGoals,
+          powerPlayPoints: gs.powerPlayPoints,
+          shorthandedGoals: gs.shorthandedGoals,
+          shorthandedPoints: gs.shorthandedPoints,
+          gameWinningGoals: gs.gameWinningGoals,
+          overtimeGoals: gs.overtimeGoals,
+          goalieWins: gs.goalieWins,
+          goalieSaves: gs.goalieSaves,
+          shutouts: gs.shutouts,
+          goalsAgainst: gs.goalsAgainst,
+        })
+      }
+    }
+
+    const fpts = calculateMemberScore(dayStats, weights)
+    await prisma.memberDailyScore.upsert({
+      where: { memberId_gameDate: { memberId: member.id, gameDate } },
+      update: { fpts },
+      create: { memberId: member.id, gameDate, fpts },
+    })
+    written++
+  }
+
+  return written
+}
+
 /** Recalculate scores for all members in a league. */
 export async function recalculateScores(leagueId: string): Promise<void> {
   const settings = await prisma.scoringSettings.findUnique({ where: { leagueId } })

@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest'
-import { calculatePlayerScore, calculateMemberScore } from '../../lib/stats-service'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { calculatePlayerScore, calculateMemberScore, writeMemberDailyScores } from '../../lib/stats-service'
+
+// Mock prisma for writeMemberDailyScores tests
+// vi.hoisted ensures the object is created before vi.mock hoisting runs
+const mockPrismaForDaily = vi.hoisted(() => ({
+  scoringSettings: { findUnique: vi.fn() },
+  leagueMember: { findMany: vi.fn() },
+  memberDailyScore: { upsert: vi.fn() },
+}))
+
+vi.mock('../../lib/prisma', () => ({ prisma: mockPrismaForDaily }))
 
 const DEFAULT_WEIGHTS = {
   goals: 2.0, assists: 1.5, plusMinus: 0.5, pim: 0.0, shots: 0.1,
@@ -88,5 +98,87 @@ describe('calculateMemberScore', () => {
 
   it('returns zero for empty game list', () => {
     expect(calculateMemberScore([], DEFAULT_WEIGHTS)).toBe(0)
+  })
+})
+
+const WEIGHTS = {
+  goals: 2.0, assists: 1.5, plusMinus: 0.5, pim: 0.0, shots: 0.1,
+  hits: 0.0, blockedShots: 0.0, powerPlayGoals: 0.5, powerPlayPoints: 0.0,
+  shorthandedGoals: 0.0, shorthandedPoints: 0.0, gameWinningGoals: 1.0,
+  overtimeGoals: 1.0, goalieWins: 3.0, goalieSaves: 0.2, shutouts: 5.0,
+  goalsAgainst: 0.0,
+}
+
+describe('writeMemberDailyScores', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrismaForDaily.scoringSettings.findUnique.mockResolvedValue(WEIGHTS)
+    mockPrismaForDaily.memberDailyScore.upsert.mockResolvedValue({})
+  })
+
+  it('returns 0 when no scoring settings exist', async () => {
+    mockPrismaForDaily.scoringSettings.findUnique.mockResolvedValue(null)
+    const count = await writeMemberDailyScores('league-1', '2026-04-14')
+    expect(count).toBe(0)
+    expect(mockPrismaForDaily.memberDailyScore.upsert).not.toHaveBeenCalled()
+  })
+
+  it('upserts a daily score row per member', async () => {
+    mockPrismaForDaily.leagueMember.findMany.mockResolvedValue([
+      {
+        id: 'member-1',
+        draftPicks: [
+          {
+            playerId: 1,
+            player: {
+              team: { eliminatedAt: null },
+              gameStats: [
+                {
+                  goals: 1, assists: 1, plusMinus: 1, pim: 0, shots: 3,
+                  hits: 0, blockedShots: 0, powerPlayGoals: 0, powerPlayPoints: 0,
+                  shorthandedGoals: 0, shorthandedPoints: 0, gameWinningGoals: 0,
+                  overtimeGoals: 0, goalieWins: 0, goalieSaves: 0, shutouts: 0,
+                  goalsAgainst: 0,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ])
+    const count = await writeMemberDailyScores('league-1', '2026-04-14')
+    expect(count).toBe(1)
+    // goals:1*2.0=2.0 + assists:1*1.5=1.5 + plusMinus:1*0.5=0.5 + shots:3*0.1=0.3 = 4.3
+    const call = mockPrismaForDaily.memberDailyScore.upsert.mock.calls[0][0]
+    expect(Number(call.create.fpts)).toBeCloseTo(4.3)
+  })
+
+  it('skips stats for players whose team was eliminated before the game date', async () => {
+    const eliminatedBefore = new Date('2026-04-13')
+    mockPrismaForDaily.leagueMember.findMany.mockResolvedValue([
+      {
+        id: 'member-1',
+        draftPicks: [
+          {
+            playerId: 1,
+            player: {
+              team: { eliminatedAt: eliminatedBefore },
+              gameStats: [
+                {
+                  goals: 5, assists: 5, plusMinus: 0, pim: 0, shots: 0,
+                  hits: 0, blockedShots: 0, powerPlayGoals: 0, powerPlayPoints: 0,
+                  shorthandedGoals: 0, shorthandedPoints: 0, gameWinningGoals: 0,
+                  overtimeGoals: 0, goalieWins: 0, goalieSaves: 0, shutouts: 0,
+                  goalsAgainst: 0,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ])
+    await writeMemberDailyScores('league-1', '2026-04-14')
+    const call = mockPrismaForDaily.memberDailyScore.upsert.mock.calls[0][0]
+    expect(Number(call.create.fpts)).toBeCloseTo(0)
   })
 })
