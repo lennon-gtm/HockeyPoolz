@@ -114,6 +114,7 @@ export async function GET(
     const players: PlayerWithIncludes[] = await prisma.nhlPlayer.findMany({
       where: {
         isActive: true,
+        team: { playoffQualified: true },
         ...positionWhere,
         ...(teamId ? { teamId } : {}),
         ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
