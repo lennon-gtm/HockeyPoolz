@@ -27,6 +27,7 @@ export default function LoginPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) throw new Error('me-failed')
+    document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
     router.push('/')
   }
 
