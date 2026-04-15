@@ -101,15 +101,12 @@ export default function LoginPage() {
       </header>
 
       {/* ── Hero ── */}
-      <section style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', minHeight: 0 }}>
-        {/* Full-bleed background */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero-bg.jpg"
-          alt=""
-          aria-hidden
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
-        />
+      <section style={{
+        flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', minHeight: 0,
+        backgroundImage: 'url(/hero-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center top',
+      }}>
         {/* Left-to-right fade overlay */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,250,245,0.88) 0%, rgba(255,250,245,0.75) 20%, rgba(255,250,245,0.00) 45%)' }} />
 
