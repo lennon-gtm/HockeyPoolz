@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (user.isBanned) return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
 
     const body = await request.json()
-    const { name, maxTeams, playersPerTeam } = body
+    const { name, maxTeams, rosterForwards, rosterDefense, rosterGoalies } = body
 
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json({ error: 'League name must be at least 2 characters' }, { status: 400 })
@@ -21,8 +21,14 @@ export async function POST(request: NextRequest) {
     if (!maxTeams || typeof maxTeams !== 'number' || maxTeams < 2 || maxTeams > 20) {
       return NextResponse.json({ error: 'Max teams must be between 2 and 20' }, { status: 400 })
     }
-    if (!playersPerTeam || typeof playersPerTeam !== 'number' || playersPerTeam < 4 || playersPerTeam > 20) {
-      return NextResponse.json({ error: 'Players per team must be between 4 and 20' }, { status: 400 })
+    if (typeof rosterForwards !== 'number' || rosterForwards < 1 || rosterForwards > 12) {
+      return NextResponse.json({ error: 'Forwards must be 1–12' }, { status: 400 })
+    }
+    if (typeof rosterDefense !== 'number' || rosterDefense < 1 || rosterDefense > 8) {
+      return NextResponse.json({ error: 'Defensemen must be 1–8' }, { status: 400 })
+    }
+    if (typeof rosterGoalies !== 'number' || rosterGoalies < 1 || rosterGoalies > 4) {
+      return NextResponse.json({ error: 'Goalies must be 1–4' }, { status: 400 })
     }
 
     const league = await prisma.league.create({
@@ -31,9 +37,11 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         inviteCode: nanoid(8),
         maxTeams,
-        playersPerTeam,
+        rosterForwards,
+        rosterDefense,
+        rosterGoalies,
         scoringSettings: {
-          create: {}, // creates with all defaults from schema
+          create: {},
         },
       },
       include: { scoringSettings: true },
