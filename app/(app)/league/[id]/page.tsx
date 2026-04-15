@@ -345,7 +345,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
                 <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10">
                   <div className="text-center">
                     <div className={`text-sm font-black ${mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? 'text-[#2db944]' : 'text-white/50'}`}>
-                      {mySt.yesterdayFpts !== null ? `+${mySt.yesterdayFpts.toFixed(1)}` : '—'}
+                      {mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? `+${mySt.yesterdayFpts.toFixed(1)}` : mySt.yesterdayFpts === 0 ? '0.0' : '—'}
                     </div>
                     <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Yesterday</div>
                   </div>
@@ -359,7 +359,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
                   </div>
                   <div className="text-center">
                     <div className="text-sm font-black text-white">
-                      {league.rosterForwards + league.rosterDefense + league.rosterGoalies}
+                      {myMember ? league.rosterForwards + league.rosterDefense + league.rosterGoalies : '—'}
                     </div>
                     <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Players</div>
                   </div>
@@ -398,7 +398,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
                         <p className="text-xs text-gray-400 truncate">{s.userName}</p>
                       </div>
                       <span className="w-12 text-right text-xs font-semibold text-[#2db944]">
-                        {s.yesterdayFpts !== null ? `+${s.yesterdayFpts.toFixed(1)}` : '—'}
+                        {s.yesterdayFpts !== null && s.yesterdayFpts > 0 ? `+${s.yesterdayFpts.toFixed(1)}` : s.yesterdayFpts === 0 ? '0.0' : '—'}
                       </span>
                       <span className="w-14 text-right text-sm font-black text-[#0042bb]">
                         {s.totalScore.toFixed(1)}
