@@ -27,7 +27,6 @@ export default function LoginPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) throw new Error('me-failed')
-    document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
     router.push('/')
   }
 
@@ -37,8 +36,10 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider())
       await finishSignIn(result.user)
-    } catch {
-      setError('Sign in failed. Please try again.')
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== 'auth/popup-closed-by-user') {
+        setError('Sign in failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }

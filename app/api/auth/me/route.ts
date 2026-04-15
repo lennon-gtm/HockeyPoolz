@@ -54,7 +54,12 @@ export async function POST(request: NextRequest) {
       throw err
     })
 
-    return NextResponse.json({ user })
+    const response = NextResponse.json({ user })
+    response.headers.set(
+      'Set-Cookie',
+      `session=${token}; Path=/; Max-Age=3600; SameSite=Strict; HttpOnly`
+    )
+    return response
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: 401 })
