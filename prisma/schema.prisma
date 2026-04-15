@@ -223,7 +223,8 @@ model NhlTeam {
   division       String
   colorPrimary   String     @map("color_primary")
   colorSecondary String     @map("color_secondary")
-  eliminatedAt   DateTime?  @map("eliminated_at")
+  eliminatedAt     DateTime? @map("eliminated_at")
+  playoffQualified Boolean   @default(false) @map("playoff_qualified")
 
   players             NhlPlayer[]
   users               User[]          @relation("UserFavoriteTeam")
