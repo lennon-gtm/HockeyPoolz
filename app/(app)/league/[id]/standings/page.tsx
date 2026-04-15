@@ -13,7 +13,7 @@ interface PlayerStanding {
 interface MemberStanding {
   rank: number; memberId: string; teamName: string; teamIcon: string | null
   userName: string; totalScore: number; scoreLastCalculatedAt: string | null
-  colorPrimary: string | null
+  colorPrimary: string | null; yesterdayFpts: number | null
   players: PlayerStanding[]
 }
 interface ScoringSettings {
@@ -129,60 +129,77 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* Leaderboard */}
-      {standings.map(member => {
-        const isMe = member.memberId === myMemberId
-        return (
-          <div
-            key={member.memberId}
-            className="border-b border-[#f5f5f5]"
-            style={isMe ? { borderLeft: `3px solid ${member.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
-          >
-            <button
-              onClick={() => setExpandedMember(expandedMember === member.memberId ? null : member.memberId)}
-              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition text-left"
-            >
-              <span className="text-lg font-black text-gray-300 w-8 text-right">{member.rank}</span>
-              <TeamIcon icon={member.teamIcon} />
-              <div className="flex-1">
-                <p className="font-bold text-sm">{member.teamName}</p>
-                <p className="text-xs text-gray-400">{member.userName}</p>
-              </div>
-              <span className="text-lg font-black text-orange-500">{member.totalScore.toFixed(1)}</span>
-            </button>
-
-            {/* Expanded roster */}
-            {expandedMember === member.memberId && (
-              <div className="px-4 pb-4">
-                {member.players
-                  .sort((a, b) => b.totalPoints - a.totalPoints)
-                  .map(player => (
-                    <Link
-                      key={player.playerId}
-                      href={`/league/${id}/players/${player.playerId}`}
-                      className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 transition"
-                    >
-                      {player.headshotUrl ? (
-                        <img src={player.headshotUrl} alt="" className="w-8 h-8 rounded-full bg-gray-100" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-200" />
-                      )}
-                      <div className="flex-1">
-                        <p className={`text-sm font-semibold ${player.isEliminated ? 'text-gray-400 line-through' : ''}`}>
-                          {player.name}
-                        </p>
-                        <p className="text-xs text-gray-400">{player.position} · {player.teamAbbrev}</p>
-                      </div>
-                      <span className={`text-sm font-bold ${player.isEliminated ? 'text-gray-400' : 'text-orange-500'}`}>
-                        {player.totalPoints.toFixed(1)}
-                      </span>
-                    </Link>
-                  ))}
-              </div>
-            )}
+      {/* Standings table */}
+      {standings.length > 0 && (
+        <div className="border border-[#eeeeee] rounded-xl overflow-hidden mb-4">
+          {/* Table header */}
+          <div className="bg-[#f8f8f8] flex items-center px-4 py-2 border-b border-[#eeeeee]">
+            <span className="w-8 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">RK</span>
+            <span className="w-8 mx-2" />
+            <span className="flex-1 text-[9px] font-bold uppercase tracking-widest text-[#98989e]">Team</span>
+            <span className="w-14 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">YDAY</span>
+            <span className="w-16 text-[9px] font-bold uppercase tracking-widest text-[#0042bb] text-right">TOTAL</span>
           </div>
-        )
-      })}
+          {standings.map(member => {
+            const isMe = member.memberId === myMemberId
+            return (
+              <div
+                key={member.memberId}
+                className="border-b border-[#f5f5f5] last:border-0"
+                style={isMe ? { borderLeft: `3px solid ${member.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
+              >
+                <button
+                  onClick={() => setExpandedMember(expandedMember === member.memberId ? null : member.memberId)}
+                  className="w-full flex items-center px-4 py-3 hover:bg-gray-50 transition text-left"
+                >
+                  <span className="w-8 text-lg font-black text-gray-300 text-right">{member.rank}</span>
+                  <span className="mx-2"><TeamIcon icon={member.teamIcon} /></span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{member.teamName}</p>
+                    <p className="text-xs text-gray-400">{member.userName}</p>
+                  </div>
+                  <span className="w-14 text-right text-xs font-semibold text-[#2db944]">
+                    {member.yesterdayFpts !== null ? `+${member.yesterdayFpts.toFixed(1)}` : '—'}
+                  </span>
+                  <span className="w-16 text-right text-sm font-black text-[#0042bb]">
+                    {member.totalScore.toFixed(1)}
+                  </span>
+                </button>
+
+                {/* Expanded roster */}
+                {expandedMember === member.memberId && (
+                  <div className="px-4 pb-4">
+                    {member.players
+                      .sort((a, b) => b.totalPoints - a.totalPoints)
+                      .map(player => (
+                        <Link
+                          key={player.playerId}
+                          href={`/league/${id}/players/${player.playerId}`}
+                          className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 transition"
+                        >
+                          {player.headshotUrl ? (
+                            <img src={player.headshotUrl} alt="" className="w-8 h-8 rounded-full bg-gray-100" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200" />
+                          )}
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold ${player.isEliminated ? 'text-gray-400 line-through' : ''}`}>
+                              {player.name}
+                            </p>
+                            <p className="text-xs text-gray-400">{player.position} · {player.teamAbbrev}</p>
+                          </div>
+                          <span className={`text-sm font-bold ${player.isEliminated ? 'text-gray-400' : 'text-[#0042bb]'}`}>
+                            {player.totalPoints.toFixed(1)}
+                          </span>
+                        </Link>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
       </div>
     </div>
   )
