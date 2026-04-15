@@ -66,16 +66,42 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
     goalsAgainst: 'GA (penalty)',
   }
 
+  const myStanding = standings.find(s => s.memberId === myMemberId)
+  const myColor = myStanding?.colorPrimary ?? '#FF6B00'
+
   return (
-    <div className="min-h-screen bg-white p-6 max-w-2xl mx-auto">
-      <button onClick={() => router.back()} className="text-sm text-gray-400 mb-4 hover:text-gray-600">
+    <div className="bg-white min-h-screen">
+      <div className="p-4 max-w-xl mx-auto">
+      <button onClick={() => router.back()} className="text-xs text-[#98989e] mb-3 font-semibold hover:text-[#515151]">
         ← Back
       </button>
-      <h1 className="text-2xl font-black tracking-widest mb-1">Standings</h1>
+      <div className="mb-4">
+        <h1 className="text-xl font-black tracking-tight text-[#121212]">Standings</h1>
+        <p className="text-xs text-[#98989e] font-semibold mt-0.5">Through {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+      </div>
       {lastUpdated && (
-        <p className="text-xs text-gray-400 mb-6">Last updated: {lastUpdated}</p>
+        <p className="text-[10px] text-[#98989e] mb-4">Last updated: {lastUpdated}</p>
       )}
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+      {myStanding && (
+        <div
+          className="bg-[#1a1a1a] rounded-xl p-3 mb-4 flex items-center justify-between"
+          style={{ borderLeft: `4px solid ${myColor}` }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="text-xl font-black text-white">{myStanding.rank}{ordinal(myStanding.rank)}</div>
+            <div>
+              <div className="text-xs font-bold text-white">{myStanding.teamName}</div>
+              <div className="text-[10px] text-[#98989e]">You</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-base font-black" style={{ color: myColor }}>{myStanding.totalScore.toFixed(1)}</div>
+            <div className="text-[9px] text-[#98989e] font-bold uppercase tracking-widest">Total FPTS</div>
+          </div>
+        </div>
+      )}
 
       {/* Scoring settings collapsible */}
       {scoringSettings && (
@@ -109,8 +135,8 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
         return (
           <div
             key={member.memberId}
-            className="border-b border-gray-100"
-            style={isMe ? { borderLeft: `4px solid ${member.colorPrimary ?? '#FF6B00'}` } : undefined}
+            className="border-b border-[#f5f5f5]"
+            style={isMe ? { borderLeft: `3px solid ${member.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
           >
             <button
               onClick={() => setExpandedMember(expandedMember === member.memberId ? null : member.memberId)}
@@ -157,6 +183,13 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
           </div>
         )
       })}
+      </div>
     </div>
   )
+}
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return s[(v - 20) % 10] ?? s[v] ?? s[0]
 }
