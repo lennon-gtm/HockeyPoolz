@@ -21,6 +21,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const settings = await prisma.scoringSettings.findUnique({ where: { leagueId: id } })
     if (!settings) return NextResponse.json({ error: 'Scoring settings not found' }, { status: 404 })
 
+    // Yesterday's date at UTC midnight
+    const yd = new Date()
+    yd.setUTCDate(yd.getUTCDate() - 1)
+    yd.setUTCHours(0, 0, 0, 0)
+
+    const dailyScores = await prisma.memberDailyScore.findMany({
+      where: { member: { leagueId: id }, gameDate: yd },
+      select: { memberId: true, fpts: true },
+    })
+    const ydMap = new Map(dailyScores.map(d => [d.memberId, Number(d.fpts)]))
+
     const weights: ScoringWeights = {
       goals: Number(settings.goals), assists: Number(settings.assists),
       plusMinus: Number(settings.plusMinus), pim: Number(settings.pim),
@@ -108,6 +119,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         totalScore: Number(member.totalScore),
         scoreLastCalculatedAt: member.scoreLastCalculatedAt,
         colorPrimary: member.favoriteTeam?.colorPrimary ?? null,
+        yesterdayFpts: ydMap.has(member.id) ? ydMap.get(member.id)! : null,
         players,
       }
     })
