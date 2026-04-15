@@ -22,6 +22,7 @@ model User {
   leagueMembers        LeagueMember[]
   commissionedLeagues  League[]       @relation("Commissioner")
   recaps               Recap[]
+  pendingJoinRequests  PendingJoinRequest[]
 
   @@map("users")
 }
@@ -43,11 +44,12 @@ model League {
   rosterGoalies  Int          @default(2) @map("roster_goalies")
   createdAt      DateTime     @default(now()) @map("created_at")
 
-  commissioner    User             @relation("Commissioner", fields: [commissionerId], references: [id])
-  members         LeagueMember[]
-  scoringSettings ScoringSettings?
-  draft           Draft?
-  recaps          Recap[]
+  commissioner        User             @relation("Commissioner", fields: [commissionerId], references: [id])
+  members             LeagueMember[]
+  scoringSettings     ScoringSettings?
+  draft               Draft?
+  recaps              Recap[]
+  pendingJoinRequests PendingJoinRequest[]
 
   @@map("leagues")
 }
@@ -209,9 +211,10 @@ model NhlTeam {
   colorSecondary String     @map("color_secondary")
   eliminatedAt   DateTime?  @map("eliminated_at")
 
-  players       NhlPlayer[]
-  users         User[]          @relation("UserFavoriteTeam")
-  leagueMembers LeagueMember[]  @relation("LeagueMemberFavoriteTeam")
+  players             NhlPlayer[]
+  users               User[]          @relation("UserFavoriteTeam")
+  leagueMembers       LeagueMember[]  @relation("LeagueMemberFavoriteTeam")
+  pendingJoinRequests PendingJoinRequest[]
 
   @@map("nhl_teams")
 }
@@ -274,4 +277,21 @@ model PlayerGameStats {
 
   @@unique([playerId, gameId])
   @@map("player_game_stats")
+}
+
+model PendingJoinRequest {
+  id             String   @id @default(uuid())
+  leagueId       String   @map("league_id")
+  userId         String   @map("user_id")
+  teamName       String   @map("team_name")
+  teamIcon       String?  @map("team_icon")
+  favoriteTeamId String?  @map("favorite_nhl_team_id")
+  submittedAt    DateTime @default(now()) @map("submitted_at")
+
+  league       League   @relation(fields: [leagueId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+  favoriteTeam NhlTeam? @relation(fields: [favoriteTeamId], references: [id])
+
+  @@unique([leagueId, userId])
+  @@map("pending_join_requests")
 }
