@@ -56,6 +56,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [error, setError] = useState('')
   const [preDraftTab, setPreDraftTab] = useState<'rankings' | 'wishlist'>('rankings')
   const [autodraftEnabled, setAutodraftEnabled] = useState(false)
+  const [liveAutodraft, setLiveAutodraft] = useState(false)
+  const [autodraftSaving, setAutodraftSaving] = useState(false)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -67,6 +69,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     if (!res.ok) return
     const data: DraftState = await res.json()
     setState(data)
+    const myMemberData = data.members.find(m => m.leagueMemberId === data.myLeagueMemberId)
+    if (myMemberData) setLiveAutodraft(myMemberData.autodraftEnabled)
   }, [leagueId])
 
   const fetchPlayers = useCallback(async () => {
@@ -138,6 +142,21 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
       await fetchState()
       await fetchPlayers()
     } finally { setPickLoading(false) }
+  }
+
+  async function toggleLiveAutodraft(enabled: boolean) {
+    setAutodraftSaving(true)
+    try {
+      const token = await getToken()
+      await fetch(`/api/leagues/${leagueId}/draft/settings`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autodraftEnabled: enabled }),
+      })
+      setLiveAutodraft(enabled)
+    } finally {
+      setAutodraftSaving(false)
+    }
   }
 
   async function commissionerAction(action: 'pause' | 'resume') {
@@ -251,6 +270,27 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
               <p className="text-xs font-bold mt-2" style={{ color: pickerColor }}>⬇ Your pick — select a player below</p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Mid-draft autodraft toggle */}
+      {state.myLeagueMemberId && (
+        <div className="flex items-center justify-between px-3 py-2.5 bg-[#f8f8f8] rounded-xl mb-3">
+          <div>
+            <p className="text-xs font-bold text-[#121212]">
+              {liveAutodraft ? '🤖 Autodraft on' : 'Autodraft off'}
+            </p>
+            <p className="text-[10px] text-[#98989e]">
+              {liveAutodraft ? "We'll pick for you going forward" : "Switch on and we'll pick by ADP"}
+            </p>
+          </div>
+          <button
+            onClick={() => toggleLiveAutodraft(!liveAutodraft)}
+            disabled={autodraftSaving}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${liveAutodraft ? 'bg-orange-500' : 'bg-gray-200'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${liveAutodraft ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
         </div>
       )}
 
