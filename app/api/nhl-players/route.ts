@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
     const pageSize = 50
 
     // Build where clause
-    const where: Record<string, unknown> = { isActive: true }
+    const where: Record<string, unknown> = {
+      isActive: true,
+      team: { playoffQualified: true },
+    }
 
     if (position && ['C', 'LW', 'RW', 'D', 'G'].includes(position)) {
       where.position = position
