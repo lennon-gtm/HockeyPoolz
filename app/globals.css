@@ -8,8 +8,39 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Nav */
+  --color-nav-primary: #1a1a1a;
+  --color-nav-secondary: #111111;
+
+  /* Content */
+  --color-surface: #f8f8f8;
+  --color-surface-alt: #fafafa;
+  --color-border: #eeeeee;
+
+  /* Text */
+  --color-text-primary: #121212;
+  --color-text-secondary: #98989e;
+  --color-text-tertiary: #515151;
+
+  /* Accents */
+  --color-data-accent: #0042bb;
+  --color-data-accent-bg: #e8f0ff;
+  --color-positive: #2db944;
+  --color-negative: #c8102e;
+  --color-wishlist: #ffcf00;
+
+  /* Position badges */
+  --color-pos-f-bg: #e8f4fd;
+  --color-pos-f-text: #0042bb;
+  --color-pos-d-bg: #fce8f3;
+  --color-pos-d-text: #8b008b;
+  --color-pos-g-bg: #fff3e0;
+  --color-pos-g-text: #e65100;
+
+  /* Fallback team color */
+  --color-team-fallback: #ff6b00;
 }
 
 @media (prefers-color-scheme: dark) {
