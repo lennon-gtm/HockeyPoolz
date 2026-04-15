@@ -111,7 +111,7 @@ export default function LoginPage() {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
         />
         {/* Left-to-right fade overlay */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,250,245,0.93) 0%, rgba(255,250,245,0.82) 28%, rgba(255,250,245,0.30) 55%, rgba(255,250,245,0.00) 72%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,250,245,0.82) 0%, rgba(255,250,245,0.60) 28%, rgba(255,250,245,0.15) 55%, rgba(255,250,245,0.00) 72%)' }} />
 
         {/* Content */}
         <div style={{ position: 'relative', zIndex: 2, padding: '72px 52px 32px', maxWidth: 520 }}>
