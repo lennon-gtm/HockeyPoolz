@@ -158,8 +158,20 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
                     <p className="font-bold text-sm truncate">{member.teamName}</p>
                     <p className="text-xs text-gray-400">{member.userName}</p>
                   </div>
-                  <span className="w-14 text-right text-xs font-semibold text-[#2db944]">
-                    {member.yesterdayFpts !== null ? `+${member.yesterdayFpts.toFixed(1)}` : '—'}
+                  <span className={`w-14 text-right text-xs font-semibold ${
+                    member.yesterdayFpts !== null && member.yesterdayFpts > 0
+                      ? 'text-[#2db944]'
+                      : member.yesterdayFpts !== null && member.yesterdayFpts < 0
+                      ? 'text-[#c8102e]'
+                      : 'text-[#98989e]'
+                  }`}>
+                    {member.yesterdayFpts !== null && member.yesterdayFpts > 0
+                      ? `+${member.yesterdayFpts.toFixed(1)}`
+                      : member.yesterdayFpts === 0
+                      ? '0.0'
+                      : member.yesterdayFpts !== null
+                      ? member.yesterdayFpts.toFixed(1)
+                      : '—'}
                   </span>
                   <span className="w-16 text-right text-sm font-black text-[#0042bb]">
                     {member.totalScore.toFixed(1)}
