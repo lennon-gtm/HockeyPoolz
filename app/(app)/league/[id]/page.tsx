@@ -14,7 +14,8 @@ interface Member {
 }
 interface LeagueDetail {
   id: string; name: string; inviteCode: string; status: string
-  maxTeams: number; playersPerTeam: number
+  maxTeams: number
+  rosterForwards: number; rosterDefense: number; rosterGoalies: number
   commissioner: { displayName: string }
   commissionerId: string
   members: Member[]
@@ -22,6 +23,7 @@ interface LeagueDetail {
 interface Draft {
   id: string; status: string; currentPickNumber: number; isMock: boolean
   pickTimeLimitSecs: number
+  scheduledStartAt: string | null
 }
 
 export default function LeagueLobbyPage({ params }: { params: Promise<{ id: string }> }) {
@@ -172,12 +174,19 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
             {isCommissioner ? '👑 Commissioner · ' : ''}{league.members.length}/{league.maxTeams} Teams · {league.status === 'setup' ? 'Setup' : league.status === 'draft' ? 'Drafting' : league.status === 'active' ? 'Active' : 'Complete'}
           </p>
         </div>
+        <Link
+          href={`/league/${id}/draft-settings`}
+          className="w-9 h-9 flex items-center justify-center rounded-full border border-[#eeeeee] text-[#515151] hover:border-gray-400 hover:text-[#121212] transition"
+          aria-label="Draft settings"
+        >
+          ⚙
+        </Link>
       </div>
 
       {league.status === 'setup' && (
         <div className="grid grid-cols-3 gap-1.5 mb-4">
           <StatCard value={`${league.members.length}/${league.maxTeams}`} label="Teams" />
-          <StatCard value="—" label="Draft" />
+          <StatCard value={formatDraftCell(draft?.scheduledStartAt ?? null)} label="Draft" />
           <StatCard value={`${draft?.pickTimeLimitSecs ?? 90}s`} label="Per Pick" />
         </div>
       )}
@@ -350,4 +359,17 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       </div>
     </div>
   )
+}
+
+function formatDraftCell(iso: string | null): string {
+  if (!iso) return '—'
+  const target = new Date(iso).getTime()
+  const diffMs = target - Date.now()
+  if (diffMs <= 0) return 'Now'
+  const mins = Math.floor(diffMs / 60_000)
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
 }
