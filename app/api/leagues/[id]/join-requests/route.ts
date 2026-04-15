@@ -13,6 +13,7 @@ async function requireCommissioner(
   const decoded = await verifyIdToken(token)
   const user = await prisma.user.findUnique({ where: { firebaseUid: decoded.uid } })
   if (!user) return { ok: false, response: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
+  if (user.isBanned) return { ok: false, response: NextResponse.json({ error: 'Account suspended' }, { status: 403 }) }
   const league = await prisma.league.findUnique({ where: { id: leagueId } })
   if (!league) return { ok: false, response: NextResponse.json({ error: 'League not found' }, { status: 404 }) }
   if (league.commissionerId !== user.id) {
