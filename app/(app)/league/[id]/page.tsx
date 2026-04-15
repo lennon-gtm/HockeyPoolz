@@ -38,7 +38,12 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const [autodraftLoading, setAutodraftLoading] = useState(false)
   const [error, setError] = useState('')
   const [pendingCount, setPendingCount] = useState(0)
-  const [standings, setStandings] = useState<{ rank: number; memberId: string; teamName: string; teamIcon: string | null; userName: string; totalScore: number }[]>([])
+  const [standings, setStandings] = useState<{
+    rank: number; memberId: string; teamName: string; teamIcon: string | null
+    userName: string; totalScore: number; yesterdayFpts: number | null
+    colorPrimary: string | null
+  }[]>([])
+  const [myMemberId, setMyMemberId] = useState<string | null>(null)
   const [recap, setRecap] = useState<{ id: string; recapDate: string; content: string; standingChange: number; createdAt: string } | null>(null)
   const [recapExpanded, setRecapExpanded] = useState(false)
 
@@ -63,6 +68,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           if (standingsRes.ok) {
             const standingsData = await standingsRes.json()
             setStandings(standingsData.standings)
+            setMyMemberId(standingsData.myMemberId ?? null)
           }
           // Fetch latest recap
           const recapRes = await fetch(`/api/leagues/${id}/recaps`, { headers })
@@ -305,28 +311,106 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* Standings summary (active/complete phase) */}
-      {(league.status === 'active' || league.status === 'complete') && standings.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Standings</p>
-            <Link href={`/league/${id}/standings`} className="text-xs text-orange-500 font-bold hover:text-orange-700">
-              View Full Standings →
-            </Link>
-          </div>
-          {standings.map(s => (
-            <div key={s.memberId} className="flex items-center gap-3 p-3 border-b border-gray-100">
-              <span className="text-sm font-black text-gray-400 w-6 text-right">{s.rank}</span>
-              <TeamIcon icon={s.teamIcon} />
-              <div className="flex-1">
-                <p className="font-semibold text-sm">{s.teamName}</p>
-                <p className="text-xs text-gray-400">{s.userName}</p>
+      {/* Active season — hero card + standings */}
+      {(league.status === 'active' || league.status === 'complete') && standings.length > 0 && (() => {
+        const mySt = standings.find(s => s.memberId === myMemberId)
+        const sorted = [...standings].sort((a, b) => b.totalScore - a.totalScore)
+        const lead = mySt
+          ? mySt.rank === 1
+            ? mySt.totalScore - (sorted[1]?.totalScore ?? 0)
+            : mySt.totalScore - sorted[0].totalScore
+          : null
+
+        return (
+          <>
+            {/* Hero card */}
+            {mySt && (
+              <div
+                className="bg-[#1a1a1a] rounded-xl p-4 mb-4"
+                style={{ borderLeft: `4px solid ${mySt.colorPrimary ?? myColor}` }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">Your Standing</div>
+                    <div className="text-3xl font-black text-white">{mySt.rank}{ordinalSuffix(mySt.rank)}</div>
+                    <div className="text-xs text-white/70 mt-0.5">of {standings.length} teams</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black" style={{ color: mySt.colorPrimary ?? myColor }}>
+                      {mySt.totalScore.toFixed(1)}
+                    </div>
+                    <div className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Total FPTS</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10">
+                  <div className="text-center">
+                    <div className={`text-sm font-black ${mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? 'text-[#2db944]' : 'text-white/50'}`}>
+                      {mySt.yesterdayFpts !== null ? `+${mySt.yesterdayFpts.toFixed(1)}` : '—'}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Yesterday</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-sm font-black ${lead !== null && lead > 0 ? 'text-[#2db944]' : lead !== null && lead < 0 ? 'text-[#c8102e]' : 'text-white/50'}`}>
+                      {lead !== null ? (lead >= 0 ? `+${lead.toFixed(1)}` : lead.toFixed(1)) : '—'}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">
+                      {mySt.rank === 1 ? 'Lead' : 'Deficit'}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm font-black text-white">
+                      {league.rosterForwards + league.rosterDefense + league.rosterGoalies}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Players</div>
+                  </div>
+                </div>
               </div>
-              <span className="text-sm font-bold text-orange-500">{s.totalScore.toFixed(1)}</span>
+            )}
+
+            {/* Top-3 standings preview */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Standings</p>
+                <Link href={`/league/${id}/standings`} className="text-xs text-orange-500 font-bold hover:text-orange-700">
+                  View all →
+                </Link>
+              </div>
+              <div className="flex items-center px-4 py-1.5 bg-[#f8f8f8] rounded-t-lg border border-b-0 border-[#eeeeee]">
+                <span className="w-7 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">RK</span>
+                <span className="w-6 mx-2" />
+                <span className="flex-1 text-[9px] font-bold uppercase tracking-widest text-[#98989e]">Team</span>
+                <span className="w-12 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">YDAY</span>
+                <span className="w-14 text-[9px] font-bold uppercase tracking-widest text-[#0042bb] text-right">TOTAL</span>
+              </div>
+              <div className="border border-[#eeeeee] rounded-b-lg overflow-hidden">
+                {standings.slice(0, 3).map(s => {
+                  const isMe = s.memberId === myMemberId
+                  return (
+                    <div
+                      key={s.memberId}
+                      className="flex items-center px-4 py-3 border-b border-[#f5f5f5] last:border-0"
+                      style={isMe ? { borderLeft: `3px solid ${s.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
+                    >
+                      <span className="w-7 text-sm font-black text-gray-300 text-right">{s.rank}</span>
+                      <span className="mx-2"><TeamIcon icon={s.teamIcon} /></span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{s.teamName}</p>
+                        <p className="text-xs text-gray-400 truncate">{s.userName}</p>
+                      </div>
+                      <span className="w-12 text-right text-xs font-semibold text-[#2db944]">
+                        {s.yesterdayFpts !== null ? `+${s.yesterdayFpts.toFixed(1)}` : '—'}
+                      </span>
+                      <span className="w-14 text-right text-sm font-black text-[#0042bb]">
+                        {s.totalScore.toFixed(1)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        )
+      })()}
 
       {/* Members list (draft phase only) */}
       {league.status === 'draft' && (
@@ -381,6 +465,12 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       </div>
     </div>
   )
+}
+
+function ordinalSuffix(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return s[(v - 20) % 10] ?? s[v] ?? s[0]
 }
 
 function formatDraftCell(iso: string | null): string {
