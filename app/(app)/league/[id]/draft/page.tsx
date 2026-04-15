@@ -67,7 +67,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     if (!res.ok) return
     const data: DraftState = await res.json()
     setState(data)
-  }, [leagueId, router])
+  }, [leagueId])
 
   const fetchPlayers = useCallback(async () => {
     if (!state?.draft) return
