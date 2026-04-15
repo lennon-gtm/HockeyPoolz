@@ -94,6 +94,11 @@ export async function PATCH(
       const unassigned = members.filter(m => m.draftPosition === null)
       if (unassigned.length > 0) return NextResponse.json({ error: 'All members must have draft positions set' }, { status: 400 })
 
+      // If a scheduled start exists in the future (more than 60s out), refuse
+      if (draft.scheduledStartAt && draft.scheduledStartAt.getTime() - Date.now() > 60_000) {
+        return NextResponse.json({ error: 'Draft is scheduled — wait until the start time' }, { status: 400 })
+      }
+
       const pickDeadline = new Date(Date.now() + draft.pickTimeLimitSecs * 1000)
       const updated = await prisma.draft.update({
         where: { leagueId },
