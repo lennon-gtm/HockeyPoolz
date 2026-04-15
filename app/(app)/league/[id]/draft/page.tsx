@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 import { TeamIcon } from '@/components/team-icon'
+import { PositionBadge } from '@/components/position-badge'
+
+function toBucket(pos: string): 'F' | 'D' | 'G' {
+  if (pos === 'G') return 'G'
+  if (pos === 'D') return 'D'
+  return 'F'
+}
 
 interface Player {
   id: number; name: string; position: string; teamId: string; headshotUrl: string | null
@@ -151,9 +158,10 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const pickerColor = currentPicker?.colorPrimary ?? '#FF6B00'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-white min-h-screen">
+      <div className="p-4 max-w-xl mx-auto">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      <div className="border-b border-gray-200 pb-3 mb-3 flex items-center justify-between">
         <div>
           <h1 className="font-black text-lg tracking-wider">
             {draft.isMock ? '📋 MOCK DRAFT' : '🏒 DRAFT ROOM'}
@@ -180,11 +188,14 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
       {/* Current pick + timer */}
       {currentPicker && draft.status === 'active' && (
-        <div className="px-4 py-3">
+        <div className="mb-3">
           <div
             style={{ backgroundColor: pickerColor + '20', borderColor: pickerColor }}
-            className="border-2 rounded-xl p-4 mb-2"
+            className="border-2 rounded-xl p-3 mb-2"
           >
+            <div className="text-[9px] font-bold text-[#98989e] uppercase tracking-widest mb-1.5">
+              On the Clock · Pick {draft.currentPickNumber}
+            </div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">On the clock: </span>
@@ -249,8 +260,11 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{player.name}</p>
-                <p className="text-xs text-gray-400">{player.teamId} · {player.position}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold truncate">{player.name}</p>
+                  <PositionBadge position={toBucket(player.position)} />
+                </div>
+                <p className="text-xs text-gray-400">{player.teamId}</p>
               </div>
               {isMyTurn && !pickLoading && (
                 <button
@@ -275,8 +289,11 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                 <div key={p.pickNumber} className="flex items-center gap-2 py-1.5 border-b border-gray-50">
                   <span className="text-xs text-gray-400 w-5">R{p.round}</span>
                   <div>
-                    <p className="text-xs font-semibold">{p.player.name}</p>
-                    <p className="text-xs text-gray-400">{p.player.teamId} · {p.player.position}</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-semibold">{p.player.name}</p>
+                      <PositionBadge position={toBucket(p.player.position)} />
+                    </div>
+                    <p className="text-xs text-gray-400">{p.player.teamId}</p>
                   </div>
                 </div>
               ))
@@ -299,6 +316,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
