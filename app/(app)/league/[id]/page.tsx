@@ -4,6 +4,7 @@ import { auth } from '@/lib/firebase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { TeamIcon } from '@/components/team-icon'
+import { StatCard } from '@/components/stat-card'
 
 interface Member {
   id: string; teamName: string; teamIcon: string | null
@@ -162,11 +163,24 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const draftActive = draft?.status === 'active' || draft?.status === 'paused'
 
   return (
-    <div className="min-h-screen bg-white max-w-lg mx-auto">
-      <div className="h-1" style={{ backgroundColor: myColor }} />
-      <div className="p-6">
-      <h1 className="text-2xl font-black mb-1">{league.name}</h1>
-      <p className="text-gray-500 text-sm mb-6">{league.members.length}/{league.maxTeams} teams · {league.playersPerTeam} players per team</p>
+    <div className="bg-white min-h-screen">
+      <div className="p-4 max-w-xl mx-auto">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h1 className="text-xl font-black tracking-tight text-[#121212]">{league.name}</h1>
+          <p className="text-xs text-[#98989e] font-semibold mt-0.5">
+            {isCommissioner ? '👑 Commissioner · ' : ''}{league.members.length}/{league.maxTeams} Teams · {league.status === 'setup' ? 'Setup' : league.status === 'draft' ? 'Drafting' : league.status === 'active' ? 'Active' : 'Complete'}
+          </p>
+        </div>
+      </div>
+
+      {league.status === 'setup' && (
+        <div className="grid grid-cols-3 gap-1.5 mb-4">
+          <StatCard value={`${league.members.length}/${league.maxTeams}`} label="Teams" />
+          <StatCard value="—" label="Draft" />
+          <StatCard value={`${draft?.pickTimeLimitSecs ?? 90}s`} label="Per Pick" />
+        </div>
+      )}
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
@@ -187,12 +201,6 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Draft Order</p>
-            {isCommissioner && (
-              <button onClick={randomizeOrder} disabled={orderLoading}
-                className="text-xs text-orange-500 font-bold hover:text-orange-700 disabled:opacity-50">
-                {orderLoading ? 'Shuffling…' : '🔀 Randomize'}
-              </button>
-            )}
           </div>
           {sortedMembers.map((m, i) => (
             <div key={m.id} className="flex items-center gap-3 p-3 border-b border-gray-100">
@@ -305,24 +313,27 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </>
       )}
 
-      {/* Commissioner controls */}
-      <div className="mt-6 flex gap-3 flex-wrap">
-        <Link href={`/league/${id}/settings`}
-          className="flex-1 text-center py-3 border-2 border-gray-200 rounded-xl text-sm font-bold hover:border-gray-400 transition">
-          Scoring Settings
-        </Link>
-        {isCommissioner && league.status === 'setup' && !draftActive && (
+      {/* Commissioner controls (setup phase only) */}
+      {isCommissioner && league.status === 'setup' && !draftActive && (
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             onClick={createAndStartDraft}
             disabled={startLoading || !allHavePositions}
             style={{ backgroundColor: myColor }}
-            className="flex-1 py-3 text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
+            className="py-3 text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
             title={!allHavePositions ? 'Randomize draft order first' : ''}
           >
             {startLoading ? 'Starting…' : '🚀 Start Draft'}
           </button>
-        )}
-      </div>
+          <button
+            onClick={randomizeOrder}
+            disabled={orderLoading}
+            className="py-3 bg-[#f8f8f8] border-2 border-[#eeeeee] rounded-xl text-sm font-bold text-[#121212] hover:border-gray-400 transition disabled:opacity-50"
+          >
+            {orderLoading ? 'Shuffling…' : '🔀 Randomize'}
+          </button>
+        </div>
+      )}
 
       {/* Invite link — below action buttons */}
       {league.status === 'setup' && (
