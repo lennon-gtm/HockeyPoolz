@@ -97,7 +97,7 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     async function load() {
       const token = await auth.currentUser?.getIdToken()
-      if (!token) return
+      if (!token) { setLoading(false); return }
       const headers = { Authorization: `Bearer ${token}` }
 
       // Step 1: standings gives myMemberId + my rank + my YDAY total
