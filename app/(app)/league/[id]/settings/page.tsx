@@ -59,6 +59,8 @@ export default function ScoringSettingsPage({ params }: { params: Promise<{ id: 
           const leagueData = await leagueRes.json()
           const meData = await meRes.json()
           setIsCommissioner(leagueData.league?.commissionerId === meData.user?.id)
+        } else {
+          setError('Could not verify your role. If you are the commissioner, please reload.')
         }
       } catch {
         setError('Failed to load settings.')
