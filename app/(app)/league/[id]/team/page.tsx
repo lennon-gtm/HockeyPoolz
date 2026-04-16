@@ -10,6 +10,7 @@ import { StatCard } from '@/components/stat-card'
 interface MemberInfo {
   id: string; teamName: string; teamIcon: string | null
   totalScore: number; colorPrimary: string | null; userName: string
+  whatsappPhone?: string | null; whatsappOptedIn?: boolean
 }
 
 interface RosterPlayer {
@@ -92,6 +93,11 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
   const [loading, setLoading] = useState(true)
   const [sortCol, setSortCol] = useState<string>('totalFpts')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [whatsappPhone, setWhatsappPhone] = useState('')
+  const [whatsappOptedIn, setWhatsappOptedIn] = useState(false)
+  const [whatsappSaving, setWhatsappSaving] = useState(false)
+  const [whatsappError, setWhatsappError] = useState('')
+  const [whatsappSaved, setWhatsappSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -116,6 +122,8 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
         const data = await rosterRes.json()
         setMember(data.member)
         setPlayers(data.players)
+        setWhatsappPhone(data.member.whatsappPhone ?? '')
+        setWhatsappOptedIn(data.member.whatsappOptedIn ?? false)
       }
       if (recapRes.ok) {
         const data = await recapRes.json()
@@ -125,6 +133,47 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
     }
     load()
   }, [id])
+
+  async function saveWhatsApp() {
+    setWhatsappSaving(true)
+    setWhatsappError('')
+    setWhatsappSaved(false)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch(`/api/leagues/${id}/members/me`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsappPhone: whatsappPhone.trim(), whatsappOptedIn: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setWhatsappError(data.error ?? 'Failed to save'); return }
+      setWhatsappOptedIn(true)
+      setWhatsappPhone(data.member.whatsappPhone ?? '')
+      setWhatsappSaved(true)
+    } finally {
+      setWhatsappSaving(false)
+    }
+  }
+
+  async function removeWhatsApp() {
+    setWhatsappSaving(true)
+    setWhatsappError('')
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      await fetch(`/api/leagues/${id}/members/me`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsappPhone: null }),
+      })
+      setWhatsappPhone('')
+      setWhatsappOptedIn(false)
+      setWhatsappSaved(false)
+    } finally {
+      setWhatsappSaving(false)
+    }
+  }
 
   function cycleSort(col: string) {
     if (sortCol !== col) { setSortCol(col); setSortDir('desc'); return }
@@ -282,6 +331,58 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
+      {/* WhatsApp opt-in */}
+      <div className="mt-4 border border-[#eeeeee] rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-black text-[#121212]">📲 Daily Recap on WhatsApp</span>
+        </div>
+        <p className="text-[11px] text-[#98989e] mb-3">Get your morning recap sent directly to WhatsApp. One message per day, per league.</p>
+
+        {whatsappOptedIn && whatsappPhone ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-[#121212]">
+                {(() => {
+                  const p = whatsappPhone
+                  if (p.length <= 7) return p
+                  return p.slice(0, 3) + ' ••• ' + p.slice(-4)
+                })()}
+              </span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-[#2db944]">✓ Active</span>
+            </div>
+            <button
+              onClick={removeWhatsApp}
+              disabled={whatsappSaving}
+              className="text-xs font-bold text-[#c8102e] hover:underline disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div>
+            <input
+              type="tel"
+              value={whatsappPhone}
+              onChange={e => { setWhatsappPhone(e.target.value); setWhatsappError(''); setWhatsappSaved(false) }}
+              placeholder="+1 416 555 1234"
+              className="w-full border-2 border-[#eeeeee] rounded-xl px-3 py-2.5 text-sm mb-1 focus:border-[#f97316] outline-none"
+            />
+            {whatsappError && <p className="text-xs text-[#c8102e] mb-2">{whatsappError}</p>}
+            {whatsappSaved && <p className="text-xs text-[#2db944] mb-2">✓ Saved! You&apos;ll receive your next recap on WhatsApp.</p>}
+            <p className="text-[10px] text-[#98989e] mb-3">
+              By saving your number you agree to receive one daily recap message per league.
+            </p>
+            <button
+              onClick={saveWhatsApp}
+              disabled={whatsappSaving || !whatsappPhone.trim()}
+              className="w-full py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-40 transition"
+              style={{ backgroundColor: myColor }}
+            >
+              {whatsappSaving ? 'Saving…' : 'Save & Enable'}
+            </button>
+          </div>
+        )}
+      </div>
 
     </div>
   )
