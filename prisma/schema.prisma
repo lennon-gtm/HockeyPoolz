@@ -77,6 +77,8 @@ model LeagueMember {
   totalScore        Decimal           @default(0) @db.Decimal(10, 2) @map("total_score")
   scoreLastCalculatedAt DateTime?     @map("score_last_calculated_at")
   joinedAt          DateTime          @default(now()) @map("joined_at")
+  whatsappPhone     String?           @map("whatsapp_phone")
+  whatsappOptedIn   Boolean           @default(false) @map("whatsapp_opted_in")
 
   league       League              @relation(fields: [leagueId], references: [id])
   user         User                @relation(fields: [userId], references: [id])
