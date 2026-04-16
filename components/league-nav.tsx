@@ -19,9 +19,10 @@ export function LeagueNav({ leagueId, color }: Props) {
 
   const tabs: Tab[] = [
     { label: 'LOBBY', slug: '', match: (p) => p === base || p === `${base}/` },
+    { label: 'SCORES', slug: '/scores', match: (p) => p.startsWith(`${base}/scores`) },
     { label: 'MY TEAM', slug: '/team', match: (p) => p.startsWith(`${base}/team`) },
-    { label: 'DRAFT', slug: '/draft', match: (p) => p.startsWith(`${base}/draft`) },
     { label: 'STANDINGS', slug: '/standings', match: (p) => p.startsWith(`${base}/standings`) },
+    { label: 'DRAFT', slug: '/draft', match: (p) => p.startsWith(`${base}/draft`) },
   ]
 
   return (
