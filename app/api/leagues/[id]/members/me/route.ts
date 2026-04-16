@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isValidE164 } from '@/lib/whatsapp-service'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,7 +18,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!membership) return NextResponse.json({ error: 'Not a league member' }, { status: 403 })
 
     const body = await request.json()
-    const updates: Record<string, string | null> = {}
+    const updates: Record<string, string | boolean | null> = {}
 
     if (body.teamName !== undefined) {
       const name = String(body.teamName).trim()
@@ -31,6 +32,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (body.favoriteTeamId !== undefined) {
       updates.favoriteTeamId = body.favoriteTeamId ?? null
+    }
+
+    if (body.whatsappPhone !== undefined) {
+      if (body.whatsappPhone === null) {
+        // Clearing the number also disables opt-in
+        updates.whatsappPhone = null
+        updates.whatsappOptedIn = false
+      } else {
+        const phone = String(body.whatsappPhone).trim()
+        if (!isValidE164(phone)) {
+          return NextResponse.json(
+            { error: 'Invalid phone number format. Use E.164 format, e.g. +14165551234' },
+            { status: 400 }
+          )
+        }
+        updates.whatsappPhone = phone
+      }
+    }
+
+    if (body.whatsappOptedIn !== undefined) {
+      updates.whatsappOptedIn = Boolean(body.whatsappOptedIn)
     }
 
     if (Object.keys(updates).length === 0) {
