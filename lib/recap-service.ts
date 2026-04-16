@@ -5,6 +5,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from './prisma'
 import { calculatePlayerScore, type ScoringWeights } from './stats-service'
+import { sendWhatsAppRecap } from './whatsapp-service'
 
 // --- Types ---
 
@@ -188,6 +189,12 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
     shutouts: Number(settings.shutouts), goalsAgainst: Number(settings.goalsAgainst),
   }
 
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { name: true },
+  })
+  const leagueName = league?.name ?? ''
+
   // Load all members with draft picks and their players
   const members = await prisma.leagueMember.findMany({
     where: { leagueId },
@@ -309,6 +316,14 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
           standingChange,
         },
       })
+
+      // Send WhatsApp DM if member is opted in
+      if (member.whatsappOptedIn && member.whatsappPhone && leagueName) {
+        sendWhatsAppRecap(member.whatsappPhone, leagueName, content).catch(err =>
+          result.errors.push(`WhatsApp failed for ${member.teamName}: ${err}`)
+        )
+      }
+
       result.recapsCreated++
     } catch (err) {
       result.errors.push(`Failed to generate recap for ${member.teamName}: ${err}`)
