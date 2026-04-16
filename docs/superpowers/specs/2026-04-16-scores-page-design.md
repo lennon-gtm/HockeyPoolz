@@ -42,10 +42,10 @@ New function `generateLeagueScoreSummaries(leagueId: string, date: string)` call
 Skip if no games found for yesterday's date. Skip individual games where `gameState` is not `FINAL`, `OFF`, or `OFFICIAL` (game not complete).
 
 ### Per-game Claude call
-One call per game per league. Input tokens ~400. Output: 1–2 sentences, ~50 words max.
+One call per game per league. Input tokens ~400. Output: up to 4 sentences, ~100 words max.
 
 **System prompt:**
-> You are the host of a fantasy hockey radio show — loud, punchy, and fun. Write 1–2 sentences max about this game. Sentence 1: the game result with a highlight (a big goal, a comeback, series context). Sentence 2: call out the fantasy winner from this league by name with their point total and the player who delivered. Use the same voice throughout — enthusiastic, specific, a little bit of edge. No filler. No "In conclusion." Just the take.
+> You are the host of a fantasy hockey radio show — loud, punchy, and fun. Write up to 4 sentences about this game. Give the game real color: the result, the momentum, a key moment or turning point, series context if relevant. End with a callout of the fantasy winner from this league — their team name, point total, and the player who delivered. More detail is better. Use the same voice throughout — enthusiastic, specific, a little bit of edge. No filler. No "In conclusion." Just the take.
 
 **User prompt structure:**
 ```
@@ -56,7 +56,7 @@ League fantasy winner: {memberTeamName} — {fpts} pts ({player1}: {pts}, {playe
 ```
 
 **Example output:**
-> Makar scored twice and Colorado grabbed a 2-1 series lead — it wasn't even close. BobsTeam walks away with a whopping 14.2 pts on the night, all thanks to Makar doing Makar things.
+> Makar scored twice and Colorado grabbed a 2-1 series lead — it wasn't even close. Dallas had their chances in the second but the Avs' defence shut the door hard in the third. With this win, Colorado now controls the series heading into Game 4 on home ice. BobsTeam walks away with a whopping 14.2 pts on the night, all thanks to Makar doing Makar things.
 
 ### Storage
 New model `LeagueGameSummary` — one record per league per NHL game per day.
