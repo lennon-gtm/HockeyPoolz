@@ -435,7 +435,7 @@ function PreDraft({
 }: PreDraftProps) {
   const [wishlistCount, setWishlistCount] = useState(0)
   const [countdown, setCountdown] = useState('TBD')
-  const [rankMode, setRankMode] = useState<'scoring' | 'adp'>('scoring')
+  const rankMode = 'scoring'
   const [rankPos, setRankPos] = useState<'ALL' | 'F' | 'D' | 'G'>('ALL')
   const [rankSearch, setRankSearch] = useState('')
   const [rankPlayers, setRankPlayers] = useState<RankedPlayer[]>([])
@@ -631,18 +631,6 @@ function PreDraft({
         {/* Tab content — Rankings (Task 3) and Wishlist (Task 4) */}
         {preDraftTab === 'rankings' && (
           <div>
-            {/* Mode toggle */}
-            <div className="flex gap-2 mb-3">
-              {(['scoring', 'adp'] as const).map(m => (
-                <button key={m} onClick={() => setRankMode(m)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${rankMode === m ? 'text-white' : 'bg-[#f8f8f8] text-[#515151] hover:bg-gray-200'}`}
-                  style={rankMode === m ? { backgroundColor: myColor } : {}}
-                >
-                  {m === 'scoring' ? 'MY SCORING' : 'ADP'}
-                </button>
-              ))}
-            </div>
-
             {/* Position + search filters */}
             <div className="flex gap-2 mb-3 flex-wrap items-center">
               {(['ALL', 'F', 'D', 'G'] as const).map(p => (
@@ -673,7 +661,7 @@ function PreDraft({
                           2025-26 RS
                         </span>
                       </th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px] bg-[#eef3ff] text-[#0042bb] whitespace-nowrap">{rankMode === 'scoring' ? 'PROJ ↓' : 'ADP ↓'}</th>
+                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px] bg-[#eef3ff] text-[#0042bb] whitespace-nowrap">PROJ ↓</th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">G</th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">A</th>
                       <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">PTS</th>
@@ -708,7 +696,7 @@ function PreDraft({
                             </div>
                           </td>
                           <td className="px-3 py-2 text-right font-black text-[#0042bb] bg-[#eef3ff] whitespace-nowrap">
-                            {rankMode === 'scoring' ? player.proj : (player.adp?.toFixed(1) ?? '—')}
+                            {player.proj}
                           </td>
                           <td className="px-3 py-2 text-right text-[#121212] font-semibold">
                             {isGoalie ? (player.totals.goalieWins || '—') : (player.totals.goals || '—')}

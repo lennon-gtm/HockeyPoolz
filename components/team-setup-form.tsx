@@ -164,9 +164,11 @@ export function TeamSetupForm({ initialValues, submitLabel, loading, onSubmit }:
                       className={`rounded-xl border-2 p-2 text-center transition ${favoriteTeamId === team.id ? 'border-current' : 'border-gray-200'}`}
                       style={favoriteTeamId === team.id ? { borderColor: team.colorPrimary, backgroundColor: team.colorPrimary + '10' } : {}}
                     >
-                      <div
-                        className="w-6 h-6 rounded-full mx-auto mb-1"
-                        style={{ background: `linear-gradient(135deg, ${team.colorPrimary}, ${team.colorSecondary})` }}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://assets.nhle.com/logos/nhl/svg/${team.id}_light.svg`}
+                        alt={team.name}
+                        className="w-8 h-8 mx-auto mb-1 object-contain"
                       />
                       <p className="text-[10px] font-semibold leading-tight" style={favoriteTeamId === team.id ? { color: team.colorPrimary } : { color: '#444' }}>
                         {team.city}<br />{team.name}
