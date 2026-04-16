@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
-    const position = searchParams.get('position')   // C|LW|RW|D|G
+    const position = searchParams.get('position')   // C|LW|RW|D|G|F|FD
     const rawSearch = searchParams.get('search')?.trim()
     const search = rawSearch && rawSearch.length <= 100 ? rawSearch : null
     const draftId = searchParams.get('draftId')     // filter to available players only
+    const teamId = searchParams.get('team')          // filter by team ID
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1)
     const pageSize = 50
 
@@ -17,8 +18,15 @@ export async function GET(request: NextRequest) {
       team: { playoffQualified: true },
     }
 
-    if (position && ['C', 'LW', 'RW', 'D', 'G'].includes(position)) {
+    if (position === 'F') {
+      where.position = { in: ['C', 'LW', 'RW'] }
+    } else if (position === 'FD') {
+      where.position = { in: ['C', 'LW', 'RW', 'D'] }
+    } else if (position && ['C', 'LW', 'RW', 'D', 'G'].includes(position)) {
       where.position = position
+    }
+    if (teamId) {
+      where.teamId = teamId
     }
     if (search) {
       where.name = { contains: search, mode: 'insensitive' }

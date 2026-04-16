@@ -107,6 +107,7 @@ export async function GET(
 
     const positionWhere: Prisma.NhlPlayerWhereInput =
       position === 'F' ? { position: { in: ['C', 'LW', 'RW'] } } :
+      position === 'FD' ? { position: { in: ['C', 'LW', 'RW', 'D'] } } :
       position === 'D' ? { position: 'D' } :
       position === 'G' ? { position: 'G' } :
       {}

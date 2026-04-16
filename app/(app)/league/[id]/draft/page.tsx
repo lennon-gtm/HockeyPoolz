@@ -42,7 +42,9 @@ interface DraftState {
   myColor: string | null
 }
 
-const POSITIONS = ['All', 'C', 'LW', 'RW', 'D', 'G']
+const POSITIONS = ['All', 'F/D', 'F', 'D', 'G', 'C', 'LW', 'RW']
+
+interface NhlTeam { id: string; abbreviation: string; colorPrimary: string }
 
 export default function DraftRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: leagueId } = use(params)
@@ -50,6 +52,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [state, setState] = useState<DraftState | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
   const [posFilter, setPosFilter] = useState('All')
+  const [teamFilter, setTeamFilter] = useState('')
+  const [teams, setTeams] = useState<NhlTeam[]>([])
   const [search, setSearch] = useState('')
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [pickLoading, setPickLoading] = useState(false)
@@ -79,17 +83,19 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const fetchPlayers = useCallback(async () => {
     if (!state?.draft) return
     const token = await getToken()
-    const pos = posFilter !== 'All' ? `&position=${posFilter}` : ''
+    const apiPos = posFilter === 'F/D' ? 'FD' : posFilter
+    const pos = apiPos !== 'All' ? `&position=${apiPos}` : ''
     const q = search ? `&search=${encodeURIComponent(search)}` : ''
+    const team = teamFilter ? `&team=${teamFilter}` : ''
     const res = await fetch(
-      `/api/nhl-players?draftId=${state.draft.id}${pos}${q}`,
+      `/api/nhl-players?draftId=${state.draft.id}${pos}${q}${team}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     if (res.ok) {
       const data = await res.json()
       setPlayers(data.players)
     }
-  }, [state?.draft, posFilter, search])
+  }, [state?.draft, posFilter, search, teamFilter])
 
   // Poll draft state every 5 seconds
   useEffect(() => {
@@ -100,6 +106,21 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
   // Fetch players when draft or filters change
   useEffect(() => { fetchPlayers() }, [fetchPlayers])
+
+  // Load playoff teams for the team filter dropdown
+  useEffect(() => {
+    async function loadTeams() {
+      const token = await getToken()
+      const res = await fetch('/api/nhl-teams?playoffQualified=true', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTeams(data.teams)
+      }
+    }
+    loadTeams()
+  }, [])
 
   // Countdown timer
   useEffect(() => {
@@ -309,7 +330,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1 flex-wrap mb-2">
               {POSITIONS.map(pos => (
                 <button key={pos}
                   onClick={() => setPosFilter(pos)}
@@ -318,6 +339,18 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                 </button>
               ))}
             </div>
+            {teams.length > 0 && (
+              <select
+                value={teamFilter}
+                onChange={e => setTeamFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white"
+              >
+                <option value="">All Teams</option>
+                {teams.map(t => (
+                  <option key={t.id} value={t.id}>{t.abbreviation}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {players.map(player => (
@@ -436,10 +469,12 @@ function PreDraft({
   const [wishlistCount, setWishlistCount] = useState(0)
   const [countdown, setCountdown] = useState('TBD')
   const rankMode = 'scoring'
-  const [rankPos, setRankPos] = useState<'ALL' | 'F' | 'D' | 'G'>('ALL')
+  const [rankPos, setRankPos] = useState<'ALL' | 'F/D' | 'F' | 'D' | 'G'>('ALL')
+  const [rankTeamId, setRankTeamId] = useState('')
   const [rankSearch, setRankSearch] = useState('')
   const [rankPlayers, setRankPlayers] = useState<RankedPlayer[]>([])
   const [rankLoading, setRankLoading] = useState(false)
+  const [preDraftTeams, setPreDraftTeams] = useState<NhlTeam[]>([])
   const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set())
   const [wishlist, setWishlist] = useState<WishlistEntry[]>([])
   const [dragIndex, setDragIndex] = useState<number | null>(null)
@@ -458,6 +493,21 @@ function PreDraft({
     const interval = setInterval(tick, 30000)
     return () => clearInterval(interval)
   }, [draft?.scheduledStartAt])
+
+  useEffect(() => {
+    async function loadTeams() {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch('/api/nhl-teams?playoffQualified=true', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setPreDraftTeams(data.teams)
+      }
+    }
+    loadTeams()
+  }, [])
 
   useEffect(() => {
     async function loadCount() {
@@ -513,9 +563,11 @@ function PreDraft({
       setRankLoading(true)
       const token = await auth.currentUser?.getIdToken()
       if (!token) return
+      const apiRankPos = rankPos === 'F/D' ? 'FD' : rankPos
       const qs = new URLSearchParams({
         mode: rankMode,
-        ...(rankPos !== 'ALL' ? { position: rankPos } : {}),
+        ...(apiRankPos !== 'ALL' ? { position: apiRankPos } : {}),
+        ...(rankTeamId ? { teamId: rankTeamId } : {}),
         ...(rankSearch ? { search: rankSearch } : {}),
       })
       const res = await fetch(`/api/leagues/${leagueId}/draft/rankings?${qs}`, {
@@ -529,7 +581,7 @@ function PreDraft({
     }
     fetchRankings()
     return () => { cancelled = true }
-  }, [leagueId, preDraftTab, rankMode, rankPos, rankSearch])
+  }, [leagueId, preDraftTab, rankMode, rankPos, rankTeamId, rankSearch])
 
   async function toggleAutodraft(enabled: boolean) {
     const token = await auth.currentUser?.getIdToken()
@@ -632,8 +684,8 @@ function PreDraft({
         {preDraftTab === 'rankings' && (
           <div>
             {/* Position + search filters */}
-            <div className="flex gap-2 mb-3 flex-wrap items-center">
-              {(['ALL', 'F', 'D', 'G'] as const).map(p => (
+            <div className="flex gap-2 mb-2 flex-wrap items-center">
+              {(['ALL', 'F/D', 'F', 'D', 'G'] as const).map(p => (
                 <button key={p} onClick={() => setRankPos(p)}
                   className={`px-2.5 py-1 text-xs font-bold rounded transition ${rankPos === p ? 'text-white' : 'bg-[#f8f8f8] text-[#515151] hover:bg-gray-200'}`}
                   style={rankPos === p ? { backgroundColor: myColor } : {}}
@@ -646,6 +698,18 @@ function PreDraft({
                 className="ml-auto border border-[#eeeeee] rounded-lg px-3 py-1 text-xs w-28"
               />
             </div>
+            {preDraftTeams.length > 0 && (
+              <select
+                value={rankTeamId}
+                onChange={e => setRankTeamId(e.target.value)}
+                className="mb-3 w-full border border-[#eeeeee] rounded-lg px-3 py-1.5 text-xs text-[#515151] bg-white"
+              >
+                <option value="">All Teams</option>
+                {preDraftTeams.map(t => (
+                  <option key={t.id} value={t.id}>{t.abbreviation}</option>
+                ))}
+              </select>
+            )}
 
             {/* Table */}
             {rankLoading ? (

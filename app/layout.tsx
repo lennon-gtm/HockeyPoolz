@@ -26,6 +26,12 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   title: "HockeyPoolz",
   description: "NHL playoff fantasy pools",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+  },
 };
 
 export default function RootLayout({
