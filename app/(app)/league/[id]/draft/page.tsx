@@ -24,6 +24,7 @@ interface Pick {
 interface MemberSummary {
   leagueMemberId: string; teamName: string; teamIcon: string | null
   draftPosition: number; pickCount: number; autodraftEnabled: boolean; isCommissioner: boolean
+  colorPrimary: string | null
 }
 interface DraftState {
   draft: {
@@ -58,6 +59,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [pickLoading, setPickLoading] = useState(false)
   const [error, setError] = useState('')
+  const [rightTab, setRightTab] = useState<'mine' | 'board' | 'all'>('mine')
+  const [expandedBoardMember, setExpandedBoardMember] = useState<string | null>(null)
   const [preDraftTab, setPreDraftTab] = useState<'rankings' | 'wishlist'>('rankings')
   const [autodraftEnabled, setAutodraftEnabled] = useState(false)
   const [liveAutodraft, setLiveAutodraft] = useState(false)
@@ -382,43 +385,140 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
           ))}
         </div>
 
-        {/* Right panel: my picks + all picks */}
-        <div className="w-64 overflow-y-auto bg-white">
-          <div className="p-3 border-b border-gray-100">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">My Picks ({myPicks.length})</p>
-            {myPicks.length === 0
-              ? <p className="text-xs text-gray-400">No picks yet</p>
-              : myPicks.map(p => (
-                <div key={p.pickNumber} className="flex items-center gap-2 py-1.5 border-b border-gray-50">
-                  <span className="text-xs text-gray-400 w-5">R{p.round}</span>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <p className="text-xs font-semibold">{p.player.name}</p>
-                      <PositionBadge position={toBucket(p.player.position)} />
-                    </div>
-                    <p className="text-xs text-gray-400">{p.player.teamId}</p>
-                  </div>
-                </div>
-              ))
-            }
-          </div>
+        {/* Right panel: tabbed */}
+        {(() => {
+          const posCounts = { F: 0, D: 0, G: 0 }
+          myPicks.forEach(p => { posCounts[toBucket(p.player.position)]++ })
 
-          <div className="p-3">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">All Picks</p>
-            {picks.slice(-20).reverse().map(p => (
-              <div key={p.pickNumber} className="flex items-start gap-2 py-1.5 border-b border-gray-50">
-                <span className="text-xs text-gray-400 w-10 flex-shrink-0">#{p.pickNumber}</span>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold truncate">{p.player.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{p.teamName}</p>
-                  {p.pickSource !== 'manual' && (
-                    <span className="text-xs text-blue-500 font-bold">AUTO</span>
-                  )}
-                </div>
+          const boardData = members.map(m => {
+            const mPicks = picks.filter(p => p.leagueMemberId === m.leagueMemberId)
+            const counts = { F: 0, D: 0, G: 0 }
+            mPicks.forEach(p => { counts[toBucket(p.player.position)]++ })
+            return { ...m, counts, mPicks }
+          }).sort((a, b) => a.draftPosition - b.draftPosition)
+
+          return (
+            <div className="w-64 flex flex-col bg-white border-l border-gray-100">
+              {/* Tab bar */}
+              <div className="flex border-b border-gray-100 sticky top-0 bg-white z-10 flex-shrink-0">
+                {([['mine', 'Mine'], ['board', 'Board'], ['all', 'All']] as const).map(([key, label]) => (
+                  <button key={key}
+                    onClick={() => setRightTab(key)}
+                    className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition ${
+                      rightTab === key ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+
+              <div className="overflow-y-auto flex-1">
+                {/* ── Mine tab ── */}
+                {rightTab === 'mine' && (
+                  <div className="p-3">
+                    {/* Position breakdown */}
+                    <div className="flex gap-1.5 mb-3">
+                      {(['F', 'D', 'G'] as const).map(pos => (
+                        <div key={pos} className="flex-1 bg-gray-50 rounded-lg py-1.5 text-center border border-gray-100">
+                          <div className="text-sm font-black text-[#121212]">{posCounts[pos]}</div>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase">{pos}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {myPicks.length === 0
+                      ? <p className="text-xs text-gray-400">No picks yet</p>
+                      : myPicks.map(p => (
+                        <div key={p.pickNumber} className="flex items-center gap-2 py-1.5 border-b border-gray-50">
+                          <span className="text-[10px] text-gray-400 w-5 flex-shrink-0">R{p.round}</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs font-semibold truncate">{p.player.name}</p>
+                              <PositionBadge position={toBucket(p.player.position)} />
+                            </div>
+                            <p className="text-[10px] text-gray-400">{p.player.teamId}</p>
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+
+                {/* ── Board tab ── */}
+                {rightTab === 'board' && (
+                  <div className="p-3">
+                    {/* Matrix header */}
+                    <div className="flex items-center pb-1.5 mb-1 border-b border-gray-100">
+                      <span className="flex-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Team</span>
+                      <span className="w-7 text-center text-[9px] font-bold text-gray-400">F</span>
+                      <span className="w-7 text-center text-[9px] font-bold text-gray-400">D</span>
+                      <span className="w-7 text-center text-[9px] font-bold text-gray-400">G</span>
+                    </div>
+                    {boardData.map(m => {
+                      const isMe = m.leagueMemberId === myLeagueMemberId
+                      const expanded = expandedBoardMember === m.leagueMemberId
+                      const color = m.colorPrimary ?? '#FF6B00'
+                      return (
+                        <div key={m.leagueMemberId}>
+                          <button
+                            onClick={() => setExpandedBoardMember(expanded ? null : m.leagueMemberId)}
+                            className="w-full flex items-center py-1.5 border-b border-gray-50 hover:bg-gray-50 transition text-left"
+                          >
+                            <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                              <TeamIcon icon={m.teamIcon} />
+                              <span className={`text-xs truncate ${isMe ? 'font-bold' : 'font-medium'}`}
+                                style={isMe ? { color } : { color: '#121212' }}>
+                                {m.teamName}
+                              </span>
+                            </div>
+                            <span className="w-7 text-center text-xs font-black" style={m.counts.F ? { color } : { color: '#d1d5db' }}>{m.counts.F}</span>
+                            <span className="w-7 text-center text-xs font-black" style={m.counts.D ? { color } : { color: '#d1d5db' }}>{m.counts.D}</span>
+                            <span className="w-7 text-center text-xs font-black" style={m.counts.G ? { color } : { color: '#d1d5db' }}>{m.counts.G}</span>
+                          </button>
+                          {expanded && m.mPicks.length > 0 && (
+                            <div className="pl-4 pb-1 bg-gray-50 border-b border-gray-100">
+                              {m.mPicks.map(p => (
+                                <div key={p.pickNumber} className="flex items-center gap-1.5 py-1">
+                                  <span className="text-[9px] text-gray-400 w-4 flex-shrink-0">#{p.pickNumber}</span>
+                                  <PositionBadge position={toBucket(p.player.position)} />
+                                  <span className="text-[10px] font-semibold text-[#121212] truncate">{p.player.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* ── All picks tab ── */}
+                {rightTab === 'all' && (
+                  <div className="p-3">
+                    {picks.length === 0
+                      ? <p className="text-xs text-gray-400">No picks yet</p>
+                      : [...picks].reverse().map(p => (
+                        <div key={p.pickNumber} className="flex items-start gap-2 py-1.5 border-b border-gray-50">
+                          <span className="text-[10px] text-gray-400 w-8 flex-shrink-0">#{p.pickNumber}</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs font-semibold truncate">{p.player.name}</p>
+                              <PositionBadge position={toBucket(p.player.position)} />
+                            </div>
+                            <p className="text-[10px] text-gray-400 truncate">{p.teamName}</p>
+                            {p.pickSource !== 'manual' && (
+                              <span className="text-[9px] text-blue-500 font-bold">AUTO</span>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
       </div>
       </div>
     </div>

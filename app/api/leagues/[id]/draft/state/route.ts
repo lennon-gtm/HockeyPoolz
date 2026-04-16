@@ -71,6 +71,7 @@ export async function GET(
       pickCount: picks.filter(p => p.leagueMemberId === m.id).length,
       autodraftEnabled: m.autodraftEnabled,
       isCommissioner: league.commissionerId === m.userId,
+      colorPrimary: m.favoriteTeam?.colorPrimary ?? null,
     }))
 
     const myMemberRow = members.find(m => m.id === myMember.id)
