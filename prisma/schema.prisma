@@ -49,6 +49,7 @@ model League {
   scoringSettings     ScoringSettings?
   draft               Draft?
   recaps              Recap[]
+  leagueRecaps        LeagueRecap[]
   pendingJoinRequests PendingJoinRequest[]
 
   @@map("leagues")
@@ -211,6 +212,19 @@ model MemberDailyScore {
 
   @@unique([memberId, gameDate])
   @@map("member_daily_scores")
+}
+
+model LeagueRecap {
+  id         String   @id @default(uuid())
+  leagueId   String   @map("league_id")
+  recapDate  DateTime @db.Date @map("recap_date")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@unique([leagueId, recapDate])
+  @@map("league_recaps")
 }
 
 model NhlTeam {
