@@ -44,8 +44,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
     colorPrimary: string | null
   }[]>([])
   const [myMemberId, setMyMemberId] = useState<string | null>(null)
-  const [recap, setRecap] = useState<{ id: string; recapDate: string; content: string; standingChange: number; createdAt: string } | null>(null)
-  const [recapExpanded, setRecapExpanded] = useState(false)
+  const [leagueRecap, setLeagueRecap] = useState<{ id: string; recapDate: string; content: string; createdAt: string } | null>(null)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -70,11 +69,13 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
             setStandings(standingsData.standings)
             setMyMemberId(standingsData.myMemberId ?? null)
           }
-          // Fetch latest recap
-          const recapRes = await fetch(`/api/leagues/${id}/recaps`, { headers })
-          if (recapRes.ok) {
-            const recapData = await recapRes.json()
-            setRecap(recapData.recap)
+        }
+        // Fetch league bulletin (shown for draft/active/complete leagues)
+        if (leagueData.league.status === 'draft' || leagueData.league.status === 'active' || leagueData.league.status === 'complete') {
+          const leagueRecapRes = await fetch(`/api/leagues/${id}/league-recap`, { headers })
+          if (leagueRecapRes.ok) {
+            const leagueRecapData = await leagueRecapRes.json()
+            setLeagueRecap(leagueRecapData.recap)
           }
         }
       }
@@ -276,38 +277,19 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* Morning Recap card */}
-      {recap && (league.status === 'active' || league.status === 'complete') && (
-        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+      {/* League Bulletin */}
+      {leagueRecap && (league.status === 'draft' || league.status === 'active' || league.status === 'complete') && (
+        <div className="bg-[#fff7ed] rounded-xl border border-[#fed7aa] p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Morning Recap</p>
-              <span className="text-xs text-gray-400">{new Date(recap.recapDate).toLocaleDateString()}</span>
-            </div>
-            {recap.standingChange !== 0 && (
-              <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                recap.standingChange > 0
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              }`}>
-                {recap.standingChange > 0 ? '▲' : '▼'} {Math.abs(recap.standingChange)}
-              </span>
-            )}
+            <span className="text-[9px] font-black tracking-[2px] uppercase text-[#f97316]">📣 League Bulletin</span>
+            <span className="text-[9px] text-[#fb923c] font-semibold">
+              {league.status === 'draft'
+                ? `Draft Day · ${new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+              }
+            </span>
           </div>
-          <div className="text-sm text-gray-700 leading-relaxed">
-            {recapExpanded
-              ? recap.content
-              : recap.content.split('\n\n')[0]
-            }
-          </div>
-          {recap.content.includes('\n\n') && (
-            <button
-              onClick={() => setRecapExpanded(!recapExpanded)}
-              className="text-xs text-orange-500 font-bold mt-2 hover:text-orange-700"
-            >
-              {recapExpanded ? 'Show less' : 'Read more'}
-            </button>
-          )}
+          <p className="text-sm leading-relaxed text-[#431407]">{leagueRecap.content}</p>
         </div>
       )}
 
