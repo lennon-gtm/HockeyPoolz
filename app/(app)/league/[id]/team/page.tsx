@@ -89,7 +89,6 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
   const [players, setPlayers] = useState<RosterPlayer[]>([])
   const [myStanding, setMyStanding] = useState<StandingEntry | null>(null)
   const [recap, setRecap] = useState<Recap | null>(null)
-  const [recapOpen, setRecapOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sortCol, setSortCol] = useState<string>('totalFpts')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -162,19 +161,35 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
+      {/* Personal recap card */}
+      {recap && (
+        <div className="bg-[#f8f8f8] rounded-xl p-4 mb-4 border border-[#eeeeee]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-black tracking-[2px] uppercase text-[#98989e]">Morning Recap</span>
+              <span className="text-[9px] text-[#98989e]">
+                {new Date(recap.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+            {recap.standingChange !== 0 && (
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
+                recap.standingChange > 0 ? 'bg-green-100 text-[#2db944]' : 'bg-red-50 text-[#c8102e]'
+              }`}>
+                {recap.standingChange > 0 ? '▲' : '▼'} {Math.abs(recap.standingChange)}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-[#121212] leading-relaxed">{recap.content}</p>
+        </div>
+      )}
+
       {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-1.5 mb-4">
+      <div className="grid grid-cols-2 gap-1.5 mb-4">
         <StatCard value={rank ? `${rank}${ordinal(rank)}` : '—'} label="Standing" />
         <StatCard
           value={ydTotal !== null ? fmtFpts(ydTotal) : '—'}
           label="Yesterday"
           tone={ydTotal !== null && ydTotal > 0 ? 'positive' : 'default'}
-        />
-        <StatCard
-          value="📰"
-          label="Recap"
-          tone="dark"
-          onClick={recap ? () => setRecapOpen(true) : undefined}
         />
       </div>
 
@@ -267,40 +282,7 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
-      {/* Recap modal */}
-      {recapOpen && recap && (
-        <div
-          className="fixed inset-0 bg-black/60 z-50 flex items-end"
-          onClick={() => setRecapOpen(false)}
-        >
-          <div
-            className="bg-white w-full max-h-[80vh] rounded-t-2xl overflow-y-auto p-5"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 bg-[#eeeeee] rounded mx-auto mb-4" />
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-sm font-black text-[#121212]">Morning Recap</p>
-                <p className="text-xs text-[#98989e]">{new Date(recap.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
-              </div>
-              {recap.standingChange !== 0 && (
-                <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                  recap.standingChange > 0 ? 'bg-green-100 text-[#2db944]' : 'bg-red-50 text-[#c8102e]'
-                }`}>
-                  {recap.standingChange > 0 ? '▲' : '▼'} {Math.abs(recap.standingChange)}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-[#121212] leading-relaxed whitespace-pre-wrap">{recap.content}</p>
-            <button
-              onClick={() => setRecapOpen(false)}
-              className="mt-5 w-full py-3 bg-[#1a1a1a] text-white rounded-xl font-bold text-sm"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }
