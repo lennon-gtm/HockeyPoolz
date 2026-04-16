@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase/client'
 import { TeamSetupForm, type TeamSetupValues } from '@/components/team-setup-form'
 import { RosterSliders, type RosterValues } from '@/components/roster-sliders'
 
-type Step = 'settings' | 'invite' | 'scoring' | 'team-setup'
+type Step = 'settings' | 'scoring' | 'team-setup' | 'invite'
 
 interface CreatedLeague { id: string; inviteCode: string; name: string }
 
@@ -13,16 +13,20 @@ interface ScoringSettings {
   goals: number; assists: number; plusMinus: number; pim: number
   shots: number; goalieWins: number; goalieSaves: number; shutouts: number
   hits: number; blockedShots: number; powerPlayGoals: number; powerPlayPoints: number
-  shorthandedGoals: number; shorthandedPoints: number; gameWinningGoals: number
-  overtimeGoals: number; goalsAgainst: number
+  powerPlayAssists: number; shorthandedGoals: number; shorthandedPoints: number
+  shorthandedAssists: number; gameWinningGoals: number; overtimeGoals: number
+  overtimeAssists: number; goalsAgainst: number; connSmytheTrophy: number
 }
 
 const SKATER_LABELS: Record<string, string> = {
   goals: 'Goals', assists: 'Assists', plusMinus: '+/-', pim: 'Penalty Minutes',
   shots: 'Shots on Goal', hits: 'Hits', blockedShots: 'Blocked Shots',
   powerPlayGoals: 'Power Play Goals', powerPlayPoints: 'Power Play Points',
+  powerPlayAssists: 'Power Play Assists',
   shorthandedGoals: 'Shorthanded Goals', shorthandedPoints: 'Shorthanded Points',
+  shorthandedAssists: 'Shorthanded Assists',
   gameWinningGoals: 'Game-Winning Goals', overtimeGoals: 'Overtime Goals',
+  overtimeAssists: 'Overtime Assists',
 }
 
 const GOALIE_LABELS: Record<string, string> = {
@@ -68,7 +72,7 @@ export default function CreateLeaguePage() {
       if (!res.ok) { setError(data.error); return }
       setLeague(data.league)
       setScoring(data.league.scoringSettings)
-      setStep('invite')
+      setStep('scoring')
     } catch {
       setError('Failed to create league')
     } finally {
@@ -90,6 +94,7 @@ export default function CreateLeaguePage() {
       })
       if (!res.ok) { setError('Failed to save scoring'); return }
       setStep('team-setup')
+
     } catch {
       setError('Failed to save scoring')
     } finally {
@@ -111,7 +116,7 @@ export default function CreateLeaguePage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Failed to create team'); return }
-      router.push(`/league/${league.id}`)
+      setStep('invite')
     } catch {
       setError('Failed to create team')
     } finally {
@@ -133,9 +138,9 @@ export default function CreateLeaguePage() {
     <div className="min-h-screen bg-white p-6 max-w-lg mx-auto">
       <h1 className="text-2xl font-black tracking-widest mb-1">Create League</h1>
       <div className="flex items-center gap-2 mb-6">
-        {(['settings', 'invite', 'scoring', 'team-setup'] as Step[]).map((s, i) => {
-          const labels: Record<Step, string> = { settings: 'League Settings', invite: 'Invite Link', scoring: 'Scoring', 'team-setup': 'Your Team' }
-          const stepIndex = ['settings', 'invite', 'scoring', 'team-setup'].indexOf(step)
+        {(['settings', 'scoring', 'team-setup', 'invite'] as Step[]).map((s, i) => {
+          const labels: Record<Step, string> = { settings: 'League Settings', scoring: 'Scoring', 'team-setup': 'Your Team', invite: 'Invite Link' }
+          const stepIndex = ['settings', 'scoring', 'team-setup', 'invite'].indexOf(step)
           const done = i < stepIndex
           const active = s === step
           return (
@@ -173,8 +178,8 @@ export default function CreateLeaguePage() {
 
       {step === 'invite' && league && (
         <>
-          <h2 className="text-lg font-bold mb-2">League created!</h2>
-          <p className="text-sm text-gray-500 mb-4">Share this link with your friends so they can join.</p>
+          <h2 className="text-lg font-bold mb-2">You&apos;re all set!</h2>
+          <p className="text-sm text-gray-500 mb-4">Share this link to invite friends to your league.</p>
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invite Link</p>
             <p className="text-sm text-gray-600 break-all mb-3">{inviteUrl}</p>
@@ -183,9 +188,9 @@ export default function CreateLeaguePage() {
               {copied ? '✓ Copied!' : 'Copy Link'}
             </button>
           </div>
-          <button onClick={() => setStep('scoring')}
+          <button onClick={() => router.push(`/league/${league.id}`)}
             className="w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition">
-            Configure Scoring →
+            Go to My League →
           </button>
         </>
       )}
@@ -198,10 +203,10 @@ export default function CreateLeaguePage() {
             <div key={field} className="mb-5">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-semibold">{label}</label>
-                <span className="text-sm font-bold text-orange-500">{Number(scoring[field as keyof ScoringSettings]).toFixed(1)} pts</span>
+                <span className="text-sm font-bold text-orange-500">{Number(scoring[field as keyof ScoringSettings]).toFixed(2)} pts</span>
               </div>
               <input
-                type="range" min={0} max={10} step={0.5}
+                type="range" min={0} max={10} step={0.05}
                 value={Number(scoring[field as keyof ScoringSettings])}
                 onChange={e => setScoring(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
                 className="w-full accent-orange-500"
@@ -213,16 +218,30 @@ export default function CreateLeaguePage() {
             <div key={field} className="mb-5">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-semibold">{label}</label>
-                <span className="text-sm font-bold text-orange-500">{Number(scoring[field as keyof ScoringSettings]).toFixed(1)} pts</span>
+                <span className="text-sm font-bold text-orange-500">{Number(scoring[field as keyof ScoringSettings]).toFixed(2)} pts</span>
               </div>
               <input
-                type="range" min={0} max={10} step={0.5}
+                type="range" min={0} max={10} step={0.05}
                 value={Number(scoring[field as keyof ScoringSettings])}
                 onChange={e => setScoring(s => s ? { ...s, [field]: parseFloat(e.target.value) } : s)}
                 className="w-full accent-orange-500"
               />
             </div>
           ))}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-8">Awards</p>
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-semibold">Conn Smythe Trophy</label>
+              <span className="text-sm font-bold text-orange-500">{Number(scoring.connSmytheTrophy).toFixed(2)} pts</span>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">One-time bonus awarded to the playoff MVP winner</p>
+            <input
+              type="range" min={0} max={50} step={0.05}
+              value={Number(scoring.connSmytheTrophy)}
+              onChange={e => setScoring(s => s ? { ...s, connSmytheTrophy: parseFloat(e.target.value) } : s)}
+              className="w-full accent-orange-500"
+            />
+          </div>
           <button onClick={saveScoring} disabled={loading}
             className="w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-40 mt-2">
             {loading ? 'Saving…' : 'Next: Set Up Your Team →'}
