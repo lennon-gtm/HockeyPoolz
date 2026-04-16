@@ -1,7 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/sync-stats", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/sync-stats", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/sync-stats", "schedule": "0 3 * * *" },
     { "path": "/api/cron/generate-recaps", "schedule": "30 11 * * *" }
   ]
 }

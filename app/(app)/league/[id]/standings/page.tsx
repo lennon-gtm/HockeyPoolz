@@ -79,9 +79,12 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
         <h1 className="text-xl font-black tracking-tight text-[#121212]">Standings</h1>
         <p className="text-xs text-[#98989e] font-semibold mt-0.5">Through {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
       </div>
-      {lastUpdated && (
-        <p className="text-[10px] text-[#98989e] mb-4">Last updated: {lastUpdated}</p>
-      )}
+      <div className="mb-4">
+        {lastUpdated && (
+          <p className="text-[10px] text-[#98989e]">Last updated: {lastUpdated}</p>
+        )}
+        <p className="text-[10px] text-[#98989e] mt-0.5">Stats update nightly at 11:00 PM and 2:00 AM ET</p>
+      </div>
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       {myStanding && (
