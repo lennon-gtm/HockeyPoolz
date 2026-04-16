@@ -34,7 +34,7 @@ One record per league per day. Separate from the existing per-member `Recap` mod
 
 ---
 
-## 2. Generation
+## 2. Generation — Active Season Bulletin
 
 ### Trigger
 
@@ -50,9 +50,7 @@ Assembled from existing tables — no new data collection:
 
 - Full standings: `LeagueMember` ordered by `totalScore` desc (team name, rank, total score)
 - Yesterday's scores: `MemberDailyScore` where `gameDate = yesterday`, joined to `LeagueMember` (team name, fpts)
-- Rank movement: compare each member's current rank to their rank in the most recent prior `LeagueRecap` context (stored as a JSON standings snapshot, or derived by comparing current standings to standings implied by the previous `LeagueRecap` generation date's scores)
-
-Simplification: rank movement is derived by sorting yesterday's full standings vs today's — no separate snapshot table needed.
+- Rank movement: derived by comparing yesterday's scores to determine who moved up or down — no separate snapshot needed
 
 ### Prompt
 
@@ -67,6 +65,47 @@ Simplification: rank movement is derived by sorting yesterday's full standings v
 ### Output
 
 150–200 words. Stored in `LeagueRecap.content`.
+
+---
+
+## 2b. Generation — Draft Day Bulletin
+
+### Trigger
+
+Generated once when the draft status transitions to `active` (commissioner hits Start Draft). Called inline from the existing `PATCH /api/leagues/[id]/draft` → `{ action: 'start' }` endpoint, after the draft record is updated.
+
+### Skip logic
+
+Only generate if no `LeagueRecap` record already exists for this league with `recapDate = today`. Prevents duplicate generation on retry.
+
+### Input data
+
+- League name
+- All team names in draft order (`LeagueMember` ordered by `draftPosition` asc)
+- Total number of teams
+
+No game stats — the pool hasn't started yet.
+
+### Prompt
+
+**System prompt:**
+> You are the host of a fantasy hockey radio show on draft day. You are loud, funny, and ruthless. Riff on the team names — find the humor, the hubris, the delusion. Build anticipation for the pool. Keep it under 150 words, punchy, one paragraph. No filler. End with a hype line to kick things off.
+
+**User prompt includes:**
+1. League name
+2. Team names in draft order (numbered list)
+
+### Example output
+
+> It's finally here. Eight teams, one Stanley Cup, and absolutely zero chill. **GrindersUnited** — love the blue-collar energy, truly, but this is a fantasy pool and grinding rarely pays the bills. **IceQueenFC** sounds dominant until you realise the queen hasn't won anything since 2019. **PuckDaddyFC**… the "FC" is really doing some heavy lifting there, champ. And **BobsTeam** — bold choice, going with your own name. The confidence is either inspiring or a cry for help, we genuinely can't tell. May your draft boards be kind and your injury luck be kinder. Let's get this pool started. 🏒
+
+### Output
+
+Under 150 words. Stored in `LeagueRecap.content` with `recapDate = today`.
+
+### UI
+
+The League Bulletin card displays during `draft` status as well as `active` and `complete`. Header shows `Draft Day · {date}` instead of just the date.
 
 ---
 
@@ -99,10 +138,12 @@ Returns `{ "recap": null }` if no recap exists yet.
 - **Add:** `LEAGUE BULLETIN` card in its place
 
 Card design:
-- Header: `LEAGUE BULLETIN` label (all-caps, orange) + recap date
+- Header: `📣 LEAGUE BULLETIN` label (all-caps, orange) + date label
+  - Active/complete: shows recap date (e.g. `April 15, 2026`)
+  - Draft day: shows `Draft Day · {date}`
 - Body: AI-generated text, shown in full (no collapse — it's short enough)
-- Card background: `#fff7ed` (light orange tint, same as the RS pill accent)
-- Only shown when league status is `active` or `completed`
+- Card background: `#fff7ed` (light orange tint), border: `#fed7aa`
+- Shown when league status is `draft`, `active`, or `complete`
 
 ### My Team Page (`/league/[id]/team`)
 
@@ -120,9 +161,10 @@ Card design:
 - `app/api/leagues/[id]/league-recap/route.ts` — GET endpoint
 
 **Modified files:**
-- `lib/recap-service.ts` — add `generateLeagueRecap(leagueId)` function
+- `lib/recap-service.ts` — add `generateLeagueRecap(leagueId)` and `generateDraftDayBulletin(leagueId)` functions
 - `app/api/cron/generate-recaps/route.ts` — call `generateLeagueRecap` per league
-- `app/(app)/league/[id]/page.tsx` — swap personal recap card for league bulletin card
+- `app/api/leagues/[id]/draft/route.ts` — call `generateDraftDayBulletin` when draft transitions to `active`
+- `app/(app)/league/[id]/page.tsx` — swap personal recap card for league bulletin card (shown in draft, active, complete states)
 - `app/(app)/league/[id]/team/page.tsx` — add personal recap card at top
 
 ---
@@ -130,5 +172,7 @@ Card design:
 ## 6. Testing
 
 - Unit test `buildLeagueRecapPrompt()` with fixture standings and daily scores
-- Verify skip logic: no `MemberDailyScore` records → no recap generated
+- Unit test `buildDraftDayPrompt()` with fixture team names — verify all team names appear in assembled prompt
+- Verify active season skip logic: no `MemberDailyScore` records → no recap generated
+- Verify draft day skip logic: existing `LeagueRecap` for today → no duplicate generated
 - No Claude API mocking — test prompt assembly only
