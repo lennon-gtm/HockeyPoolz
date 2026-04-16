@@ -39,12 +39,14 @@ model League {
   inviteCode     String       @unique @map("invite_code")
   status         LeagueStatus @default(setup)
   maxTeams       Int          @map("max_teams")
-  rosterForwards Int          @default(9) @map("roster_forwards")
-  rosterDefense  Int          @default(4) @map("roster_defense")
-  rosterGoalies  Int          @default(2) @map("roster_goalies")
-  createdAt      DateTime     @default(now()) @map("created_at")
+  rosterForwards     Int          @default(9) @map("roster_forwards")
+  rosterDefense      Int          @default(4) @map("roster_defense")
+  rosterGoalies      Int          @default(2) @map("roster_goalies")
+  connSmytheWinnerId Int?         @map("conn_smythe_winner_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
 
   commissioner        User             @relation("Commissioner", fields: [commissionerId], references: [id])
+  connSmytheWinner    NhlPlayer?       @relation("ConnSmytheWinner", fields: [connSmytheWinnerId], references: [id])
   members             LeagueMember[]
   scoringSettings     ScoringSettings?
   draft               Draft?
@@ -114,9 +116,13 @@ model ScoringSettings {
   powerPlayPoints   Decimal @default(0.0) @db.Decimal(5, 2) @map("power_play_points")
   shorthandedGoals  Decimal @default(0.0) @db.Decimal(5, 2) @map("shorthanded_goals")
   shorthandedPoints Decimal @default(0.0) @db.Decimal(5, 2) @map("shorthanded_points")
-  gameWinningGoals  Decimal @default(1.0) @db.Decimal(5, 2) @map("game_winning_goals")
-  overtimeGoals     Decimal @default(1.0) @db.Decimal(5, 2) @map("overtime_goals")
-  goalsAgainst      Decimal @default(0.0) @db.Decimal(5, 2) @map("goals_against")
+  gameWinningGoals   Decimal @default(1.0) @db.Decimal(5, 2) @map("game_winning_goals")
+  overtimeGoals      Decimal @default(1.0) @db.Decimal(5, 2) @map("overtime_goals")
+  overtimeAssists    Decimal @default(0.0) @db.Decimal(5, 2) @map("overtime_assists")
+  powerPlayAssists   Decimal @default(0.0) @db.Decimal(5, 2) @map("power_play_assists")
+  shorthandedAssists Decimal @default(0.0) @db.Decimal(5, 2) @map("shorthanded_assists")
+  connSmytheTrophy   Decimal @default(0.0) @db.Decimal(5, 2) @map("conn_smythe_trophy")
+  goalsAgainst       Decimal @default(0.0) @db.Decimal(5, 2) @map("goals_against")
 
   league League @relation(fields: [leagueId], references: [id])
 
@@ -286,10 +292,11 @@ model NhlPlayer {
   adp         Decimal?  @db.Decimal(6, 2)
   isActive    Boolean   @default(true) @map("is_active")
 
-  team            NhlTeam            @relation(fields: [teamId], references: [id])
-  gameStats       PlayerGameStats[]
-  draftPicks      DraftPick[]
-  wishlistEntries AutodraftWishlist[]
+  team              NhlTeam            @relation(fields: [teamId], references: [id])
+  gameStats         PlayerGameStats[]
+  draftPicks        DraftPick[]
+  wishlistEntries   AutodraftWishlist[]
+  connSmytheLeagues League[]           @relation("ConnSmytheWinner")
 
   @@map("nhl_players")
 }
@@ -324,6 +331,7 @@ model PlayerGameStats {
   shorthandedPoints Int      @default(0) @map("shorthanded_points")
   gameWinningGoals  Int      @default(0) @map("game_winning_goals")
   overtimeGoals     Int      @default(0) @map("overtime_goals")
+  overtimeAssists   Int      @default(0) @map("overtime_assists")
   savePct           Decimal  @default(0) @db.Decimal(5, 4) @map("save_pct")
 
   player NhlPlayer @relation(fields: [playerId], references: [id])

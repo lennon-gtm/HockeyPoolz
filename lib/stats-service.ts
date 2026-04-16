@@ -19,10 +19,13 @@ export interface GameStats {
   blockedShots: number
   powerPlayGoals: number
   powerPlayPoints: number
+  powerPlayAssists: number
   shorthandedGoals: number
   shorthandedPoints: number
+  shorthandedAssists: number
   gameWinningGoals: number
   overtimeGoals: number
+  overtimeAssists: number
   goalieWins: number
   goalieSaves: number
   shutouts: number
@@ -39,10 +42,13 @@ export interface ScoringWeights {
   blockedShots: number
   powerPlayGoals: number
   powerPlayPoints: number
+  powerPlayAssists: number
   shorthandedGoals: number
   shorthandedPoints: number
+  shorthandedAssists: number
   gameWinningGoals: number
   overtimeGoals: number
+  overtimeAssists: number
   goalieWins: number
   goalieSaves: number
   shutouts: number
@@ -69,10 +75,13 @@ export function calculatePlayerScore(stats: GameStats, weights: ScoringWeights):
     stats.blockedShots * weights.blockedShots +
     stats.powerPlayGoals * weights.powerPlayGoals +
     stats.powerPlayPoints * weights.powerPlayPoints +
+    stats.powerPlayAssists * weights.powerPlayAssists +
     stats.shorthandedGoals * weights.shorthandedGoals +
     stats.shorthandedPoints * weights.shorthandedPoints +
+    stats.shorthandedAssists * weights.shorthandedAssists +
     stats.gameWinningGoals * weights.gameWinningGoals +
     stats.overtimeGoals * weights.overtimeGoals +
+    stats.overtimeAssists * weights.overtimeAssists +
     stats.goalieWins * weights.goalieWins +
     stats.goalieSaves * weights.goalieSaves +
     stats.shutouts * weights.shutouts -
@@ -130,6 +139,31 @@ interface NhlGameLogEntry {
   goalsAgainst?: number
   shutouts?: number
   decision?: string
+}
+
+/** Fetch OT assists from a game's play-by-play. Returns Map<playerId, assistCount>. */
+async function fetchOTAssists(gameId: number): Promise<Map<number, number>> {
+  try {
+    const res = await fetch(`${NHL_API_BASE}/gamecenter/${gameId}/play-by-play`)
+    if (!res.ok) return new Map()
+    const data = await res.json()
+    const otAssists = new Map<number, number>()
+    for (const play of data.plays ?? []) {
+      if (play.typeDescKey === 'goal' && play.periodDescriptor?.periodType === 'OT') {
+        if (play.details?.assist1PlayerId) {
+          const id = play.details.assist1PlayerId
+          otAssists.set(id, (otAssists.get(id) ?? 0) + 1)
+        }
+        if (play.details?.assist2PlayerId) {
+          const id = play.details.assist2PlayerId
+          otAssists.set(id, (otAssists.get(id) ?? 0) + 1)
+        }
+      }
+    }
+    return otAssists
+  } catch {
+    return new Map()
+  }
 }
 
 /** Fetch completed playoff games for a given date. */
@@ -302,10 +336,14 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
 
   for (const game of games) {
     try {
-      const { skaters, goalies } = await fetchBoxScore(game.id)
+      const [{ skaters, goalies }, otAssistMap] = await Promise.all([
+        fetchBoxScore(game.id),
+        fetchOTAssists(game.id),
+      ])
 
       // Upsert skater stats from box score
       for (const s of skaters) {
+        const otA = otAssistMap.get(s.playerId) ?? 0
         await prisma.playerGameStats.upsert({
           where: { playerId_gameId: { playerId: s.playerId, gameId: String(game.id) } },
           update: {
@@ -317,6 +355,7 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
             hits: s.hits ?? 0,
             blockedShots: s.blockedShots ?? 0,
             powerPlayGoals: s.powerPlayGoals ?? 0,
+            overtimeAssists: otA,
           },
           create: {
             playerId: s.playerId,
@@ -330,6 +369,7 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
             hits: s.hits ?? 0,
             blockedShots: s.blockedShots ?? 0,
             powerPlayGoals: s.powerPlayGoals ?? 0,
+            overtimeAssists: otA,
           },
         })
         result.playersUpdated++
@@ -439,10 +479,13 @@ export async function writeMemberDailyScores(leagueId: string, date: string): Pr
     blockedShots: Number(settings.blockedShots),
     powerPlayGoals: Number(settings.powerPlayGoals),
     powerPlayPoints: Number(settings.powerPlayPoints),
+    powerPlayAssists: Number(settings.powerPlayAssists),
     shorthandedGoals: Number(settings.shorthandedGoals),
     shorthandedPoints: Number(settings.shorthandedPoints),
+    shorthandedAssists: Number(settings.shorthandedAssists),
     gameWinningGoals: Number(settings.gameWinningGoals),
     overtimeGoals: Number(settings.overtimeGoals),
+    overtimeAssists: Number(settings.overtimeAssists),
     goalieWins: Number(settings.goalieWins),
     goalieSaves: Number(settings.goalieSaves),
     shutouts: Number(settings.shutouts),
@@ -488,10 +531,13 @@ export async function writeMemberDailyScores(leagueId: string, date: string): Pr
           blockedShots: gs.blockedShots,
           powerPlayGoals: gs.powerPlayGoals,
           powerPlayPoints: gs.powerPlayPoints,
+          powerPlayAssists: gs.powerPlayPoints - gs.powerPlayGoals,
           shorthandedGoals: gs.shorthandedGoals,
           shorthandedPoints: gs.shorthandedPoints,
+          shorthandedAssists: gs.shorthandedPoints - gs.shorthandedGoals,
           gameWinningGoals: gs.gameWinningGoals,
           overtimeGoals: gs.overtimeGoals,
+          overtimeAssists: gs.overtimeAssists,
           goalieWins: gs.goalieWins,
           goalieSaves: gs.goalieSaves,
           shutouts: gs.shutouts,
@@ -514,7 +560,10 @@ export async function writeMemberDailyScores(leagueId: string, date: string): Pr
 
 /** Recalculate scores for all members in a league. */
 export async function recalculateScores(leagueId: string): Promise<void> {
-  const settings = await prisma.scoringSettings.findUnique({ where: { leagueId } })
+  const [settings, league] = await Promise.all([
+    prisma.scoringSettings.findUnique({ where: { leagueId } }),
+    prisma.league.findUnique({ where: { id: leagueId }, select: { connSmytheWinnerId: true } }),
+  ])
   if (!settings) return
 
   const weights: ScoringWeights = {
@@ -527,15 +576,21 @@ export async function recalculateScores(leagueId: string): Promise<void> {
     blockedShots: Number(settings.blockedShots),
     powerPlayGoals: Number(settings.powerPlayGoals),
     powerPlayPoints: Number(settings.powerPlayPoints),
+    powerPlayAssists: Number(settings.powerPlayAssists),
     shorthandedGoals: Number(settings.shorthandedGoals),
     shorthandedPoints: Number(settings.shorthandedPoints),
+    shorthandedAssists: Number(settings.shorthandedAssists),
     gameWinningGoals: Number(settings.gameWinningGoals),
     overtimeGoals: Number(settings.overtimeGoals),
+    overtimeAssists: Number(settings.overtimeAssists),
     goalieWins: Number(settings.goalieWins),
     goalieSaves: Number(settings.goalieSaves),
     shutouts: Number(settings.shutouts),
     goalsAgainst: Number(settings.goalsAgainst),
   }
+
+  const connSmytheBonus = Number(settings.connSmytheTrophy)
+  const connSmytheWinnerId = league?.connSmytheWinnerId ?? null
 
   const members = await prisma.leagueMember.findMany({
     where: { leagueId },
@@ -573,10 +628,13 @@ export async function recalculateScores(leagueId: string): Promise<void> {
           blockedShots: gs.blockedShots,
           powerPlayGoals: gs.powerPlayGoals,
           powerPlayPoints: gs.powerPlayPoints,
+          powerPlayAssists: gs.powerPlayPoints - gs.powerPlayGoals,
           shorthandedGoals: gs.shorthandedGoals,
           shorthandedPoints: gs.shorthandedPoints,
+          shorthandedAssists: gs.shorthandedPoints - gs.shorthandedGoals,
           gameWinningGoals: gs.gameWinningGoals,
           overtimeGoals: gs.overtimeGoals,
+          overtimeAssists: gs.overtimeAssists,
           goalieWins: gs.goalieWins,
           goalieSaves: gs.goalieSaves,
           shutouts: gs.shutouts,
@@ -585,7 +643,13 @@ export async function recalculateScores(leagueId: string): Promise<void> {
       }
     }
 
-    const totalScore = calculateMemberScore(allGameStats, weights)
+    let totalScore = calculateMemberScore(allGameStats, weights)
+
+    // Conn Smythe bonus: add once if the winner is on this member's roster
+    if (connSmytheWinnerId && connSmytheBonus > 0) {
+      const hasWinner = member.draftPicks.some(p => p.playerId === connSmytheWinnerId)
+      if (hasWinner) totalScore += connSmytheBonus
+    }
 
     await prisma.leagueMember.update({
       where: { id: member.id },

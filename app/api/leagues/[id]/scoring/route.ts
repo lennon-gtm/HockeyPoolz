@@ -36,9 +36,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const allowedFields = [
       'goals', 'assists', 'plusMinus', 'pim', 'shots',
       'goalieWins', 'goalieSaves', 'shutouts',
-      'hits', 'blockedShots', 'powerPlayGoals', 'powerPlayPoints',
-      'shorthandedGoals', 'shorthandedPoints', 'gameWinningGoals',
-      'overtimeGoals', 'goalsAgainst',
+      'hits', 'blockedShots', 'powerPlayGoals', 'powerPlayPoints', 'powerPlayAssists',
+      'shorthandedGoals', 'shorthandedPoints', 'shorthandedAssists',
+      'gameWinningGoals', 'overtimeGoals', 'overtimeAssists',
+      'connSmytheTrophy', 'goalsAgainst',
     ]
     const updates: Record<string, number> = {}
 

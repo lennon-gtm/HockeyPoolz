@@ -26,9 +26,11 @@ const ctx = (id: string, memberId: string) => ({
 
 const SCORING = {
   goals: 2, assists: 1.5, plusMinus: 0.5, pim: 0, shots: 0.1,
-  hits: 0, blockedShots: 0, powerPlayGoals: 0.5, powerPlayPoints: 0,
-  shorthandedGoals: 0, shorthandedPoints: 0, gameWinningGoals: 1,
-  overtimeGoals: 1, goalieWins: 3, goalieSaves: 0.2, shutouts: 5, goalsAgainst: 0,
+  hits: 0, blockedShots: 0,
+  powerPlayGoals: 0.5, powerPlayPoints: 0, powerPlayAssists: 0,
+  shorthandedGoals: 0, shorthandedPoints: 0, shorthandedAssists: 0,
+  gameWinningGoals: 1, overtimeGoals: 1, overtimeAssists: 0,
+  goalieWins: 3, goalieSaves: 0.2, shutouts: 5, goalsAgainst: 0,
 }
 
 describe('GET /api/leagues/[id]/members/[memberId]/roster', () => {
@@ -59,7 +61,8 @@ describe('GET /api/leagues/[id]/members/[memberId]/roster', () => {
                   goals: 1, assists: 2, plusMinus: 1, pim: 0, shots: 4,
                   hits: 0, blockedShots: 0, powerPlayGoals: 1, powerPlayPoints: 1,
                   shorthandedGoals: 0, shorthandedPoints: 0, gameWinningGoals: 0,
-                  overtimeGoals: 0, goalieWins: 0, goalieSaves: 0, shutouts: 0,
+                  overtimeGoals: 0, overtimeAssists: 0,
+                  goalieWins: 0, goalieSaves: 0, shutouts: 0,
                   goalsAgainst: 0, savePct: 0,
                 },
               ],
