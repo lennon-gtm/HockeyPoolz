@@ -86,11 +86,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#fffaf5', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#0d0d0d', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}>
 
       {/* ── Header ── */}
       <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 48px' }}>
-        <span style={{ fontFamily: 'var(--font-fredoka, Fredoka, sans-serif)', fontSize: 26, fontWeight: 600, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <span style={{ fontFamily: 'var(--font-bebas, "Bebas Neue", sans-serif)', fontSize: 32, fontWeight: 400, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.5)', letterSpacing: '1px' }}>
           HockeyPoolz
         </span>
         <nav>
@@ -103,12 +103,12 @@ export default function LoginPage() {
       {/* ── Hero ── */}
       <section style={{
         flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', minHeight: 0,
-        backgroundImage: 'url(/hero-bg.jpg)',
+        backgroundImage: 'url(/bell-center-fire.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center top',
       }}>
-        {/* Left-to-right fade overlay */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,250,245,0.88) 0%, rgba(255,250,245,0.75) 20%, rgba(255,250,245,0.00) 45%)' }} />
+        {/* Dark overlay — solid left fading to transparent right */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.70) 25%, rgba(0,0,0,0.20) 55%, rgba(0,0,0,0.00) 75%)' }} />
 
         {/* Content */}
         <div style={{ position: 'relative', zIndex: 2, padding: '72px 52px 32px', maxWidth: 520 }}>
@@ -121,15 +121,15 @@ export default function LoginPage() {
           </div>
 
           {/* Heading */}
-          <h1 style={{ fontFamily: 'var(--font-fredoka, Fredoka, sans-serif)', fontSize: 'clamp(36px, 4.5vw, 58px)', fontWeight: 600, lineHeight: 1.08, color: '#1a1a1a', marginBottom: 14 }}>
+          <h1 style={{ fontFamily: 'var(--font-bebas, "Bebas Neue", sans-serif)', fontSize: 'clamp(48px, 6vw, 80px)', fontWeight: 400, lineHeight: 1.0, color: '#ffffff', marginBottom: 14, letterSpacing: '1px' }}>
             Your Pool.<br />
             Your Players.<br />
-            Your <span style={{ color: '#d4a017' }}>Nonna.</span>
+            Your <span style={{ color: '#f97316' }}>Glory.</span>
           </h1>
 
           {/* Subtext */}
-          <p style={{ fontSize: 15, fontWeight: 500, color: '#555', lineHeight: 1.6, marginBottom: 24, maxWidth: 380 }}>
-            Pick your NHL playoff roster, compete with friends, and track every goal live.
+          <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.80)', lineHeight: 1.6, marginBottom: 24, maxWidth: 380 }}>
+            Pick your NHL playoff roster, compete with friends, and get play by play updates straight to your phone.
           </p>
 
           {/* Error */}

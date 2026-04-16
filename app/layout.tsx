@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Fredoka, Nunito } from "next/font/google";
+import { Inter, Fredoka, Nunito, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -23,6 +23,13 @@ const nunito = Nunito({
   variable: "--font-nunito",
 });
 
+const bebasNeue = Bebas_Neue({
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+  variable: "--font-bebas",
+});
+
 export const metadata: Metadata = {
   title: "HockeyPoolz",
   description: "NHL playoff fantasy pools",
@@ -40,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${fredoka.variable} ${nunito.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${fredoka.variable} ${nunito.variable} ${bebasNeue.variable} h-full antialiased`}>
       <body className="font-sans min-h-full flex flex-col">{children}</body>
     </html>
   );

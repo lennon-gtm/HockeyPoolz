@@ -48,3 +48,5 @@ next-env.d.ts
 
 # worktrees
 .worktrees/
+
+.env*.local
