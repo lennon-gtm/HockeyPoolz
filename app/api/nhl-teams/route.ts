@@ -6,7 +6,11 @@ export async function GET(request: NextRequest) {
     const playoffOnly = request.nextUrl.searchParams.get('playoffQualified') !== 'false'
     const teams = await prisma.nhlTeam.findMany({
       where: playoffOnly ? { playoffQualified: true } : undefined,
-      select: { id: true, name: true, abbreviation: true, colorPrimary: true },
+      select: {
+        id: true, name: true, city: true, abbreviation: true,
+        conference: true, division: true,
+        colorPrimary: true, colorSecondary: true,
+      },
       orderBy: { abbreviation: 'asc' },
     })
     return NextResponse.json({ teams })

@@ -38,7 +38,7 @@ export function TeamSetupForm({ initialValues, submitLabel, loading, onSubmit }:
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetch('/api/nhl-teams').then(r => r.json()).then(d => setNhlTeams(d.teams ?? []))
+    fetch('/api/nhl-teams?playoffQualified=false').then(r => r.json()).then(d => setNhlTeams(d.teams ?? []))
   }, [])
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
