@@ -66,6 +66,24 @@ export interface DraftDayPromptInput {
 
 const SYSTEM_PROMPT = `You are a sportscaster for a fantasy hockey playoff pool called HockeyPoolz. Write a 2-3 paragraph personalized morning recap for a participant. Be enthusiastic, slightly irreverent, and include friendly trash talk about other teams in the league. Reference specific players and stats. Keep it under 200 words.`
 
+const LEAGUE_SYSTEM_PROMPT = `You are the host of a fantasy hockey radio show. You are loud, funny, and ruthless. You celebrate winners by name, and you roast the worst performers specifically and mercilessly — use their actual team name, their actual point total from yesterday, and make it sting. Keep it playful, never mean-spirited. 2–3 paragraphs, under 200 words.`
+
+const DRAFT_DAY_SYSTEM_PROMPT = `You are the host of a fantasy hockey radio show on draft day. You are loud, funny, and ruthless. Riff on the team names — find the humor, the hubris, the delusion. Build anticipation for the pool. Keep it under 150 words, punchy, one paragraph. No filler. End with a hype line to kick things off.`
+
+/** Generic Claude call — allows custom system prompt and token limit. */
+async function callClaude(systemPrompt: string, userPrompt: string, maxTokens: number): Promise<string> {
+  const client = new Anthropic()
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+  })
+  const block = response.content[0]
+  if (block.type !== 'text') throw new Error('Unexpected response type from Claude API')
+  return block.text
+}
+
 // --- Pure functions ---
 
 function ordinal(n: number): string {
@@ -136,18 +154,7 @@ export function buildDraftDayPrompt(input: DraftDayPromptInput): string {
 
 /** Generate recap text using Claude API. */
 export async function generateRecapText(userPrompt: string): Promise<string> {
-  const client = new Anthropic()
-
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 400,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: userPrompt }],
-  })
-
-  const block = response.content[0]
-  if (block.type !== 'text') throw new Error('Unexpected response type from Claude API')
-  return block.text
+  return callClaude(SYSTEM_PROMPT, userPrompt, 400)
 }
 
 // --- Orchestration ---
@@ -309,4 +316,93 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
   }
 
   return result
+}
+
+/** Generate the league-wide daily bulletin and store it. Skips if no games yesterday. */
+export async function generateLeagueRecap(leagueId: string): Promise<void> {
+  const yesterday = new Date()
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const yesterdayDate = new Date(yesterdayStr)
+
+  // Skip if no daily scores exist for yesterday
+  const scoreCount = await prisma.memberDailyScore.count({
+    where: { member: { leagueId }, gameDate: yesterdayDate },
+  })
+  if (scoreCount === 0) return
+
+  // Skip if already generated today
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayDate = new Date(todayStr)
+  const existing = await prisma.leagueRecap.findUnique({
+    where: { leagueId_recapDate: { leagueId, recapDate: todayDate } },
+  })
+  if (existing) return
+
+  const league = await prisma.league.findUnique({ where: { id: leagueId }, select: { name: true } })
+  if (!league) return
+
+  const [dailyScoreRows, memberRows] = await Promise.all([
+    prisma.memberDailyScore.findMany({
+      where: { member: { leagueId }, gameDate: yesterdayDate },
+      include: { member: { select: { teamName: true } } },
+      orderBy: { fpts: 'desc' },
+    }),
+    prisma.leagueMember.findMany({
+      where: { leagueId },
+      orderBy: { totalScore: 'desc' },
+      select: { teamName: true, totalScore: true },
+    }),
+  ])
+
+  const dailyScores: DailyScore[] = dailyScoreRows.map(r => ({
+    teamName: r.member.teamName,
+    fpts: Number(r.fpts),
+  }))
+
+  const standings: StandingEntry[] = memberRows.map((m, i) => ({
+    rank: i + 1,
+    teamName: m.teamName,
+    userName: '',
+    totalScore: Number(m.totalScore),
+  }))
+
+  const userPrompt = buildLeagueRecapPrompt({ leagueName: league.name, dailyScores, standings })
+  const content = await callClaude(LEAGUE_SYSTEM_PROMPT, userPrompt, 500)
+
+  await prisma.leagueRecap.create({
+    data: { leagueId, recapDate: todayDate, content },
+  })
+}
+
+/** Generate a draft-day roast bulletin when the draft goes live. */
+export async function generateDraftDayBulletin(leagueId: string): Promise<void> {
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayDate = new Date(todayStr)
+
+  // Skip if already generated today (idempotent)
+  const existing = await prisma.leagueRecap.findUnique({
+    where: { leagueId_recapDate: { leagueId, recapDate: todayDate } },
+  })
+  if (existing) return
+
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { name: true },
+  })
+  if (!league) return
+
+  const members = await prisma.leagueMember.findMany({
+    where: { leagueId },
+    orderBy: { draftPosition: 'asc' },
+    select: { teamName: true },
+  })
+
+  const teams = members.map(m => m.teamName)
+  const userPrompt = buildDraftDayPrompt({ leagueName: league.name, teams })
+  const content = await callClaude(DRAFT_DAY_SYSTEM_PROMPT, userPrompt, 350)
+
+  await prisma.leagueRecap.create({
+    data: { leagueId, recapDate: todayDate, content },
+  })
 }
