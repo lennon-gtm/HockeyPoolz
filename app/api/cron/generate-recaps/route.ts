@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateLeagueRecaps, generateLeagueRecap } from '@/lib/recap-service'
+import { generateLeagueScoreSummaries } from '@/lib/scores-service'
 
 export async function POST(request: NextRequest) {
   // Verify cron secret
@@ -24,6 +25,15 @@ export async function POST(request: NextRequest) {
         await generateLeagueRecap(league.id)
       } catch (err) {
         result.errors.push(`League recap failed: ${err}`)
+      }
+      // Generate yesterday's game summaries
+      const yesterday = new Date()
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split('T')[0]
+      try {
+        await generateLeagueScoreSummaries(league.id, yesterdayStr)
+      } catch (err) {
+        result.errors.push(`Scores summary failed: ${err}`)
       }
       results.push({ leagueId: league.id, leagueName: league.name, ...result })
     }
