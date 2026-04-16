@@ -116,10 +116,11 @@ export function TeamSetupForm({ initialValues, submitLabel, loading, onSubmit }:
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="w-full py-2 mb-2 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:border-orange-400 disabled:opacity-50"
+        className="w-full py-2 mb-1 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:border-orange-400 disabled:opacity-50"
       >
         {uploading ? 'Uploading…' : '📷 Upload Custom Icon'}
       </button>
+      <p className="text-[10px] text-gray-400 text-center mb-2">PNG, JPG, GIF or WEBP · max 2 MB</p>
       <input
         ref={fileInputRef}
         type="file"
