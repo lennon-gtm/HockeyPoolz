@@ -46,6 +46,22 @@ export interface RecapGenerationResult {
   errors: string[]
 }
 
+export interface DailyScore {
+  teamName: string
+  fpts: number
+}
+
+export interface LeagueRecapPromptInput {
+  leagueName: string
+  dailyScores: DailyScore[]   // sorted best to worst
+  standings: StandingEntry[]
+}
+
+export interface DraftDayPromptInput {
+  leagueName: string
+  teams: string[]   // in draft order
+}
+
 // --- Constants ---
 
 const SYSTEM_PROMPT = `You are a sportscaster for a fantasy hockey playoff pool called HockeyPoolz. Write a 2-3 paragraph personalized morning recap for a participant. Be enthusiastic, slightly irreverent, and include friendly trash talk about other teams in the league. Reference specific players and stats. Keep it under 200 words.`
@@ -91,6 +107,28 @@ export function buildRecapPrompt(input: RecapPromptInput): string {
     }
   }
 
+  return prompt
+}
+
+/** Build the prompt for the league-wide daily bulletin. */
+export function buildLeagueRecapPrompt(input: LeagueRecapPromptInput): string {
+  let prompt = `League: ${input.leagueName}\n\nYesterday's scores (best to worst):\n`
+  for (const s of input.dailyScores) {
+    prompt += `- ${s.teamName}: ${s.fpts.toFixed(1)} pts\n`
+  }
+  prompt += '\nCurrent standings:\n'
+  for (const s of input.standings) {
+    prompt += `${s.rank}. ${s.teamName} — ${s.totalScore.toFixed(1)} total pts\n`
+  }
+  return prompt
+}
+
+/** Build the prompt for the draft-day bulletin. */
+export function buildDraftDayPrompt(input: DraftDayPromptInput): string {
+  let prompt = `League: ${input.leagueName}\n\nTeams in draft order:\n`
+  input.teams.forEach((t, i) => {
+    prompt += `${i + 1}. ${t}\n`
+  })
   return prompt
 }
 
