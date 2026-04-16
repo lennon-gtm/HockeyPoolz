@@ -1,0 +1,190 @@
+<h2>My Team — Recap Button Replaces Player Count</h2>
+<p class="subtitle">Stat cards: Standing · Weekly Movement · Recap button. Click Recap to open modal.</p>
+
+<div class="mockup">
+  <div class="mockup-header">My Team — with Recap Modal</div>
+  <div class="mockup-body" style="padding:0; font-family:Inter,Arial,sans-serif; background:#fff; max-width:420px; margin:0 auto; position:relative;">
+
+    <div style="background:#1a1a1a;">
+      <div style="padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="color:#fff; font-weight:900; font-size:11px; letter-spacing:3px;">HOCKEYPOOLZ</span>
+        <div style="width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#C8102E,#00356B); font-size:10px; display:flex; align-items:center; justify-content:center;">🦅</div>
+      </div>
+      <div style="background:#111; padding:0 14px; display:flex; border-top:1px solid #252525;">
+        <div style="padding:8px 12px 8px 0;"><span style="color:#515151; font-size:9px; font-weight:700;">LOBBY</span></div>
+        <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">DRAFT</span></div>
+        <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">STANDINGS</span></div>
+        <div style="padding:8px 12px; border-bottom:2px solid #C8102E;"><span style="color:#fff; font-size:9px; font-weight:700;">MY TEAM</span></div>
+      </div>
+    </div>
+
+    <div style="padding:14px;">
+
+      <!-- Team header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:28px;">🦅</span>
+          <div>
+            <div style="font-size:18px; font-weight:900; color:#121212;">Lenz Team</div>
+            <div style="font-size:10px; color:#98989e; font-weight:600;">Lennon A.</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px; font-weight:900; color:#C8102E;">142.5</div>
+          <div style="font-size:9px; color:#98989e; font-weight:700; text-transform:uppercase;">Total FPTS</div>
+        </div>
+      </div>
+
+      <!-- Stat cards: Standing · Weekly · Recap button -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:16px;">
+        <div style="background:#f8f8f8; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px; font-weight:900; color:#121212;">1st</div>
+          <div style="font-size:8px; color:#98989e; font-weight:700; text-transform:uppercase; margin-top:2px;">Standing</div>
+        </div>
+        <div style="background:#f8f8f8; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:18px; font-weight:900; color:#006847;">▲2</div>
+          <div style="font-size:8px; color:#98989e; font-weight:700; text-transform:uppercase; margin-top:2px;">This Week</div>
+        </div>
+        <!-- Recap button as card -->
+        <div onclick="document.getElementById('recap-modal').style.display='flex'"
+             style="background:#1a1a1a; border-radius:8px; padding:10px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;">
+          <div style="font-size:16px;">📰</div>
+          <div style="font-size:8px; color:#fff; font-weight:700; text-transform:uppercase;">Recap</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div style="border:1px solid #eee; border-radius:10px; overflow:hidden;">
+        <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+          <table style="border-collapse:collapse; width:100%; min-width:520px;">
+            <thead>
+              <tr style="background:#f8f8f8;">
+                <th style="position:sticky; left:0; z-index:2; background:#f8f8f8; padding:7px 10px; text-align:left; border-bottom:1px solid #eee; border-right:1px solid #eee; min-width:140px; white-space:nowrap;">
+                  <span style="font-size:7px; font-weight:700; color:#121212; text-transform:uppercase; cursor:pointer;">Player ↕</span>
+                </th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; background:#eef3ff; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#0042bb; cursor:pointer;">FPTS ↓</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">G ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">A ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">PTS ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">PPG ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">GWG ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">+/- ↕</span></th>
+                <th style="padding:7px 8px; border-bottom:1px solid #eee; white-space:nowrap;"><span style="font-size:7px; font-weight:700; color:#98989e; cursor:pointer;">ATOI ↕</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #f5f5f5;">
+                <td style="position:sticky; left:0; z-index:1; background:#fff; padding:9px 10px; border-right:1px solid #eee; white-space:nowrap;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:7px; background:#e8f4fd; color:#0042bb; padding:2px 4px; border-radius:3px; font-weight:700;">F</span>
+                    <div><div style="font-size:11px; font-weight:700; color:#121212;">C. McDavid</div><div style="font-size:8px; color:#98989e;">EDM</div></div>
+                  </div>
+                </td>
+                <td style="padding:9px 8px; text-align:center; background:#eef3ff;"><span style="font-size:10px; font-weight:900; color:#0042bb;">39.1</span></td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">44</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">92</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; font-weight:700; color:#121212;">136</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">16</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">7</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#006847;">+22</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">21:42</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f5f5f5; background:#fafafa;">
+                <td style="position:sticky; left:0; z-index:1; background:#fafafa; padding:9px 10px; border-right:1px solid #eee; white-space:nowrap;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:7px; background:#e8f4fd; color:#0042bb; padding:2px 4px; border-radius:3px; font-weight:700;">F</span>
+                    <div><div style="font-size:11px; font-weight:700; color:#121212;">D. Pastrnak</div><div style="font-size:8px; color:#98989e;">BOS</div></div>
+                  </div>
+                </td>
+                <td style="padding:9px 8px; text-align:center; background:#eef3ff;"><span style="font-size:10px; font-weight:900; color:#0042bb;">31.0</span></td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">52</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">44</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; font-weight:700; color:#121212;">96</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">14</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">8</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#006847;">+18</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">20:11</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f5f5f5;">
+                <td style="position:sticky; left:0; z-index:1; background:#fff; padding:9px 10px; border-right:1px solid #eee; white-space:nowrap;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:7px; background:#fce8f3; color:#8B008B; padding:2px 4px; border-radius:3px; font-weight:700;">D</span>
+                    <div><div style="font-size:11px; font-weight:700; color:#121212;">C. Makar</div><div style="font-size:8px; color:#98989e;">COL</div></div>
+                  </div>
+                </td>
+                <td style="padding:9px 8px; text-align:center; background:#eef3ff;"><span style="font-size:10px; font-weight:900; color:#0042bb;">28.3</span></td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">28</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">62</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; font-weight:700; color:#121212;">90</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">11</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">6</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#006847;">+27</td>
+                <td style="padding:9px 8px; text-align:center; font-size:10px; color:#121212;">24:38</td>
+              </tr>
+              <tr>
+                <td colspan="9" style="padding:10px; text-align:center; background:#fafafa;">
+                  <span style="font-size:9px; color:#98989e; font-weight:600;">+ 12 more players</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RECAP MODAL -->
+    <div id="recap-modal" onclick="this.style.display='none'"
+         style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.6); z-index:10; align-items:flex-end; justify-content:center; border-radius:inherit;">
+      <div onclick="event.stopPropagation()"
+           style="background:#fff; border-radius:16px 16px 0 0; padding:20px 16px 28px; width:100%; max-height:80%; overflow-y:auto;">
+        <!-- Handle -->
+        <div style="width:36px; height:4px; background:#e0e0e0; border-radius:2px; margin:0 auto 16px;"></div>
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <div>
+            <div style="font-size:14px; font-weight:900; color:#121212;">Morning Recap</div>
+            <div style="font-size:10px; color:#98989e; font-weight:600;">April 14, 2026</div>
+          </div>
+          <span style="font-size:10px; font-weight:700; background:#e8f5e9; color:#006847; padding:3px 8px; border-radius:10px;">▲ Moved up 2</span>
+        </div>
+        <!-- Recap text -->
+        <div style="font-size:12px; color:#333; line-height:1.6; margin-bottom:14px;">
+          What a night for Lenz Team! McDavid put up a two-goal, two-assist performance to give you a massive 8.4-point night — your best individual performance of the week. Pastrnak added a power play goal and an assist to push your total to 12.1 points on the evening.
+        </div>
+        <div style="font-size:12px; color:#333; line-height:1.6; margin-bottom:14px;">
+          Makar was quiet with just one shot on goal, but Fox stepped up with a two-assist effort on the blue line. Your goalie Shesterkin stopped 34 of 35 shots in a 2-1 win over Pittsburgh — a 3.2-point night.
+        </div>
+        <div style="font-size:12px; color:#333; line-height:1.6;">
+          You now sit in 1st place with 142.5 points, up 2 spots from last night. Your closest competition is Mike T. at 138.0 — only 4.5 points back. Keep an eye on Kaprizov, who has a tough matchup tonight.
+        </div>
+        <!-- Close -->
+        <button onclick="document.getElementById('recap-modal').style.display='none'"
+                style="width:100%; margin-top:20px; padding:12px; background:#1a1a1a; color:#fff; border:none; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer;">
+          Close
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <p style="font-size:12px; color:#555; margin-bottom:12px;">Click the dark <strong>📰 Recap</strong> card to see the modal in action.</p>
+  <div class="options">
+    <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content">
+        <h3>Approved — write the spec</h3>
+        <p>All pages locked in, ready to go</p>
+      </div>
+    </div>
+    <div class="option" data-choice="tweaks" onclick="toggleSelect(this)">
+      <div class="letter">~</div>
+      <div class="content">
+        <h3>Still tweaks needed</h3>
+        <p>Tell me in the terminal</p>
+      </div>
+    </div>
+  </div>
+</div>

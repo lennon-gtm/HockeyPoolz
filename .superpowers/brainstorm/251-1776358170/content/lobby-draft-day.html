@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lobby — Draft Day Bulletin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f8f8f8;
+    font-family: -apple-system, system-ui, 'Inter', sans-serif;
+    color: #121212;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .top-nav {
+    background: #1a1a1a;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .top-nav-title { color: #fff; font-size: 13px; font-weight: 800; }
+  .top-nav-meta { color: #98989e; font-size: 10px; font-weight: 600; }
+  .settings-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; color: #515151; font-size: 14px; }
+
+  .subnav { display: flex; overflow-x: auto; background: #111; border-bottom: 1px solid #222; scrollbar-width: none; }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav-item { padding: 10px 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #98989e; white-space: nowrap; border-bottom: 2px solid transparent; }
+  .subnav-item.active { color: #f97316; border-bottom-color: #f97316; }
+
+  .page { padding: 14px 16px; background: #fff; min-height: 100vh; }
+
+  .league-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .league-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+  .league-meta { font-size: 10px; color: #98989e; font-weight: 600; margin-top: 2px; }
+
+  /* Draft day stats row */
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat-card { background: #f8f8f8; border: 1px solid #eee; border-radius: 12px; padding: 10px 12px; text-align: center; }
+  .stat-val { font-size: 16px; font-weight: 900; color: #121212; }
+  .stat-key { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #98989e; margin-top: 2px; }
+
+  /* Draft active banner */
+  .draft-banner {
+    background: #fff7ed;
+    border: 2px solid #fed7aa;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .draft-banner-text { font-size: 13px; font-weight: 700; color: #9a3412; }
+  .draft-banner-sub { font-size: 10px; color: #c2410c; margin-top: 2px; font-weight: 600; }
+  .draft-btn { background: #f97316; color: #fff; font-size: 12px; font-weight: 800; padding: 8px 14px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+
+  /* Bulletin */
+  .bulletin { background: #fff7ed; border-radius: 14px; border: 1px solid #fed7aa; padding: 14px; margin-bottom: 12px; }
+  .bulletin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .bulletin-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #f97316; }
+  .bulletin-date { font-size: 9px; color: #fb923c; font-weight: 600; }
+  .bulletin-body { font-size: 13px; line-height: 1.65; color: #431407; }
+  .bulletin-body strong { font-weight: 700; }
+
+  /* Draft order */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .section-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #98989e; }
+
+  .draft-order { border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
+  .draft-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f5f5f5; }
+  .draft-row:last-child { border-bottom: none; }
+  .draft-row.me { border-left: 3px solid #f97316; background: #fffbf7; }
+  .draft-pos { font-size: 13px; font-weight: 900; color: #d0d0d0; width: 20px; text-align: right; flex-shrink: 0; }
+  .draft-icon { width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .draft-info { flex: 1; min-width: 0; }
+  .draft-info p { font-size: 13px; font-weight: 700; }
+  .draft-info span { font-size: 10px; color: #98989e; }
+  .auto-badge { font-size: 9px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div>
+    <div class="top-nav-title">Champs Pool 2026</div>
+    <div class="top-nav-meta">👑 Commissioner · 8/8 Teams · Drafting</div>
+  </div>
+  <div class="settings-btn">⚙</div>
+</div>
+
+<div class="subnav">
+  <div class="subnav-item active">Lobby</div>
+  <div class="subnav-item">Scores</div>
+  <div class="subnav-item">My Team</div>
+  <div class="subnav-item">Standings</div>
+  <div class="subnav-item">Draft</div>
+</div>
+
+<div class="page">
+
+  <div class="league-header">
+    <div>
+      <div class="league-name">Champs Pool 2026</div>
+      <div class="league-meta">8/8 Teams · Drafting</div>
+    </div>
+    <div class="settings-btn">⚙</div>
+  </div>
+
+  <!-- Stat row -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-val">8/8</div>
+      <div class="stat-key">Teams</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#f97316">Live</div>
+      <div class="stat-key">Draft</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">90s</div>
+      <div class="stat-key">Per Pick</div>
+    </div>
+  </div>
+
+  <!-- Draft active banner -->
+  <div class="draft-banner">
+    <div>
+      <div class="draft-banner-text">🚨 Draft is live!</div>
+      <div class="draft-banner-sub">Pick 3 of 112 · BobsTeam is on the clock</div>
+    </div>
+    <div class="draft-btn">Go to Draft →</div>
+  </div>
+
+  <!-- League Bulletin — Draft Day edition -->
+  <div class="bulletin">
+    <div class="bulletin-header">
+      <span class="bulletin-label">📣 League Bulletin</span>
+      <span class="bulletin-date">Draft Day · April 15, 2026</span>
+    </div>
+    <div class="bulletin-body">
+      It's finally here. Eight teams, one Stanley Cup, and absolutely zero chill. <strong>GrindersUnited</strong> — love the blue-collar energy, truly, but this is a fantasy pool and grinding rarely pays the bills. <strong>IceQueenFC</strong> sounds dominant until you realise the queen hasn't won anything since 2019. <strong>PuckDaddyFC</strong>… the "FC" is really doing some heavy lifting there, champ. And <strong>BobsTeam</strong> — bold choice, going with your own name. The confidence is either inspiring or a cry for help, we genuinely can't tell. May your draft boards be kind and your injury luck be kinder. Let's get this pool started. 🏒
+    </div>
+  </div>
+
+  <!-- Draft order -->
+  <div class="section-header">
+    <span class="section-label">Draft Order</span>
+  </div>
+  <div class="draft-order">
+    <div class="draft-row">
+      <div class="draft-pos">1</div>
+      <div class="draft-icon">⚡</div>
+      <div class="draft-info"><p>GrindersUnited</p><span>mike_g</span></div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">2</div>
+      <div class="draft-icon">👑</div>
+      <div class="draft-info"><p>IceQueenFC</p><span>sarah_k</span></div>
+    </div>
+    <div class="draft-row me">
+      <div class="draft-pos">3</div>
+      <div class="draft-icon">🏒</div>
+      <div class="draft-info"><p>BobsTeam</p><span>bob_c</span></div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">4</div>
+      <div class="draft-icon">🦅</div>
+      <div class="draft-info"><p>PuckDaddyFC</p><span>puckdad</span></div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">5</div>
+      <div class="draft-icon">🔥</div>
+      <div class="draft-info"><p>FlamingPucks</p><span>j_burns</span></div>
+      <div class="auto-badge">AUTO</div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">6</div>
+      <div class="draft-icon">🦁</div>
+      <div class="draft-info"><p>LionheartHC</p><span>t_walsh</span></div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">7</div>
+      <div class="draft-icon">🐺</div>
+      <div class="draft-info"><p>WolfPackFC</p><span>d_ross</span></div>
+    </div>
+    <div class="draft-row">
+      <div class="draft-pos">8</div>
+      <div class="draft-icon">🏆</div>
+      <div class="draft-info"><p>LastPlaceLegacy</p><span>k_chan</span></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

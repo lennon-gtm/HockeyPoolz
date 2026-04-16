@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hockey Pool Feedback</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 40px 16px 80px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #58a6ff;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #8b949e;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 28px 24px;
+      margin-bottom: 16px;
+    }
+
+    .question-label {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .question-number {
+      color: #58a6ff;
+      margin-right: 6px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .option:hover {
+      border-color: #58a6ff;
+      background: #111827;
+    }
+
+    .option input[type="radio"],
+    .option input[type="checkbox"] {
+      accent-color: #58a6ff;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .option label {
+      font-size: 14px;
+      color: #c9d1d9;
+      cursor: pointer;
+      flex: 1;
+      line-height: 1.4;
+    }
+
+    .option:has(input:checked) {
+      border-color: #58a6ff;
+      background: #0c1d35;
+    }
+
+    .option:has(input:checked) label {
+      color: #e6edf3;
+    }
+
+    .multi-hint {
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 14px;
+      margin-top: -8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      font-family: inherit;
+      padding: 12px 14px;
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    textarea::placeholder {
+      color: #484f58;
+    }
+
+    .submit-wrap {
+      margin-top: 32px;
+      text-align: center;
+    }
+
+    button[type="submit"] {
+      background: #58a6ff;
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px 40px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button[type="submit"]:hover {
+      background: #79b8ff;
+    }
+
+    button[type="submit"]:active {
+      transform: scale(0.98);
+    }
+
+    .success {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .success .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .success h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .success p {
+      color: #8b949e;
+      font-size: 15px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #21262d;
+      margin: 20px 0;
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 22px; }
+      .card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="eyebrow">🏒 Quick Survey</div>
+      <h1>Tell us how you use your hockey pool</h1>
+      <p class="subtitle">10 questions, ~3 minutes. Your answers will shape what we build next.</p>
+    </header>
+
+    <form id="feedback-form">
+
+      <!-- Q1 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">1.</span> How often do you check the pool during the playoffs?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q1" id="q1a" value="multiple-per-day" required><label for="q1a">Multiple times a day</label></div>
+          <div class="option"><input type="radio" name="q1" id="q1b" value="once-a-day"><label for="q1b">Once a day</label></div>
+          <div class="option"><input type="radio" name="q1" id="q1c" value="few-times-week"><label for="q1c">A few times a week</label></div>
+          <div class="option"><input type="radio" name="q1" id="q1d" value="rarely"><label for="q1d">Rarely — mainly after big game nights</label></div>
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">2.</span> What device do you mostly use to check the pool?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q2" id="q2a" value="iphone" required><label for="q2a">iPhone</label></div>
+          <div class="option"><input type="radio" name="q2" id="q2b" value="android"><label for="q2b">Android</label></div>
+          <div class="option"><input type="radio" name="q2" id="q2c" value="desktop"><label for="q2c">Desktop / laptop</label></div>
+          <div class="option"><input type="radio" name="q2" id="q2d" value="mixed"><label for="q2d">Mix of phone and desktop</label></div>
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">3.</span> When you open the pool site, what's the first thing you look at?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q3" id="q3a" value="standings" required><label for="q3a">The standings — where am I in the pool?</label></div>
+          <div class="option"><input type="radio" name="q3" id="q3b" value="my-score"><label for="q3b">My current score / points</label></div>
+          <div class="option"><input type="radio" name="q3" id="q3c" value="my-roster"><label for="q3c">My roster — who's playing tonight?</label></div>
+          <div class="option"><input type="radio" name="q3" id="q3d" value="other-rosters"><label for="q3d">Other people's rosters</label></div>
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">4.</span> How do you usually find out your pool score has changed?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q4" id="q4a" value="check-myself" required><label for="q4a">I check the site myself</label></div>
+          <div class="option"><input type="radio" name="q4" id="q4b" value="notification"><label for="q4b">Push notification or email</label></div>
+          <div class="option"><input type="radio" name="q4" id="q4c" value="group-chat"><label for="q4c">Someone texts the group chat</label></div>
+          <div class="option"><input type="radio" name="q4" id="q4d" value="after-games"><label for="q4d">I check once games are done for the night</label></div>
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">5.</span> How often do you actively manage your roster during the playoffs?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q5" id="q5a" value="rarely" required><label for="q5a">Rarely — set it at the draft, leave it</label></div>
+          <div class="option"><input type="radio" name="q5" id="q5b" value="injury-or-elim"><label for="q5b">Only when someone gets injured or eliminated</label></div>
+          <div class="option"><input type="radio" name="q5" id="q5c" value="often"><label for="q5c">Often — I'm adjusting throughout</label></div>
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">6.</span> When managing your roster, what actions do you take most? <span style="font-weight:400;color:#8b949e">(pick all that apply)</span></p>
+        <p class="multi-hint">Select all that apply</p>
+        <div class="options">
+          <div class="option"><input type="checkbox" name="q6" id="q6a" value="swap-eliminated"><label for="q6a">Swapping out eliminated players</label></div>
+          <div class="option"><input type="checkbox" name="q6" id="q6b" value="drop-injured"><label for="q6b">Dropping injured players</label></div>
+          <div class="option"><input type="checkbox" name="q6" id="q6c" value="pickup-undrafted"><label for="q6c">Picking up undrafted players</label></div>
+          <div class="option"><input type="checkbox" name="q6" id="q6d" value="bench-sit"><label for="q6d">Benching / sitting players strategically</label></div>
+        </div>
+      </div>
+
+      <!-- Q7 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">7.</span> What's the single most important feature to you in a pool platform?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q7" id="q7a" value="live-scoring" required><label for="q7a">Live / real-time scoring updates</label></div>
+          <div class="option"><input type="radio" name="q7" id="q7b" value="standings"><label for="q7b">Clear leaderboard and standings</label></div>
+          <div class="option"><input type="radio" name="q7" id="q7c" value="roster-mgmt"><label for="q7c">Easy roster management</label></div>
+          <div class="option"><input type="radio" name="q7" id="q7d" value="player-stats"><label for="q7d">Player stats and performance details</label></div>
+        </div>
+      </div>
+
+      <!-- Q8 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">8.</span> What's your biggest frustration with OfficePools right now?</p>
+        <div class="options">
+          <div class="option"><input type="radio" name="q8" id="q8a" value="mobile" required><label for="q8a">Clunky on mobile</label></div>
+          <div class="option"><input type="radio" name="q8" id="q8b" value="ui-dated"><label for="q8b">The interface feels old and hard to navigate</label></div>
+          <div class="option"><input type="radio" name="q8" id="q8c" value="scoring-lag"><label for="q8c">Scores are slow to update</label></div>
+          <div class="option"><input type="radio" name="q8" id="q8d" value="no-frustration"><label for="q8d">Honestly it works fine for me</label></div>
+        </div>
+      </div>
+
+      <!-- Q9 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">9.</span> Is there a feature OfficePools doesn't have that you wish it did?</p>
+        <textarea name="q9" placeholder="e.g. push notifications, player injury alerts, a better mobile app…"></textarea>
+      </div>
+
+      <!-- Q10 -->
+      <div class="card">
+        <p class="question-label"><span class="question-number">10.</span> Any other thoughts? What would make you reach for the pool app more often?</p>
+        <textarea name="q10" placeholder="Anything goes…"></textarea>
+      </div>
+
+      <div class="submit-wrap">
+        <button type="submit">Submit Feedback 🏒</button>
+      </div>
+
+    </form>
+
+    <div class="success" id="success-msg">
+      <div class="icon">🏒</div>
+      <h2>Thanks, legend.</h2>
+      <p>Your feedback means a lot — we'll use it to build something better for next playoffs.</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('feedback-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Collect answers
+      const data = {};
+      const formData = new FormData(this);
+      for (const [key, value] of formData.entries()) {
+        if (data[key]) {
+          data[key] = [].concat(data[key], value);
+        } else {
+          data[key] = value;
+        }
+      }
+
+      console.log('Feedback submitted:', data);
+
+      // Show thank you screen
+      this.style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Clicking anywhere on the option row selects the input
+    document.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+          const input = this.querySelector('input');
+          if (input.type === 'checkbox') {
+            input.checked = !input.checked;
+          } else {
+            input.checked = true;
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

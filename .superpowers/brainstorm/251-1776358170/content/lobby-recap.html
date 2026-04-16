@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lobby with League Bulletin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f8f8f8;
+    font-family: -apple-system, system-ui, 'Inter', sans-serif;
+    color: #121212;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* ── Top nav ── */
+  .top-nav {
+    background: #1a1a1a;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .top-nav-title { color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; }
+  .top-nav-meta { color: #98989e; font-size: 10px; font-weight: 600; }
+
+  /* ── League subnav ── */
+  .subnav {
+    display: flex;
+    overflow-x: auto;
+    background: #111;
+    border-bottom: 1px solid #222;
+    scrollbar-width: none;
+  }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav-item {
+    padding: 10px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #98989e;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+  }
+  .subnav-item.active { color: #c8102e; border-bottom-color: #c8102e; }
+
+  /* ── Page body ── */
+  .page { padding: 14px 16px; background: #fff; min-height: 100vh; }
+
+  /* ── League header ── */
+  .league-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .league-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: #121212; }
+  .league-meta { font-size: 10px; color: #98989e; font-weight: 600; margin-top: 2px; }
+  .settings-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid #eee; display: flex; align-items: center; justify-content: center;
+    color: #515151; font-size: 14px;
+  }
+
+  /* ── Hero card ── */
+  .hero {
+    background: #1a1a1a;
+    border-radius: 14px;
+    border-left: 4px solid #c8102e;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .hero-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+  .hero-rank { font-size: 32px; font-weight: 900; color: #fff; line-height: 1; }
+  .hero-of { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .hero-score { font-size: 26px; font-weight: 900; color: #c8102e; line-height: 1; }
+  .hero-score-label { font-size: 9px; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; text-align: right; margin-top: 2px; }
+  .hero-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .hero-stat { text-align: center; }
+  .hero-stat-val { font-size: 13px; font-weight: 900; }
+  .hero-stat-key { font-size: 9px; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 1px; }
+
+  /* ── League Bulletin ── */
+  .bulletin {
+    background: #fff7ed;
+    border-radius: 14px;
+    border: 1px solid #fed7aa;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .bulletin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .bulletin-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f97316;
+  }
+  .bulletin-date {
+    font-size: 9px;
+    color: #fb923c;
+    font-weight: 600;
+  }
+  .bulletin-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #431407;
+  }
+  .bulletin-body strong { font-weight: 700; }
+
+  /* ── Standings preview ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .section-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #98989e; }
+  .section-link { font-size: 10px; font-weight: 700; color: #f97316; }
+
+  .standings-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+  }
+  .standings-header span { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #98989e; }
+
+  .standings-body { border: 1px solid #eee; border-radius: 0 0 10px 10px; overflow: hidden; }
+  .standing-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-row.me { border-left: 3px solid #c8102e; background: #fff8f8; }
+  .standing-rank { width: 24px; font-size: 13px; font-weight: 900; color: #d0d0d0; text-align: right; flex-shrink: 0; }
+  .standing-icon { width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0; margin: 0 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .standing-name { flex: 1; min-width: 0; }
+  .standing-name p { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .standing-name span { font-size: 10px; color: #98989e; }
+  .standing-yday { width: 40px; text-align: right; font-size: 11px; font-weight: 700; color: #2db944; flex-shrink: 0; }
+  .standing-total { width: 46px; text-align: right; font-size: 13px; font-weight: 900; color: #0042bb; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- Top nav -->
+<div class="top-nav">
+  <div>
+    <div class="top-nav-title">Champs Pool 2026</div>
+    <div class="top-nav-meta">👑 Commissioner · 8/8 Teams · Active</div>
+  </div>
+  <div class="settings-btn">⚙</div>
+</div>
+
+<!-- Subnav -->
+<div class="subnav">
+  <div class="subnav-item active">Lobby</div>
+  <div class="subnav-item">Scores</div>
+  <div class="subnav-item">My Team</div>
+  <div class="subnav-item">Standings</div>
+  <div class="subnav-item">Draft</div>
+</div>
+
+<div class="page">
+
+  <!-- Hero card -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">Your Standing</div>
+        <div class="hero-rank">2<sup style="font-size:16px">nd</sup></div>
+        <div class="hero-of">of 8 teams</div>
+      </div>
+      <div style="text-align:right">
+        <div class="hero-score">218.4</div>
+        <div class="hero-score-label">Total FPTS</div>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val" style="color:#2db944">+9.6</div>
+        <div class="hero-stat-key">Yesterday</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" style="color:#c8102e">-4.2</div>
+        <div class="hero-stat-key">Deficit</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" style="color:#fff">14</div>
+        <div class="hero-stat-key">Players</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- League Bulletin -->
+  <div class="bulletin">
+    <div class="bulletin-header">
+      <span class="bulletin-label">📣 League Bulletin</span>
+      <span class="bulletin-date">April 15, 2026</span>
+    </div>
+    <div class="bulletin-body">
+      Last night was an absolute bloodbath and <strong>GrindersUnited</strong> is laughing all the way to the top. McDavid put on a one-man show with a hat trick and the 18.4 pts that came with it have them sitting pretty in first with a growing lead. Meanwhile, <strong>IceQueenFC</strong> — bless their heart — scraped together a whopping 1.8 pts on the night. ONE POINT EIGHT. Your players were out there, we checked. Not entirely sure what happened. <strong>BobsTeam</strong> had a solid night riding Makar's two-goal effort for 14.2 pts and is quietly creeping into the conversation.
+    </div>
+  </div>
+
+  <!-- Standings preview -->
+  <div class="section-header">
+    <span class="section-label">Standings</span>
+    <span class="section-link">View all →</span>
+  </div>
+  <div class="standings-header">
+    <span style="width:24px"></span>
+    <span style="width:44px"></span>
+    <span style="flex:1">Team</span>
+    <span style="width:40px;text-align:right">YDAY</span>
+    <span style="width:46px;text-align:right;color:#0042bb">TOTAL</span>
+  </div>
+  <div class="standings-body">
+    <div class="standing-row">
+      <div class="standing-rank">1</div>
+      <div class="standing-icon">⚡</div>
+      <div class="standing-name"><p>GrindersUnited</p><span>mike_g</span></div>
+      <div class="standing-yday">+18.4</div>
+      <div class="standing-total">222.6</div>
+    </div>
+    <div class="standing-row me">
+      <div class="standing-rank">2</div>
+      <div class="standing-icon">🏒</div>
+      <div class="standing-name"><p>BobsTeam</p><span>bob_c</span></div>
+      <div class="standing-yday">+14.2</div>
+      <div class="standing-total">218.4</div>
+    </div>
+    <div class="standing-row">
+      <div class="standing-rank">3</div>
+      <div class="standing-icon">🦅</div>
+      <div class="standing-name"><p>PuckDaddyFC</p><span>puckdad</span></div>
+      <div class="standing-yday">+9.6</div>
+      <div class="standing-total">201.1</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

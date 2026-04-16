@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scores Page Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f8f8f8;
+    font-family: -apple-system, system-ui, 'Inter', sans-serif;
+    color: #121212;
+    padding: 16px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* ── Nav ── */
+  .nav {
+    background: #1a1a1a;
+    margin: -16px -16px 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-back { color: #98989e; font-size: 13px; }
+  .nav-title { color: #fff; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ── League subnav ── */
+  .subnav {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    margin: 0 -16px 16px;
+    padding: 0 16px;
+    background: #111;
+    border-bottom: 1px solid #222;
+    scrollbar-width: none;
+  }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav-item {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #98989e;
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .subnav-item.active {
+    color: #f97316;
+    border-bottom-color: #f97316;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .page-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #121212;
+  }
+  .page-date {
+    font-size: 10px;
+    color: #98989e;
+    font-weight: 600;
+  }
+
+  /* ── Game card ── */
+  .game-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #eeeeee;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .game-header {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid #f2f2f2;
+  }
+
+  .teams-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .team-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .team-block.right {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+
+  .team-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+  }
+
+  .team-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #121212;
+  }
+  .team-city {
+    font-size: 9px;
+    color: #98989e;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .score-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+  }
+  .score {
+    font-size: 28px;
+    font-weight: 900;
+    color: #121212;
+    line-height: 1;
+    min-width: 24px;
+    text-align: center;
+  }
+  .score.winner { color: #121212; }
+  .score.loser { color: #c0c0c0; }
+  .score-sep {
+    font-size: 16px;
+    color: #d0d0d0;
+    font-weight: 300;
+  }
+
+  .game-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .badge {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .badge-final { background: #f0f0f0; color: #515151; }
+  .badge-ot { background: #fef3c7; color: #b45309; }
+  .badge-series { background: #eef3ff; color: #0042bb; }
+
+  /* ── Commentary ── */
+  .commentary {
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #2a2a2a;
+    border-bottom: 1px solid #f2f2f2;
+  }
+  .benefactor-name {
+    color: #f97316;
+    font-weight: 700;
+  }
+
+  /* ── Footer ── */
+  .game-footer {
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .benefactor-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff7ed;
+    border-radius: 999px;
+    padding: 4px 10px 4px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #f97316;
+  }
+  .benefactor-pill .pts {
+    font-size: 11px;
+    font-weight: 900;
+  }
+  .article-link {
+    font-size: 10px;
+    font-weight: 700;
+    color: #0042bb;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<div class="nav">
+  <span class="nav-back">← Champs Pool</span>
+</div>
+
+<!-- Subnav -->
+<div class="subnav">
+  <div class="subnav-item">Lobby</div>
+  <div class="subnav-item active">Scores</div>
+  <div class="subnav-item">My Team</div>
+  <div class="subnav-item">Standings</div>
+  <div class="subnav-item">Draft</div>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+  <span class="page-label">Yesterday's Games</span>
+  <span class="page-date">April 15, 2026</span>
+</div>
+
+<!-- Game 1 -->
+<div class="game-card">
+  <div class="game-header">
+    <div class="teams-row">
+      <div class="team-block">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/DAL_light.svg" alt="Dallas">
+        <div>
+          <div class="team-city">Dallas</div>
+          <div class="team-name">Stars</div>
+        </div>
+      </div>
+      <div class="score-block">
+        <div class="score loser">2</div>
+        <div class="score-sep">–</div>
+        <div class="score winner">4</div>
+      </div>
+      <div class="team-block right">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/COL_light.svg" alt="Colorado">
+        <div>
+          <div class="team-city">Colorado</div>
+          <div class="team-name">Avalanche</div>
+        </div>
+      </div>
+    </div>
+    <div class="game-meta">
+      <span class="badge badge-final">Final</span>
+      <span class="badge badge-series">COL leads 2–1</span>
+    </div>
+  </div>
+
+  <div class="commentary">
+    Makar was an absolute menace — two goals and an assist to put this one away by the third. Dallas had their looks in the second but Colorado's back end shut every door. The Avs now control this series heading into Game 4 on home ice, and things are looking very bad for the Stars. <span class="benefactor-name">BobsTeam</span> walks away with a whopping 14.2 pts on the night — all Makar, all day.
+  </div>
+
+  <div class="game-footer">
+    <div class="benefactor-pill">
+      🏆 BobsTeam <span class="pts">14.2 pts</span>
+    </div>
+    <a class="article-link" href="#">Read recap →</a>
+  </div>
+</div>
+
+<!-- Game 2 -->
+<div class="game-card">
+  <div class="game-header">
+    <div class="teams-row">
+      <div class="team-block">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/BOS_light.svg" alt="Boston">
+        <div>
+          <div class="team-city">Boston</div>
+          <div class="team-name">Bruins</div>
+        </div>
+      </div>
+      <div class="score-block">
+        <div class="score winner">3</div>
+        <div class="score-sep">–</div>
+        <div class="score loser">2</div>
+      </div>
+      <div class="team-block right">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/OTT_light.svg" alt="Ottawa">
+        <div>
+          <div class="team-city">Ottawa</div>
+          <div class="team-name">Senators</div>
+        </div>
+      </div>
+    </div>
+    <div class="game-meta">
+      <span class="badge badge-ot">OT</span>
+      <span class="badge badge-series">Series tied 1–1</span>
+    </div>
+  </div>
+
+  <div class="commentary">
+    David Pastrnak ended it in overtime with a wrister top shelf — classic Pasta. This was a grinding, physical game that Ottawa played tight until Pastrnak decided enough was enough. The series is now even at 1–1, and Boston will like their chances with two of the next three at home. <span class="benefactor-name">PuckDaddyFC</span> pocketed a tidy 9.6 pts off the back of Pastrnak's big night.
+  </div>
+
+  <div class="game-footer">
+    <div class="benefactor-pill">
+      🏆 PuckDaddyFC <span class="pts">9.6 pts</span>
+    </div>
+    <a class="article-link" href="#">Read recap →</a>
+  </div>
+</div>
+
+<!-- Game 3 — no league benefactor -->
+<div class="game-card">
+  <div class="game-header">
+    <div class="teams-row">
+      <div class="team-block">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/VGK_light.svg" alt="Vegas">
+        <div>
+          <div class="team-city">Vegas</div>
+          <div class="team-name">Golden Knights</div>
+        </div>
+      </div>
+      <div class="score-block">
+        <div class="score loser">1</div>
+        <div class="score-sep">–</div>
+        <div class="score winner">5</div>
+      </div>
+      <div class="team-block right">
+        <img class="team-logo" src="https://assets.nhle.com/logos/nhl/svg/EDM_light.svg" alt="Edmonton">
+        <div>
+          <div class="team-city">Edmonton</div>
+          <div class="team-name">Oilers</div>
+        </div>
+      </div>
+    </div>
+    <div class="game-meta">
+      <span class="badge badge-final">Final</span>
+      <span class="badge badge-series">EDM leads 2–0</span>
+    </div>
+  </div>
+
+  <div class="commentary">
+    This one was over before the second period. McDavid notched a hat trick and an assist as Edmonton buried Vegas in their own building — an absolutely embarrassing performance from the Golden Knights. They're now in a 2–0 hole and looking completely lost. <span class="benefactor-name">GrindersUnited</span> cashed in big with 18.4 pts, all riding the McDavid wave.
+  </div>
+
+  <div class="game-footer">
+    <div class="benefactor-pill">
+      🏆 GrindersUnited <span class="pts">18.4 pts</span>
+    </div>
+    <a class="article-link" href="#">Read recap →</a>
+  </div>
+</div>
+
+</body>
+</html>

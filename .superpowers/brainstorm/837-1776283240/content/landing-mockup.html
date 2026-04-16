@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HockeyPoolz Landing — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #fffaf5;
+    color: #111;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+  }
+
+  .logo {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+
+  nav a {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    margin-left: 28px;
+    font-size: 15px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    opacity: 0.9;
+  }
+  nav a:hover { opacity: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    width: 100%;
+    min-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  /* warm gradient behind the image placeholder */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #fdf3e7 0%, #fde8cc 35%, #ffe4b8 60%, #ffd8a0 100%);
+  }
+
+  /* faint rink-line texture */
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.35) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.35) 60px);
+    background-size: 60px 60px;
+  }
+
+  /* child image — right side */
+  .hero-image-area {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 52%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .hero-image-placeholder {
+    width: 100%;
+    height: 88%;
+    background: linear-gradient(170deg, #fce4b0 0%, #f5c87a 100%);
+    border-radius: 60px 60px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0.7;
+  }
+
+  .hero-image-placeholder span {
+    font-size: 72px;
+    line-height: 1;
+  }
+  .hero-image-placeholder p {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #c47a1e;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* left content */
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 120px 60px 80px;
+    max-width: 560px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #f97316;
+    margin-bottom: 16px;
+  }
+
+  .hero-heading {
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 600;
+    line-height: 1.1;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+  }
+
+  .hero-heading span {
+    color: #f97316;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 500;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    max-width: 420px;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 320px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 28px;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: none;
+  }
+  .btn:hover { transform: translateY(-2px); }
+
+  .btn-google {
+    background: #fff;
+    color: #222;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .btn-google:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.18); }
+
+  .btn-apple {
+    background: #111;
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  }
+  .btn-apple:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.28); }
+
+  .btn-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ── HOW IT WORKS STRIP ── */
+  .steps {
+    background: #fff;
+    border-top: 2px solid #f3f4f6;
+    padding: 56px 40px;
+  }
+
+  .steps-heading {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+    color: #1a1a1a;
+    margin-bottom: 40px;
+    letter-spacing: 0.3px;
+  }
+
+  .steps-grid {
+    display: flex;
+    gap: 32px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .step-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #fff7ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    border: 2px solid #fed7aa;
+  }
+
+  .step-num {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f97316;
+  }
+
+  .step-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  /* ── ANNOTATION OVERLAY ── */
+  .annotation {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #1e293b;
+    color: #e2e8f0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    max-width: 260px;
+    line-height: 1.5;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 100;
+  }
+  .annotation strong { color: #f97316; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">HockeyPoolz</div>
+  <nav>
+    <a href="#">How it works</a>
+    <a href="#">Sign In</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+
+  <!-- placeholder for girl-eating-lasagna hero image -->
+  <div class="hero-image-area">
+    <div class="hero-image-placeholder">
+      <span>🍝</span>
+      <p>Girl eating lasagna — hero image</p>
+    </div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">🏒 NHL Playoff Fantasy</div>
+    <h1 class="hero-heading">
+      Your pool.<br>Your <span>players.</span><br>Your glory.
+    </h1>
+    <p class="hero-sub">
+      Pick your NHL playoff roster, compete with friends, and track every goal live.
+    </p>
+    <div class="btn-group">
+      <a href="#" class="btn btn-google">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        </span>
+        Sign in with Google
+      </a>
+      <a href="#" class="btn btn-apple">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        </span>
+        Sign in with Apple
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="steps">
+  <h2 class="steps-heading">How HockeyPoolz works</h2>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-icon">🏒</div>
+      <div class="step-num">Step 1</div>
+      <div class="step-label">Join or create a pool</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🧊</div>
+      <div class="step-num">Step 2</div>
+      <div class="step-label">Draft your playoff roster</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🏆</div>
+      <div class="step-num">Step 3</div>
+      <div class="step-label">Track every goal live</div>
+    </div>
+  </div>
+</section>
+
+<div class="annotation">
+  <strong>Design note:</strong> Fredoka + Nunito fonts match ledoral.com. Orange replaces their teal. The hero image area (right side) is a placeholder — needs a girl eating lasagna photo or illustration.
+</div>
+
+</body>
+</html>

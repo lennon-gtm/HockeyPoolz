@@ -1,0 +1,250 @@
+<h2>Draft Page — Rankings vs Wishlist Tabs</h2>
+<p class="subtitle">Two sub-tabs within the Draft page. Does this work?</p>
+
+<div class="split">
+
+  <!-- RANKINGS TAB -->
+  <div class="mockup">
+    <div class="mockup-header">Draft Page — Rankings Tab</div>
+    <div class="mockup-body" style="padding:0; font-family:Inter,Arial,sans-serif; background:#fff;">
+
+      <div style="background:#1a1a1a;">
+        <div style="padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+          <span style="color:#fff; font-weight:900; font-size:11px; letter-spacing:3px;">HOCKEYPOOLZ</span>
+          <div style="width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#006847,#CE1126); font-size:10px; display:flex; align-items:center; justify-content:center;">🔥</div>
+        </div>
+        <div style="background:#111; padding:0 14px; display:flex; border-top:1px solid #252525;">
+          <div style="padding:8px 12px 8px 0;"><span style="color:#515151; font-size:9px; font-weight:700;">LOBBY</span></div>
+          <div style="padding:8px 12px; border-bottom:2px solid #006847;"><span style="color:#fff; font-size:9px; font-weight:700;">DRAFT</span></div>
+          <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">STANDINGS</span></div>
+          <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">MY TEAM</span></div>
+        </div>
+      </div>
+
+      <div style="padding:14px;">
+
+        <!-- Draft countdown -->
+        <div style="background:#f8f8f8; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#98989e; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Draft Starts In</div>
+            <div style="font-size:20px; font-weight:900; color:#121212; letter-spacing:-1px;">4d 6h 22m</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:9px; color:#98989e;">Apr 20 · 8:00 PM ET</div>
+            <!-- Autodraft toggle inline -->
+            <div style="display:flex; align-items:center; gap:6px; margin-top:6px; justify-content:flex-end;">
+              <span style="font-size:9px; font-weight:600; color:#121212;">Autodraft</span>
+              <div style="width:34px; height:18px; background:#e0e0e0; border-radius:9px; position:relative; cursor:pointer;">
+                <div style="width:14px; height:14px; background:#fff; border-radius:50%; position:absolute; left:2px; top:2px; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div style="display:flex; gap:0; border-bottom:2px solid #f0f0f0; margin-bottom:12px;">
+          <div style="padding:8px 16px; border-bottom:2px solid #006847; margin-bottom:-2px;">
+            <span style="font-size:10px; font-weight:700; color:#121212;">Rankings</span>
+          </div>
+          <div style="padding:8px 16px;">
+            <span style="font-size:10px; font-weight:700; color:#98989e;">My Wishlist</span>
+            <span style="font-size:8px; background:#006847; color:#fff; border-radius:10px; padding:1px 5px; margin-left:4px; font-weight:700;">3</span>
+          </div>
+        </div>
+
+        <!-- Ranking toggle + filters -->
+        <div style="display:flex; gap:6px; margin-bottom:10px; align-items:center;">
+          <div style="display:flex; background:#f0f0f0; border-radius:7px; overflow:hidden; padding:2px; gap:1px; flex-shrink:0;">
+            <div style="padding:4px 8px; background:#006847; border-radius:5px;"><span style="font-size:8px; font-weight:700; color:#fff;">MY SCORING</span></div>
+            <div style="padding:4px 8px;"><span style="font-size:8px; font-weight:700; color:#98989e;">ADP</span></div>
+          </div>
+          <div style="display:flex; background:#f0f0f0; border-radius:7px; overflow:hidden; padding:2px; gap:1px;">
+            <div style="padding:4px 7px; background:#fff; border-radius:5px; box-shadow:0 1px 2px rgba(0,0,0,0.08);"><span style="font-size:8px; font-weight:700; color:#121212;">ALL</span></div>
+            <div style="padding:4px 7px;"><span style="font-size:8px; font-weight:700; color:#98989e;">F</span></div>
+            <div style="padding:4px 7px;"><span style="font-size:8px; font-weight:700; color:#98989e;">D</span></div>
+            <div style="padding:4px 7px;"><span style="font-size:8px; font-weight:700; color:#98989e;">G</span></div>
+          </div>
+          <div style="flex:1; background:#f8f8f8; border:1px solid #eee; border-radius:7px; padding:5px 8px; font-size:9px; color:#98989e;">Team ▾</div>
+        </div>
+
+        <!-- Table header -->
+        <div style="overflow-x:auto;">
+          <div style="min-width:480px;">
+            <div style="display:grid; grid-template-columns:20px 20px minmax(90px,1fr) 26px 26px 30px 26px 26px 26px 36px 20px; gap:3px; padding:6px 8px; background:#f8f8f8; border-radius:6px 6px 0 0; border:1px solid #eee; border-bottom:none;">
+              <span style="font-size:7px; font-weight:700; color:#98989e;">#</span>
+              <span style="font-size:7px; color:#98989e;"></span>
+              <span style="font-size:7px; font-weight:700; color:#98989e;">PLAYER</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">G↕</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">A↕</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">PTS↕</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">PPG↕</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">GWG↕</span>
+              <span style="font-size:7px; font-weight:700; color:#98989e; text-align:center;">ATOI↕</span>
+              <span style="font-size:7px; font-weight:700; color:#0042bb; text-align:center; background:#e8f0ff; border-radius:3px; padding:1px 2px;">PROJ↓</span>
+              <span style="font-size:7px; color:#98989e; text-align:center;">★</span>
+            </div>
+            <div style="border:1px solid #eee; border-radius:0 0 6px 6px; overflow:hidden;">
+              <div style="display:grid; grid-template-columns:20px 20px minmax(90px,1fr) 26px 26px 30px 26px 26px 26px 36px 20px; gap:3px; align-items:center; padding:8px; border-bottom:1px solid #f5f5f5;">
+                <span style="font-size:9px; font-weight:900; color:#121212;">1</span>
+                <span style="font-size:7px; background:#e8f4fd; color:#0042bb; padding:1px 2px; border-radius:2px; font-weight:700; text-align:center;">F</span>
+                <div><div style="font-size:10px; font-weight:700; color:#121212;">N. MacKinnon</div><div style="font-size:7px; color:#98989e;">COL</div></div>
+                <span style="font-size:9px; text-align:center; color:#121212;">51</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">88</span>
+                <span style="font-size:9px; text-align:center; font-weight:700; color:#121212;">139</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">18</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">9</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">22:14</span>
+                <span style="font-size:9px; font-weight:900; color:#0042bb; text-align:center; background:#e8f0ff; border-radius:3px; padding:1px 3px;">142.4</span>
+                <span style="font-size:12px; color:#98989e; text-align:center; cursor:pointer;">☆</span>
+              </div>
+              <div style="display:grid; grid-template-columns:20px 20px minmax(90px,1fr) 26px 26px 30px 26px 26px 26px 36px 20px; gap:3px; align-items:center; padding:8px; border-bottom:1px solid #f5f5f5;">
+                <span style="font-size:9px; font-weight:900; color:#121212;">2</span>
+                <span style="font-size:7px; background:#e8f4fd; color:#0042bb; padding:1px 2px; border-radius:2px; font-weight:700; text-align:center;">F</span>
+                <div><div style="font-size:10px; font-weight:700; color:#121212;">C. McDavid</div><div style="font-size:7px; color:#98989e;">EDM</div></div>
+                <span style="font-size:9px; text-align:center; color:#121212;">44</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">92</span>
+                <span style="font-size:9px; text-align:center; font-weight:700; color:#121212;">136</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">16</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">7</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">21:42</span>
+                <span style="font-size:9px; font-weight:900; color:#0042bb; text-align:center; background:#e8f0ff; border-radius:3px; padding:1px 3px;">139.1</span>
+                <span style="font-size:12px; color:#ffcf00; text-align:center; cursor:pointer;">★</span>
+              </div>
+              <div style="display:grid; grid-template-columns:20px 20px minmax(90px,1fr) 26px 26px 30px 26px 26px 26px 36px 20px; gap:3px; align-items:center; padding:8px;">
+                <span style="font-size:9px; font-weight:900; color:#121212;">3</span>
+                <span style="font-size:7px; background:#fce8f3; color:#8B008B; padding:1px 2px; border-radius:2px; font-weight:700; text-align:center;">D</span>
+                <div><div style="font-size:10px; font-weight:700; color:#121212;">C. Makar</div><div style="font-size:7px; color:#98989e;">COL</div></div>
+                <span style="font-size:9px; text-align:center; color:#121212;">28</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">62</span>
+                <span style="font-size:9px; text-align:center; font-weight:700; color:#121212;">90</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">11</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">6</span>
+                <span style="font-size:9px; text-align:center; color:#121212;">24:38</span>
+                <span style="font-size:9px; font-weight:900; color:#0042bb; text-align:center; background:#e8f0ff; border-radius:3px; padding:1px 3px;">128.3</span>
+                <span style="font-size:12px; color:#98989e; text-align:center; cursor:pointer;">☆</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WISHLIST TAB -->
+  <div class="mockup">
+    <div class="mockup-header">Draft Page — My Wishlist Tab</div>
+    <div class="mockup-body" style="padding:0; font-family:Inter,Arial,sans-serif; background:#fff;">
+
+      <div style="background:#1a1a1a;">
+        <div style="padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+          <span style="color:#fff; font-weight:900; font-size:11px; letter-spacing:3px;">HOCKEYPOOLZ</span>
+          <div style="width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#006847,#CE1126); font-size:10px; display:flex; align-items:center; justify-content:center;">🔥</div>
+        </div>
+        <div style="background:#111; padding:0 14px; display:flex; border-top:1px solid #252525;">
+          <div style="padding:8px 12px 8px 0;"><span style="color:#515151; font-size:9px; font-weight:700;">LOBBY</span></div>
+          <div style="padding:8px 12px; border-bottom:2px solid #006847;"><span style="color:#fff; font-size:9px; font-weight:700;">DRAFT</span></div>
+          <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">STANDINGS</span></div>
+          <div style="padding:8px 12px;"><span style="color:#515151; font-size:9px; font-weight:700;">MY TEAM</span></div>
+        </div>
+      </div>
+
+      <div style="padding:14px;">
+
+        <!-- Countdown compact -->
+        <div style="background:#f8f8f8; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#98989e; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Draft Starts In</div>
+            <div style="font-size:20px; font-weight:900; color:#121212; letter-spacing:-1px;">4d 6h 22m</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:9px; color:#98989e;">Apr 20 · 8:00 PM ET</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:6px; justify-content:flex-end;">
+              <span style="font-size:9px; font-weight:600; color:#121212;">Autodraft</span>
+              <div style="width:34px; height:18px; background:#006847; border-radius:9px; position:relative; cursor:pointer;">
+                <div style="width:14px; height:14px; background:#fff; border-radius:50%; position:absolute; right:2px; top:2px; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div style="display:flex; gap:0; border-bottom:2px solid #f0f0f0; margin-bottom:12px;">
+          <div style="padding:8px 16px;">
+            <span style="font-size:10px; font-weight:700; color:#98989e;">Rankings</span>
+          </div>
+          <div style="padding:8px 16px; border-bottom:2px solid #006847; margin-bottom:-2px;">
+            <span style="font-size:10px; font-weight:700; color:#121212;">My Wishlist</span>
+            <span style="font-size:8px; background:#006847; color:#fff; border-radius:10px; padding:1px 5px; margin-left:4px; font-weight:700;">3</span>
+          </div>
+        </div>
+
+        <!-- Wishlist info -->
+        <p style="font-size:10px; color:#98989e; margin-bottom:10px;">Drag to reorder. Autodraft picks in this order, skipping players already taken.</p>
+
+        <!-- Wishlist items — draggable -->
+        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
+
+          <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #eee; border-radius:10px; padding:10px 12px; border-left:3px solid #006847;">
+            <span style="font-size:14px; color:#ddd; cursor:grab;">⋮⋮</span>
+            <div style="width:24px; height:24px; background:#006847; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:900; flex-shrink:0;">1</div>
+            <div style="flex:1;">
+              <div style="font-size:11px; font-weight:700; color:#121212;">C. McDavid</div>
+              <div style="font-size:9px; color:#98989e;">EDM · F · PROJ 139.1</div>
+            </div>
+            <span style="font-size:8px; background:#e8f4fd; color:#0042bb; padding:2px 5px; border-radius:4px; font-weight:700;">F</span>
+            <span style="font-size:12px; color:#ccc; cursor:pointer;">✕</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #eee; border-radius:10px; padding:10px 12px;">
+            <span style="font-size:14px; color:#ddd; cursor:grab;">⋮⋮</span>
+            <div style="width:24px; height:24px; background:#eee; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#666; font-size:10px; font-weight:900; flex-shrink:0;">2</div>
+            <div style="flex:1;">
+              <div style="font-size:11px; font-weight:700; color:#121212;">C. Makar</div>
+              <div style="font-size:9px; color:#98989e;">COL · D · PROJ 128.3</div>
+            </div>
+            <span style="font-size:8px; background:#fce8f3; color:#8B008B; padding:2px 5px; border-radius:4px; font-weight:700;">D</span>
+            <span style="font-size:12px; color:#ccc; cursor:pointer;">✕</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #eee; border-radius:10px; padding:10px 12px;">
+            <span style="font-size:14px; color:#ddd; cursor:grab;">⋮⋮</span>
+            <div style="width:24px; height:24px; background:#eee; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#666; font-size:10px; font-weight:900; flex-shrink:0;">3</div>
+            <div style="flex:1;">
+              <div style="font-size:11px; font-weight:700; color:#121212;">I. Shesterkin</div>
+              <div style="font-size:9px; color:#98989e;">NYR · G · PROJ 119.7</div>
+            </div>
+            <span style="font-size:8px; background:#fff3e0; color:#e65100; padding:2px 5px; border-radius:4px; font-weight:700;">G</span>
+            <span style="font-size:12px; color:#ccc; cursor:pointer;">✕</span>
+          </div>
+
+        </div>
+
+        <!-- Add more CTA -->
+        <button style="width:100%; padding:10px; background:#f8f8f8; border:2px dashed #ddd; border-radius:10px; font-size:10px; font-weight:700; color:#98989e; cursor:pointer;">
+          + Add players from Rankings
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <div class="options">
+    <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content">
+        <h3>Approved — write the spec</h3>
+        <p>Rankings + Wishlist tabs, this is the Draft page I want</p>
+      </div>
+    </div>
+    <div class="option" data-choice="tweaks" onclick="toggleSelect(this)">
+      <div class="letter">~</div>
+      <div class="content">
+        <h3>Tweaks needed</h3>
+        <p>Tell me in the terminal</p>
+      </div>
+    </div>
+  </div>
+</div>
