@@ -50,6 +50,7 @@ model League {
   draft               Draft?
   recaps              Recap[]
   leagueRecaps        LeagueRecap[]
+  gameSummaries       LeagueGameSummary[]
   pendingJoinRequests PendingJoinRequest[]
 
   @@map("leagues")
@@ -225,6 +226,27 @@ model LeagueRecap {
 
   @@unique([leagueId, recapDate])
   @@map("league_recaps")
+}
+
+model LeagueGameSummary {
+  id           String   @id @default(uuid())
+  leagueId     String   @map("league_id")
+  gameId       String   @map("game_id")
+  gameDate     DateTime @db.Date @map("game_date")
+  homeTeamId   String   @map("home_team_id")
+  awayTeamId   String   @map("away_team_id")
+  homeScore    Int      @map("home_score")
+  awayScore    Int      @map("away_score")
+  gameState    String   @map("game_state")
+  seriesStatus String?  @map("series_status")
+  articleUrl   String?  @map("article_url")
+  content      String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@unique([leagueId, gameId])
+  @@map("league_game_summaries")
 }
 
 model NhlTeam {
