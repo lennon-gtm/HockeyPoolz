@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateDraftDayBulletin } from '@/lib/recap-service'
 
 // GET — fetch current draft for a league
 export async function GET(
@@ -105,7 +106,13 @@ export async function PATCH(
         data: { status: 'active', startedAt: new Date(), pickDeadline },
       })
       // Transition league to draft status
-      if (!draft.isMock) await prisma.league.update({ where: { id: leagueId }, data: { status: 'draft' } })
+      if (!draft.isMock) {
+        await prisma.league.update({ where: { id: leagueId }, data: { status: 'draft' } })
+        // Generate draft-day bulletin (non-blocking — don't fail the draft start if this errors)
+        generateDraftDayBulletin(leagueId).catch(err =>
+          console.error('Draft day bulletin error:', err)
+        )
+      }
       return NextResponse.json({ draft: updated })
     }
 

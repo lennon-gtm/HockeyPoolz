@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateLeagueRecaps } from '@/lib/recap-service'
+import { generateLeagueRecaps, generateLeagueRecap } from '@/lib/recap-service'
 
 export async function POST(request: NextRequest) {
   // Verify cron secret
@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
     const results = []
     for (const league of activeLeagues) {
       const result = await generateLeagueRecaps(league.id)
+      // Generate league-wide bulletin after per-member recaps
+      try {
+        await generateLeagueRecap(league.id)
+      } catch (err) {
+        result.errors.push(`League recap failed: ${err}`)
+      }
       results.push({ leagueId: league.id, leagueName: league.name, ...result })
     }
 
