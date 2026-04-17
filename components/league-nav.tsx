@@ -33,7 +33,7 @@ export function LeagueNav({ leagueId, color }: Props) {
           <Link
             key={tab.label}
             href={`${base}${tab.slug}`}
-            className={`py-2.5 px-3 text-[10px] font-bold tracking-wider ${active ? 'text-white' : 'text-[#515151]'}`}
+            className={`py-2.5 px-3 text-[10px] font-bold tracking-wider transition-colors ${active ? 'text-white' : 'text-[#b8b8b8] hover:text-white'}`}
             style={active ? { borderBottom: `2px solid ${color}` } : undefined}
           >
             {tab.label}

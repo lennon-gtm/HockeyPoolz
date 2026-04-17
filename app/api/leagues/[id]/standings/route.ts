@@ -113,6 +113,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           position: pick.player.position,
           teamAbbrev: pick.player.team.abbreviation,
           headshotUrl: pick.player.headshotUrl,
+          injuryStatus: pick.player.injuryStatus,
           totalPoints: Math.round(totalPoints * 100) / 100,
           isEliminated,
           stats: totals,

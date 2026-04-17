@@ -59,11 +59,13 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
   const SETTING_LABELS: Record<string, string> = {
     goals: 'Goals', assists: 'Assists', plusMinus: '+/-', pim: 'PIM',
     shots: 'Shots', hits: 'Hits', blockedShots: 'Blocked Shots',
-    powerPlayGoals: 'PP Goals', powerPlayPoints: 'PP Points',
-    shorthandedGoals: 'SH Goals', shorthandedPoints: 'SH Points',
-    gameWinningGoals: 'GWG', overtimeGoals: 'OT Goals',
+    powerPlayGoals: 'PP Goals', powerPlayAssists: 'PP Assists', powerPlayPoints: 'PP Points',
+    shorthandedGoals: 'SH Goals', shorthandedAssists: 'SH Assists', shorthandedPoints: 'SH Points',
+    gameWinningGoals: 'GWG',
+    overtimeGoals: 'OT Goals', overtimeAssists: 'OT Assists',
     goalieWins: 'Wins', goalieSaves: 'Saves', shutouts: 'Shutouts',
     goalsAgainst: 'GA (penalty)',
+    connSmytheTrophy: 'Conn Smythe',
   }
 
   const myStanding = standings.find(s => s.memberId === myMemberId)

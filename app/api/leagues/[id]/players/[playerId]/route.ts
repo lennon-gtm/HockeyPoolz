@@ -124,6 +124,7 @@ export async function GET(
           isEliminated: player.team.eliminatedAt !== null,
         },
         headshotUrl: player.headshotUrl,
+        injuryStatus: player.injuryStatus,
         totals: { ...totals, weightedTotal: Math.round(weightedTotal * 100) / 100 },
         gameLog,
       },

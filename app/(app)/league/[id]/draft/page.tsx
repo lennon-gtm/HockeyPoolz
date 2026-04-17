@@ -4,6 +4,7 @@ import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 import { TeamIcon } from '@/components/team-icon'
 import { PositionBadge } from '@/components/position-badge'
+import { InjuryBadge, type InjuryStatus } from '@/components/injury-badge'
 
 function toBucket(pos: string): 'F' | 'D' | 'G' {
   if (pos === 'G') return 'G'
@@ -13,12 +14,13 @@ function toBucket(pos: string): 'F' | 'D' | 'G' {
 
 interface Player {
   id: number; name: string; position: string; teamId: string; headshotUrl: string | null
+  injuryStatus?: InjuryStatus | null
   team?: { id: string; name: string; colorPrimary: string }
 }
 interface Pick {
   pickNumber: number; round: number
   leagueMemberId: string; teamName: string; teamIcon: string | null
-  player: { id: number; name: string; position: string; teamId: string; headshotUrl: string | null }
+  player: { id: number; name: string; position: string; teamId: string; headshotUrl: string | null; injuryStatus?: InjuryStatus | null }
   pickSource: string; pickedAt: string
 }
 interface MemberSummary {
@@ -369,6 +371,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-semibold truncate">{player.name}</p>
                   <PositionBadge position={toBucket(player.position)} />
+                  <InjuryBadge status={player.injuryStatus} size="xs" />
                 </div>
                 <p className="text-xs text-gray-400">{player.teamId}</p>
               </div>
@@ -435,6 +438,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                             <div className="flex items-center gap-1">
                               <p className="text-xs font-semibold truncate">{p.player.name}</p>
                               <PositionBadge position={toBucket(p.player.position)} />
+                              <InjuryBadge status={p.player.injuryStatus} size="xs" />
                             </div>
                             <p className="text-[10px] text-gray-400">{p.player.teamId}</p>
                           </div>
@@ -482,6 +486,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                                   <span className="text-[9px] text-gray-400 w-4 flex-shrink-0">#{p.pickNumber}</span>
                                   <PositionBadge position={toBucket(p.player.position)} />
                                   <span className="text-[10px] font-semibold text-[#121212] truncate">{p.player.name}</span>
+                                  <InjuryBadge status={p.player.injuryStatus} size="xs" />
                                 </div>
                               ))}
                             </div>
@@ -504,6 +509,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                             <div className="flex items-center gap-1">
                               <p className="text-xs font-semibold truncate">{p.player.name}</p>
                               <PositionBadge position={toBucket(p.player.position)} />
+                              <InjuryBadge status={p.player.injuryStatus} size="xs" />
                             </div>
                             <p className="text-[10px] text-gray-400 truncate">{p.teamName}</p>
                             {p.pickSource !== 'manual' && (
@@ -529,6 +535,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
 interface RankedPlayer {
   id: number; name: string; position: string; adp: number | null; headshotUrl: string | null
+  injuryStatus?: InjuryStatus | null
   team: { id: string; name: string; colorPrimary: string } | null
   totals: { goals: number; assists: number; plusMinus: number; pim: number; shots: number
             goalieWins: number; goalieSaves: number; goalsAgainst: number; shutouts: number }
@@ -538,6 +545,7 @@ interface RankedPlayer {
 interface WishlistEntry {
   id: string; playerId: number; rank: number
   player: { id: number; name: string; position: string; adp: number | null
+            injuryStatus?: InjuryStatus | null
             team: { id: string; name: string } | null; proj?: number }
 }
 
@@ -854,6 +862,7 @@ function PreDraft({
                                 <div className="flex items-center gap-1">
                                   <span className="font-bold text-[#121212] truncate text-xs">{player.name}</span>
                                   <PositionBadge position={isGoalie ? 'G' : player.position === 'D' ? 'D' : 'F'} />
+                                  <InjuryBadge status={player.injuryStatus} size="xs" />
                                 </div>
                                 <span className="text-[10px] text-[#98989e]">{player.team?.id ?? '—'}</span>
                               </div>
@@ -940,6 +949,7 @@ function PreDraft({
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-bold text-[#121212] truncate">{entry.player.name}</span>
                           <PositionBadge position={entry.player.position === 'G' ? 'G' : entry.player.position === 'D' ? 'D' : 'F'} />
+                          <InjuryBadge status={entry.player.injuryStatus} size="xs" />
                         </div>
                         <span className="text-[10px] text-[#98989e]">{entry.player.team?.id ?? '—'}</span>
                       </div>
@@ -1043,6 +1053,7 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold text-[#121212] truncate">{pick.player.name}</span>
             <PositionBadge position={pick.player.position === 'G' ? 'G' : pick.player.position === 'D' ? 'D' : 'F'} />
+            <InjuryBadge status={pick.player.injuryStatus} size="xs" />
           </div>
           <span className="text-[10px] text-[#98989e]">{pick.teamName} · {pick.player.teamId}</span>
         </div>

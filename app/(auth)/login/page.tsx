@@ -1,10 +1,15 @@
 'use client'
 import { useState } from 'react'
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth'
+import {
+  signInWithPopup, GoogleAuthProvider,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from 'firebase/auth'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 
 type Mode = 'idle' | 'email'
+type EmailAction = 'signIn' | 'signUp'
 
 const STEPS = [
   { icon: '🏒', num: 'Step 1', label: 'Join or create a pool' },
@@ -17,8 +22,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mode, setMode] = useState<Mode>('idle')
+  const [emailAction, setEmailAction] = useState<EmailAction>('signIn')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [info, setInfo] = useState('')
 
   async function finishSignIn(user: { getIdToken: () => Promise<string> }) {
     const token = await user.getIdToken()
@@ -46,23 +53,53 @@ export default function LoginPage() {
     }
   }
 
-  async function signInWithEmail(e: React.FormEvent) {
+  async function submitEmail(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setInfo('')
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password)
+      const result = emailAction === 'signUp'
+        ? await createUserWithEmailAndPassword(auth, email, password)
+        : await signInWithEmailAndPassword(auth, email, password)
       await finishSignIn(result.user)
     } catch (err: unknown) {
       const code = (err as { code?: string }).code
-      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
-        setError('No account found with that email.')
-      } else if (code === 'auth/wrong-password') {
-        setError('Incorrect password.')
+      if (emailAction === 'signUp' && code === 'auth/email-already-in-use') {
+        setError('An account with that email already exists. Try signing in instead.')
+      } else if (emailAction === 'signUp' && code === 'auth/weak-password') {
+        setError('Password must be at least 6 characters.')
+      } else if (code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.')
+      } else if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        setError('Incorrect email or password.')
       } else if (code === 'auth/too-many-requests') {
         setError('Too many attempts. Try again later.')
       } else {
         setError('Something went wrong. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function resetPassword() {
+    setError('')
+    setInfo('')
+    if (!email) {
+      setError('Enter your email above, then tap Forgot password.')
+      return
+    }
+    setLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setInfo('Password reset email sent. Check your inbox.')
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code
+      if (code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.')
+      } else {
+        setError('Could not send reset email. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -132,9 +169,12 @@ export default function LoginPage() {
             Pick your NHL playoff roster, compete with friends, and get play by play updates straight to your phone.
           </p>
 
-          {/* Error */}
+          {/* Error / Info */}
           {error && (
             <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{error}</p>
+          )}
+          {info && (
+            <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 12 }}>{info}</p>
           )}
 
           {/* Auth — idle */}
@@ -160,29 +200,63 @@ export default function LoginPage() {
 
           {/* Auth — email form */}
           {mode === 'email' && (
-            <form onSubmit={signInWithEmail} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
+            <form onSubmit={submitEmail} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
+              {/* Sign in / Sign up toggle */}
+              <div style={{ display: 'flex', background: '#fff', borderRadius: 9999, padding: 4, gap: 4 }}>
+                {(['signIn', 'signUp'] as const).map(a => (
+                  <button
+                    type="button"
+                    key={a}
+                    onClick={() => { setEmailAction(a); setError(''); setInfo('') }}
+                    style={{
+                      flex: 1, padding: '8px 12px', borderRadius: 9999, border: 'none',
+                      fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                      background: emailAction === a ? '#f97316' : 'transparent',
+                      color: emailAction === a ? '#fff' : '#6b7280',
+                      fontFamily: 'var(--font-nunito, Nunito, sans-serif)',
+                    }}
+                  >
+                    {a === 'signIn' ? 'Sign in' : 'Sign up'}
+                  </button>
+                ))}
+              </div>
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 style={inputStyle}
               />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder={emailAction === 'signUp' ? 'Password (6+ characters)' : 'Password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
+                minLength={emailAction === 'signUp' ? 6 : undefined}
+                autoComplete={emailAction === 'signUp' ? 'new-password' : 'current-password'}
                 style={inputStyle}
               />
               <button type="submit" disabled={loading} style={{ ...pillBase, background: '#f97316', color: '#fff', boxShadow: '0 4px 16px rgba(249,115,22,0.3)' }}>
-                {loading ? 'Signing in…' : 'Sign In'}
+                {loading
+                  ? (emailAction === 'signUp' ? 'Creating account…' : 'Signing in…')
+                  : (emailAction === 'signUp' ? 'Create Account' : 'Sign In')}
               </button>
+              {emailAction === 'signIn' && (
+                <button
+                  type="button"
+                  onClick={resetPassword}
+                  disabled={loading}
+                  style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', textAlign: 'left', padding: '2px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
+                >
+                  Forgot password?
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => { setMode('idle'); setError('') }}
+                onClick={() => { setMode('idle'); setError(''); setInfo('') }}
                 style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: '4px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
               >
                 ← Back

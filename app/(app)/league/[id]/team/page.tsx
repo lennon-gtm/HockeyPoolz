@@ -3,6 +3,7 @@ import { useState, useEffect, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { TeamIcon } from '@/components/team-icon'
 import { PositionBadge } from '@/components/position-badge'
+import { InjuryBadge, type InjuryStatus } from '@/components/injury-badge'
 import { StatCard } from '@/components/stat-card'
 
 // ---- Types ----
@@ -16,6 +17,7 @@ interface MemberInfo {
 interface RosterPlayer {
   playerId: number; name: string; position: string
   nhlTeamAbbrev: string; headshotUrl: string | null
+  injuryStatus: InjuryStatus | null
   isEliminated: boolean; totalFpts: number; yesterdayFpts: number | null
   goals: number; assists: number; pts: number; plusMinus: number; pim: number
   powerPlayGoals: number; powerPlayAssists: number
@@ -283,6 +285,7 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
                         <span className={`font-semibold ${p.isEliminated ? 'line-through text-[#98989e]' : 'text-[#121212]'}`}>
                           {p.name}
                         </span>
+                        <InjuryBadge status={p.injuryStatus} size="xs" />
                         <span className="text-[#98989e] ml-1">{p.nhlTeamAbbrev}</span>
                       </div>
                     </td>

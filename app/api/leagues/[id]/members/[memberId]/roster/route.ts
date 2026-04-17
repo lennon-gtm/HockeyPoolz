@@ -153,6 +153,7 @@ export async function GET(
         position: player.position,
         nhlTeamAbbrev: player.team.abbreviation,
         headshotUrl: player.headshotUrl,
+        injuryStatus: player.injuryStatus,
         isEliminated,
         totalFpts: Math.round(totalFpts * 100) / 100,
         yesterdayFpts: yesterdayFpts !== null ? Math.round(yesterdayFpts * 100) / 100 : null,

@@ -284,13 +284,14 @@ enum Conference {
 }
 
 model NhlPlayer {
-  id          Int       @id
-  teamId      String    @map("team_id")
-  name        String
-  position    Position
-  headshotUrl String?   @map("headshot_url")
-  adp         Decimal?  @db.Decimal(6, 2)
-  isActive    Boolean   @default(true) @map("is_active")
+  id            Int            @id
+  teamId        String         @map("team_id")
+  name          String
+  position      Position
+  headshotUrl   String?        @map("headshot_url")
+  adp           Decimal?       @db.Decimal(6, 2)
+  isActive      Boolean        @default(true) @map("is_active")
+  injuryStatus  InjuryStatus?  @map("injury_status")
 
   team              NhlTeam            @relation(fields: [teamId], references: [id])
   gameStats         PlayerGameStats[]
@@ -307,6 +308,12 @@ enum Position {
   RW
   D
   G
+}
+
+enum InjuryStatus {
+  DTD
+  OUT
+  LTIR
 }
 
 model PlayerGameStats {
