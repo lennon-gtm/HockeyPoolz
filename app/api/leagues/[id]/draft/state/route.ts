@@ -38,7 +38,7 @@ export async function GET(
     const picks = await prisma.draftPick.findMany({
       where: { draftId: draft.id },
       include: {
-        player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true } },
+        player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true, injuryStatus: true } },
         leagueMember: { select: { id: true, teamName: true, teamIcon: true } },
       },
       orderBy: { pickNumber: 'asc' },

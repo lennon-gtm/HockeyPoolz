@@ -4,6 +4,8 @@ import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 import { TeamIcon } from '@/components/team-icon'
 import { PositionBadge } from '@/components/position-badge'
+import { InjuryBadge, type InjuryStatus } from '@/components/injury-badge'
+import { PlayerRankingsPanel } from '@/components/player-rankings-panel'
 
 function toBucket(pos: string): 'F' | 'D' | 'G' {
   if (pos === 'G') return 'G'
@@ -11,14 +13,10 @@ function toBucket(pos: string): 'F' | 'D' | 'G' {
   return 'F'
 }
 
-interface Player {
-  id: number; name: string; position: string; teamId: string; headshotUrl: string | null
-  team?: { id: string; name: string; colorPrimary: string }
-}
 interface Pick {
   pickNumber: number; round: number
   leagueMemberId: string; teamName: string; teamIcon: string | null
-  player: { id: number; name: string; position: string; teamId: string; headshotUrl: string | null }
+  player: { id: number; name: string; position: string; teamId: string; headshotUrl: string | null; injuryStatus?: InjuryStatus | null }
   pickSource: string; pickedAt: string
 }
 interface MemberSummary {
@@ -43,19 +41,10 @@ interface DraftState {
   myColor: string | null
 }
 
-const POSITIONS = ['All', 'F/D', 'F', 'D', 'G', 'C', 'LW', 'RW']
-
-interface NhlTeam { id: string; abbreviation: string; colorPrimary: string }
-
 export default function DraftRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: leagueId } = use(params)
   const router = useRouter()
   const [state, setState] = useState<DraftState | null>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [posFilter, setPosFilter] = useState('All')
-  const [teamFilter, setTeamFilter] = useState('')
-  const [teams, setTeams] = useState<NhlTeam[]>([])
-  const [search, setSearch] = useState('')
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [pickLoading, setPickLoading] = useState(false)
   const [error, setError] = useState('')
@@ -83,47 +72,12 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     }
   }, [leagueId])
 
-  const fetchPlayers = useCallback(async () => {
-    if (!state?.draft) return
-    const token = await getToken()
-    const apiPos = posFilter === 'F/D' ? 'FD' : posFilter
-    const pos = apiPos !== 'All' ? `&position=${apiPos}` : ''
-    const q = search ? `&search=${encodeURIComponent(search)}` : ''
-    const team = teamFilter ? `&team=${teamFilter}` : ''
-    const res = await fetch(
-      `/api/nhl-players?draftId=${state.draft.id}${pos}${q}${team}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    if (res.ok) {
-      const data = await res.json()
-      setPlayers(data.players)
-    }
-  }, [state?.draft, posFilter, search, teamFilter])
-
   // Poll draft state every 5 seconds
   useEffect(() => {
     fetchState()
     const interval = setInterval(fetchState, 5000)
     return () => clearInterval(interval)
   }, [fetchState])
-
-  // Fetch players when draft or filters change
-  useEffect(() => { fetchPlayers() }, [fetchPlayers])
-
-  // Load playoff teams for the team filter dropdown
-  useEffect(() => {
-    async function loadTeams() {
-      const token = await getToken()
-      const res = await fetch('/api/nhl-teams?playoffQualified=true', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setTeams(data.teams)
-      }
-    }
-    loadTeams()
-  }, [])
 
   // Countdown timer
   useEffect(() => {
@@ -167,7 +121,6 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Pick failed'); return }
       await fetchState()
-      await fetchPlayers()
     } finally { setPickLoading(false) }
   }
 
@@ -232,7 +185,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="p-4 max-w-xl mx-auto">
+      <div className="p-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="border-b border-gray-200 pb-3 mb-3 flex items-center justify-between">
         <div>
@@ -324,65 +277,18 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
       {error && <p className="text-red-600 text-sm px-4 py-2">{error}</p>}
 
       <div className="flex gap-0 h-[calc(100vh-200px)]">
-        {/* Left panel: available players */}
+        {/* Left panel: available players — shared rankings table (same columns + filters as pre-draft). */}
         <div className="flex-1 overflow-y-auto border-r border-gray-200 bg-white">
-          <div className="p-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <input
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-2"
-              placeholder="Search players…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+          <div className="p-3">
+            <PlayerRankingsPanel
+              leagueId={leagueId}
+              myColor={state.myColor ?? '#FF6B00'}
+              excludeIds={picks.map(p => p.player.id)}
+              canDraft={!!isMyTurn && !pickLoading}
+              onDraft={makePick}
+              enableWishlist
             />
-            <div className="flex gap-1 flex-wrap mb-2">
-              {POSITIONS.map(pos => (
-                <button key={pos}
-                  onClick={() => setPosFilter(pos)}
-                  className={`text-xs px-2 py-1 rounded font-bold transition ${posFilter === pos ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                  {pos}
-                </button>
-              ))}
-            </div>
-            {teams.length > 0 && (
-              <select
-                value={teamFilter}
-                onChange={e => setTeamFilter(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-700 bg-white"
-              >
-                <option value="">All Teams</option>
-                {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.abbreviation}</option>
-                ))}
-              </select>
-            )}
           </div>
-
-          {players.map(player => (
-            <div key={player.id}
-              className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-50 hover:bg-orange-50 transition">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
-                {player.headshotUrl
-                  ? <img src={player.headshotUrl} alt={player.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">{player.position}</div>
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-semibold truncate">{player.name}</p>
-                  <PositionBadge position={toBucket(player.position)} />
-                </div>
-                <p className="text-xs text-gray-400">{player.teamId}</p>
-              </div>
-              {isMyTurn && !pickLoading && (
-                <button
-                  onClick={() => makePick(player.id)}
-                  className="text-xs text-white px-3 py-1 rounded-lg font-bold flex-shrink-0"
-                  style={{ backgroundColor: pickerColor }}
-                >
-                  Draft
-                </button>
-              )}
-            </div>
-          ))}
         </div>
 
         {/* Right panel: tabbed */}
@@ -435,6 +341,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                             <div className="flex items-center gap-1">
                               <p className="text-xs font-semibold truncate">{p.player.name}</p>
                               <PositionBadge position={toBucket(p.player.position)} />
+                              <InjuryBadge status={p.player.injuryStatus} size="xs" />
                             </div>
                             <p className="text-[10px] text-gray-400">{p.player.teamId}</p>
                           </div>
@@ -482,6 +389,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                                   <span className="text-[9px] text-gray-400 w-4 flex-shrink-0">#{p.pickNumber}</span>
                                   <PositionBadge position={toBucket(p.player.position)} />
                                   <span className="text-[10px] font-semibold text-[#121212] truncate">{p.player.name}</span>
+                                  <InjuryBadge status={p.player.injuryStatus} size="xs" />
                                 </div>
                               ))}
                             </div>
@@ -504,6 +412,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                             <div className="flex items-center gap-1">
                               <p className="text-xs font-semibold truncate">{p.player.name}</p>
                               <PositionBadge position={toBucket(p.player.position)} />
+                              <InjuryBadge status={p.player.injuryStatus} size="xs" />
                             </div>
                             <p className="text-[10px] text-gray-400 truncate">{p.teamName}</p>
                             {p.pickSource !== 'manual' && (
@@ -527,17 +436,10 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
-interface RankedPlayer {
-  id: number; name: string; position: string; adp: number | null; headshotUrl: string | null
-  team: { id: string; name: string; colorPrimary: string } | null
-  totals: { goals: number; assists: number; plusMinus: number; pim: number; shots: number
-            goalieWins: number; goalieSaves: number; goalsAgainst: number; shutouts: number }
-  proj: number
-}
-
 interface WishlistEntry {
   id: string; playerId: number; rank: number
   player: { id: number; name: string; position: string; adp: number | null
+            injuryStatus?: InjuryStatus | null
             team: { id: string; name: string } | null; proj?: number }
 }
 
@@ -568,14 +470,6 @@ function PreDraft({
 }: PreDraftProps) {
   const [wishlistCount, setWishlistCount] = useState(0)
   const [countdown, setCountdown] = useState('TBD')
-  const rankMode = 'scoring'
-  const [rankPos, setRankPos] = useState<'ALL' | 'F/D' | 'F' | 'D' | 'G'>('ALL')
-  const [rankTeamId, setRankTeamId] = useState('')
-  const [rankSearch, setRankSearch] = useState('')
-  const [rankPlayers, setRankPlayers] = useState<RankedPlayer[]>([])
-  const [rankLoading, setRankLoading] = useState(false)
-  const [preDraftTeams, setPreDraftTeams] = useState<NhlTeam[]>([])
-  const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set())
   const [wishlist, setWishlist] = useState<WishlistEntry[]>([])
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
@@ -594,37 +488,6 @@ function PreDraft({
     return () => clearInterval(interval)
   }, [draft?.scheduledStartAt])
 
-  useEffect(() => {
-    async function loadTeams() {
-      const token = await auth.currentUser?.getIdToken()
-      if (!token) return
-      const res = await fetch('/api/nhl-teams?playoffQualified=true', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setPreDraftTeams(data.teams)
-      }
-    }
-    loadTeams()
-  }, [])
-
-  useEffect(() => {
-    async function loadCount() {
-      const token = await auth.currentUser?.getIdToken()
-      if (!token) return
-      const res = await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setWishlistCount(data.wishlist?.length ?? 0)
-        setWishlistIds(new Set((data.wishlist ?? []).map((w: { playerId: number }) => w.playerId)))
-      }
-    }
-    loadCount()
-  }, [leagueId])
-
   async function loadWishlist() {
     const token = await auth.currentUser?.getIdToken()
     if (!token) return
@@ -635,7 +498,6 @@ function PreDraft({
     const data = await res.json()
     const entries: WishlistEntry[] = data.wishlist ?? []
     setWishlist(entries)
-    setWishlistIds(new Set(entries.map(e => e.playerId)))
     setWishlistCount(entries.length)
   }
 
@@ -656,33 +518,6 @@ function PreDraft({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preDraftTab, leagueId])
 
-  useEffect(() => {
-    if (preDraftTab !== 'rankings') return
-    let cancelled = false
-    async function fetchRankings() {
-      setRankLoading(true)
-      const token = await auth.currentUser?.getIdToken()
-      if (!token) return
-      const apiRankPos = rankPos === 'F/D' ? 'FD' : rankPos
-      const qs = new URLSearchParams({
-        mode: rankMode,
-        ...(apiRankPos !== 'ALL' ? { position: apiRankPos } : {}),
-        ...(rankTeamId ? { teamId: rankTeamId } : {}),
-        ...(rankSearch ? { search: rankSearch } : {}),
-      })
-      const res = await fetch(`/api/leagues/${leagueId}/draft/rankings?${qs}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok && !cancelled) {
-        const data = await res.json()
-        setRankPlayers(data.players ?? [])
-      }
-      if (!cancelled) setRankLoading(false)
-    }
-    fetchRankings()
-    return () => { cancelled = true }
-  }, [leagueId, preDraftTab, rankMode, rankPos, rankTeamId, rankSearch])
-
   async function toggleAutodraft(enabled: boolean) {
     const token = await auth.currentUser?.getIdToken()
     if (!token) return
@@ -694,35 +529,23 @@ function PreDraft({
     setAutodraftEnabled(enabled)
   }
 
-  async function toggleWishlist(playerId: number) {
+  async function removeFromWishlist(playerId: number) {
     const token = await auth.currentUser?.getIdToken()
     if (!token) return
-    const isInWishlist = wishlistIds.has(playerId)
-    if (isInWishlist) {
-      const res = await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      const newList = (data.wishlist ?? [])
-        .filter((w: { playerId: number }) => w.playerId !== playerId)
-        .map((w: { playerId: number }, i: number) => ({ playerId: w.playerId, rank: i + 1 }))
-      await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wishlist: newList }),
-      })
-      setWishlistIds(prev => { const s = new Set(prev); s.delete(playerId); return s })
-      setWishlistCount(c => Math.max(0, c - 1))
-    } else {
-      await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId }),
-      })
-      setWishlistIds(prev => new Set([...prev, playerId]))
-      setWishlistCount(c => c + 1)
-    }
+    const res = await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const newList = (data.wishlist ?? [])
+      .filter((w: { playerId: number }) => w.playerId !== playerId)
+      .map((w: { playerId: number }, i: number) => ({ playerId: w.playerId, rank: i + 1 }))
+    await fetch(`/api/leagues/${leagueId}/draft/wishlist`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wishlist: newList }),
+    })
+    loadWishlist()
   }
 
   const draftDateStr = draft?.scheduledStartAt
@@ -780,121 +603,14 @@ function PreDraft({
           ))}
         </div>
 
-        {/* Tab content — Rankings (Task 3) and Wishlist (Task 4) */}
+        {/* Tab content — Rankings (shared with live draft) and Wishlist */}
         {preDraftTab === 'rankings' && (
-          <div>
-            {/* Position + search filters */}
-            <div className="flex gap-2 mb-2 flex-wrap items-center">
-              {(['ALL', 'F/D', 'F', 'D', 'G'] as const).map(p => (
-                <button key={p} onClick={() => setRankPos(p)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded transition ${rankPos === p ? 'text-white' : 'bg-[#f8f8f8] text-[#515151] hover:bg-gray-200'}`}
-                  style={rankPos === p ? { backgroundColor: myColor } : {}}
-                >
-                  {p}
-                </button>
-              ))}
-              <input value={rankSearch} onChange={e => setRankSearch(e.target.value)}
-                placeholder="Search…"
-                className="ml-auto border border-[#eeeeee] rounded-lg px-3 py-1 text-xs w-28"
-              />
-            </div>
-            {preDraftTeams.length > 0 && (
-              <select
-                value={rankTeamId}
-                onChange={e => setRankTeamId(e.target.value)}
-                className="mb-3 w-full border border-[#eeeeee] rounded-lg px-3 py-1.5 text-xs text-[#515151] bg-white"
-              >
-                <option value="">All Teams</option>
-                {preDraftTeams.map(t => (
-                  <option key={t.id} value={t.id}>{t.abbreviation}</option>
-                ))}
-              </select>
-            )}
-
-            {/* Table */}
-            {rankLoading ? (
-              <p className="text-sm text-[#98989e] py-4">Loading…</p>
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-[#eeeeee]">
-                <table className="text-xs w-full">
-                  <thead>
-                    <tr className="bg-[#f8f8f8] text-[#98989e]">
-                      <th className="sticky left-0 z-20 bg-[#f8f8f8] px-3 py-2 text-left font-bold uppercase tracking-widest text-[10px] min-w-[160px] border-r border-[#eeeeee]">
-                        <span>Player</span>
-                        <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, background: '#fff7ed', color: '#f97316', fontWeight: 700, fontSize: 9, letterSpacing: '1px', textTransform: 'uppercase', verticalAlign: 'middle' }}>
-                          2025-26 RS
-                        </span>
-                      </th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px] bg-[#eef3ff] text-[#0042bb] whitespace-nowrap">PROJ ↓</th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">G</th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">A</th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">PTS</th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px]">+/-</th>
-                      <th className="px-3 py-2 text-right font-bold uppercase tracking-widest text-[10px] whitespace-nowrap">SOG</th>
-                      <th className="px-2 py-2 text-center font-bold uppercase tracking-widest text-[10px]">★</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rankPlayers.map((player, i) => {
-                      const isGoalie = player.position === 'G'
-                      const inWishlist = wishlistIds.has(player.id)
-                      const rowBg = i % 2 === 1 ? '#fafafa' : '#ffffff'
-                      return (
-                        <tr key={player.id} className="border-t border-[#eeeeee]" style={{ backgroundColor: rowBg }}>
-                          <td className="sticky left-0 z-10 px-3 py-2 border-r border-[#eeeeee]" style={{ backgroundColor: rowBg }}>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-[#98989e] w-5 text-right flex-shrink-0">{i + 1}</span>
-                              <div className="w-7 h-7 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden">
-                                {player.headshotUrl
-                                  ? <img src={player.headshotUrl} alt="" className="w-full h-full object-cover" />
-                                  : <div className="w-full h-full flex items-center justify-center text-[9px] text-gray-400">{player.position}</div>
-                                }
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1">
-                                  <span className="font-bold text-[#121212] truncate text-xs">{player.name}</span>
-                                  <PositionBadge position={isGoalie ? 'G' : player.position === 'D' ? 'D' : 'F'} />
-                                </div>
-                                <span className="text-[10px] text-[#98989e]">{player.team?.id ?? '—'}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-right font-black text-[#0042bb] bg-[#eef3ff] whitespace-nowrap">
-                            {player.proj}
-                          </td>
-                          <td className="px-3 py-2 text-right text-[#121212] font-semibold">
-                            {isGoalie ? (player.totals.goalieWins || '—') : (player.totals.goals || '—')}
-                          </td>
-                          <td className="px-3 py-2 text-right text-[#121212] font-semibold">
-                            {isGoalie ? '—' : (player.totals.assists || '—')}
-                          </td>
-                          <td className="px-3 py-2 text-right text-[#121212] font-semibold">
-                            {isGoalie ? '—' : ((player.totals.goals + player.totals.assists) || '—')}
-                          </td>
-                          <td className="px-3 py-2 text-right font-semibold"
-                            style={{ color: isGoalie ? '#98989e' : player.totals.plusMinus >= 0 ? '#2db944' : '#c8102e' }}>
-                            {isGoalie ? '—' : (player.totals.plusMinus > 0 ? `+${player.totals.plusMinus}` : player.totals.plusMinus || '—')}
-                          </td>
-                          <td className="px-3 py-2 text-right text-[#121212] font-semibold">
-                            {isGoalie ? (player.totals.goalieSaves || '—') : (player.totals.shots || '—')}
-                          </td>
-                          <td className="px-2 py-2 text-center">
-                            <button onClick={() => toggleWishlist(player.id)}
-                              className="text-base leading-none hover:scale-110 transition-transform"
-                              style={{ color: inWishlist ? '#ffcf00' : '#d1d5db' }}
-                            >★</button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                    {rankPlayers.length === 0 && (
-                      <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-[#98989e]">No players found</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <PlayerRankingsPanel
+            leagueId={leagueId}
+            myColor={myColor}
+            enableWishlist
+            onWishlistChange={count => setWishlistCount(count)}
+          />
         )}
         {preDraftTab === 'wishlist' && (
           <div>
@@ -940,6 +656,7 @@ function PreDraft({
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-bold text-[#121212] truncate">{entry.player.name}</span>
                           <PositionBadge position={entry.player.position === 'G' ? 'G' : entry.player.position === 'D' ? 'D' : 'F'} />
+                          <InjuryBadge status={entry.player.injuryStatus} size="xs" />
                         </div>
                         <span className="text-[10px] text-[#98989e]">{entry.player.team?.id ?? '—'}</span>
                       </div>
@@ -954,7 +671,7 @@ function PreDraft({
                           <div className="text-xs font-bold text-[#121212]">{entry.player.adp?.toFixed(1) ?? '—'}</div>
                           <div className="text-[9px] text-[#98989e] font-semibold">ADP</div>
                         </div>
-                        <button onClick={() => toggleWishlist(entry.playerId)}
+                        <button onClick={() => removeFromWishlist(entry.playerId)}
                           className="text-[#98989e] hover:text-red-400 text-sm font-bold transition">
                           ✕
                         </button>
@@ -1043,6 +760,7 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold text-[#121212] truncate">{pick.player.name}</span>
             <PositionBadge position={pick.player.position === 'G' ? 'G' : pick.player.position === 'D' ? 'D' : 'F'} />
+            <InjuryBadge status={pick.player.injuryStatus} size="xs" />
           </div>
           <span className="text-[10px] text-[#98989e]">{pick.teamName} · {pick.player.teamId}</span>
         </div>

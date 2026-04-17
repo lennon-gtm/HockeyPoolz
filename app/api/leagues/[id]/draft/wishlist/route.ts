@@ -20,7 +20,7 @@ export async function GET(
 
     const wishlist = await prisma.autodraftWishlist.findMany({
       where: { leagueMemberId: member.id },
-      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true } } },
+      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true, injuryStatus: true } } },
       orderBy: { rank: 'asc' },
     })
 
@@ -63,7 +63,7 @@ export async function POST(
 
     const entry = await prisma.autodraftWishlist.create({
       data: { leagueMemberId: member.id, playerId, rank },
-      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true } } },
+      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true, injuryStatus: true } } },
     })
 
     return NextResponse.json({ entry }, { status: 201 })
@@ -106,7 +106,7 @@ export async function PUT(
 
     const wishlist = await prisma.autodraftWishlist.findMany({
       where: { leagueMemberId: member.id },
-      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true } } },
+      include: { player: { select: { id: true, name: true, position: true, teamId: true, headshotUrl: true, injuryStatus: true } } },
       orderBy: { rank: 'asc' },
     })
 

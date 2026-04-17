@@ -169,6 +169,7 @@ export async function GET(
         team: player.team,
         headshotUrl: player.headshotUrl,
         adp: player.adp,
+        injuryStatus: player.injuryStatus,
         totals,
         proj: Math.round(proj * 10) / 10,
       }

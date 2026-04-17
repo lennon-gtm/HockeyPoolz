@@ -2,6 +2,7 @@
 import { useState, useEffect, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
+import { InjuryBadge, type InjuryStatus } from '@/components/injury-badge'
 
 interface GameLogEntry {
   gameId: string; gameDate: string
@@ -12,6 +13,7 @@ interface PlayerDetail {
   id: number; name: string; position: string
   team: { abbreviation: string; name: string; isEliminated: boolean }
   headshotUrl: string | null
+  injuryStatus: InjuryStatus | null
   totals: Record<string, number> & { weightedTotal: number }
   gameLog: GameLogEntry[]
 }
@@ -95,9 +97,12 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             <div className="w-16 h-16 rounded-full bg-gray-200" />
           )}
           <div>
-            <h1 className={`text-2xl font-black ${player.team.isEliminated ? 'text-gray-400' : ''}`}>
-              {player.name}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className={`text-2xl font-black ${player.team.isEliminated ? 'text-gray-400' : ''}`}>
+                {player.name}
+              </h1>
+              <InjuryBadge status={player.injuryStatus} />
+            </div>
             <p className="text-sm text-gray-500">
               {player.position} · {player.team.name} ({player.team.abbreviation})
               {player.team.isEliminated && (
