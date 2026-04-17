@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     const draftId = searchParams.get('draftId')     // filter to available players only
     const teamId = searchParams.get('team')          // filter by team ID
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1)
-    const pageSize = 50
+    // Playoff pool is bounded (~16 teams × ~23 rostered ≈ 370 players); one page
+    // should cover every eligible player so the draft list isn't silently
+    // truncated to the ADP top-50.
+    const pageSize = 500
 
     // Build where clause
     const where: Record<string, unknown> = {
