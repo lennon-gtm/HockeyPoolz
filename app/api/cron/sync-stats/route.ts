@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncRosters, syncGameStats, checkEliminations, recalculateScores, writeMemberDailyScores } from '@/lib/stats-service'
+import { syncInjuries, type InjurySyncResult } from '@/lib/injury-service'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
@@ -48,6 +49,15 @@ export async function POST(request: NextRequest) {
       dailyResults.push({ leagueId: league.id, membersScored: count })
     }
 
+    // 6. Refresh injury tags from ESPN feed — non-fatal if it fails.
+    let injuries: InjurySyncResult | { error: string } = { error: 'skipped' }
+    try {
+      injuries = await syncInjuries()
+    } catch (err) {
+      console.error('syncInjuries failed:', err)
+      injuries = { error: String(err) }
+    }
+
     return NextResponse.json({
       success: true,
       rosters: rosterResult,
@@ -55,6 +65,7 @@ export async function POST(request: NextRequest) {
       eliminations: newEliminations,
       leaguesScored: activeLeagues.length,
       dailyScores: dailyResults,
+      injuries,
     })
   } catch (error) {
     console.error('Cron sync-stats error:', error)
