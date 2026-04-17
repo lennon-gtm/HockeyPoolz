@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import { getAuth, type Auth } from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -8,5 +8,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 }
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
-export const auth = getAuth(app)
+// Defer Firebase init to the browser. During server-side prerender,
+// NEXT_PUBLIC_* env vars may be absent (e.g. Vercel preview builds),
+// and initializeApp would throw auth/invalid-api-key.
+export const auth: Auth = typeof window === 'undefined'
+  ? ({ currentUser: null } as unknown as Auth)
+  : getAuth(getApps().length ? getApp() : initializeApp(firebaseConfig))
