@@ -56,6 +56,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [autodraftSaving, setAutodraftSaving] = useState(false)
   const [restartOpen, setRestartOpen] = useState(false)
   const [restartSaving, setRestartSaving] = useState(false)
+  const [editingPick, setEditingPick] = useState<Pick | null>(null)
+  const [rewindingPick, setRewindingPick] = useState<Pick | null>(null)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -174,31 +176,70 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   }
 
   if (!state) return <div className="p-6 text-gray-400 text-sm">Loading draft…</div>
+
+  const commissionerModals = (
+    <>
+      {restartOpen && (
+        <RestartDraftModal
+          onCancel={() => { if (!restartSaving) setRestartOpen(false) }}
+          onConfirm={restartDraft}
+          saving={restartSaving}
+        />
+      )}
+      {editingPick && (
+        <EditPickModal
+          leagueId={leagueId}
+          pick={editingPick}
+          onClose={() => setEditingPick(null)}
+          onSaved={async () => { setEditingPick(null); await fetchState() }}
+        />
+      )}
+      {rewindingPick && (
+        <RewindPickModal
+          leagueId={leagueId}
+          pick={rewindingPick}
+          laterPickCount={state.picks.filter(p => p.pickNumber > rewindingPick.pickNumber).length}
+          onClose={() => setRewindingPick(null)}
+          onDone={async () => { setRewindingPick(null); await fetchState() }}
+        />
+      )}
+    </>
+  )
+
   if (!state.draft || state.draft.status === 'pending') {
     return (
-      <PreDraft
-        leagueId={leagueId}
-        draft={state.draft}
-        myColor={state.myColor ?? '#FF6B00'}
-        preDraftTab={preDraftTab}
-        setPreDraftTab={setPreDraftTab}
-        autodraftEnabled={autodraftEnabled}
-        setAutodraftEnabled={setAutodraftEnabled}
-        isCommissioner={state.isCommissioner}
-        onDraftStarted={fetchState}
-      />
+      <>
+        {commissionerModals}
+        <PreDraft
+          leagueId={leagueId}
+          draft={state.draft}
+          myColor={state.myColor ?? '#FF6B00'}
+          preDraftTab={preDraftTab}
+          setPreDraftTab={setPreDraftTab}
+          autodraftEnabled={autodraftEnabled}
+          setAutodraftEnabled={setAutodraftEnabled}
+          isCommissioner={state.isCommissioner}
+          onDraftStarted={fetchState}
+        />
+      </>
     )
   }
 
   if (state.draft.status === 'complete') {
     return (
-      <PostDraft
-        draft={state.draft}
-        picks={state.picks}
-        members={state.members}
-        myLeagueMemberId={state.myLeagueMemberId}
-        myColor={state.myColor ?? '#FF6B00'}
-      />
+      <>
+        {commissionerModals}
+        <PostDraft
+          draft={state.draft}
+          picks={state.picks}
+          members={state.members}
+          myLeagueMemberId={state.myLeagueMemberId}
+          myColor={state.myColor ?? '#FF6B00'}
+          isCommissioner={state.isCommissioner}
+          onEditPick={setEditingPick}
+          onRewindPick={setRewindingPick}
+        />
+      </>
     )
   }
 
@@ -211,13 +252,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="bg-white min-h-screen">
-      {restartOpen && (
-        <RestartDraftModal
-          onCancel={() => { if (!restartSaving) setRestartOpen(false) }}
-          onConfirm={restartDraft}
-          saving={restartSaving}
-        />
-      )}
+      {commissionerModals}
       <div className="p-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="border-b border-gray-200 pb-3 mb-3 flex items-center justify-between">
@@ -449,7 +484,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                       : [...picks].reverse().map(p => (
                         <div key={p.pickNumber} className="flex items-start gap-2 py-1.5 border-b border-gray-50">
                           <span className="text-[10px] text-gray-400 w-8 flex-shrink-0">#{p.pickNumber}</span>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1">
                               <p className="text-xs font-semibold truncate">{p.player.name}</p>
                               <PositionBadge position={toBucket(p.player.position)} />
@@ -460,6 +495,12 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
                               <span className="text-[9px] text-blue-500 font-bold">AUTO</span>
                             )}
                           </div>
+                          {isCommissioner && (
+                            <CommishPickActions
+                              onEdit={() => setEditingPick(p)}
+                              onRewind={() => setRewindingPick(p)}
+                            />
+                          )}
                         </div>
                       ))
                     }
@@ -502,6 +543,9 @@ interface PostDraftProps {
   members: MemberSummary[]
   myLeagueMemberId: string | null
   myColor: string
+  isCommissioner: boolean
+  onEditPick: (pick: Pick) => void
+  onRewindPick: (pick: Pick) => void
 }
 
 // ── PreDraft ──────────────────────────────────────────────────────────────────
@@ -787,7 +831,7 @@ function PreDraft({
 
 // ── PostDraft ─────────────────────────────────────────────────────────────────
 
-function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDraftProps) {
+function PostDraft({ draft, picks, members, myLeagueMemberId, myColor, isCommissioner, onEditPick, onRewindPick }: PostDraftProps) {
   const [search, setSearch] = useState('')
   const [expandedRounds, setExpandedRounds] = useState<Set<number>>(new Set([1, 2]))
 
@@ -857,7 +901,7 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
           </div>
           <span className="text-[10px] text-[#98989e]">{pick.teamName} · {pick.player.teamId}</span>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-2">
           {isMe && (
             <span className="text-[9px] font-black px-2 py-0.5 rounded"
               style={{ backgroundColor: myColor + '20', color: myColor }}>YOU</span>
@@ -867,6 +911,12 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
           )}
           {!isMe && !isAuto && timeTaken && (
             <span className="text-[10px] text-[#98989e]">{timeTaken}</span>
+          )}
+          {isCommissioner && (
+            <CommishPickActions
+              onEdit={() => onEditPick(pick)}
+              onRewind={() => onRewindPick(pick)}
+            />
           )}
         </div>
       </div>
@@ -933,12 +983,219 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
   )
 }
 
-// ── RestartDraftModal ─────────────────────────────────────────────────────────
+// ── Commissioner pick controls ────────────────────────────────────────────────
 
 interface RestartModalProps {
   onCancel: () => void
   onConfirm: (randomize: boolean) => void
   saving: boolean
+}
+
+// ── Per-pick commissioner menu (inline on pick rows) ─────────────────────────
+
+function CommishPickActions({ onEdit, onRewind }: { onEdit: () => void; onRewind: () => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={e => { e.stopPropagation(); onEdit() }}
+        title="Edit pick"
+        className="text-[11px] w-6 h-6 rounded-md border border-[#eeeeee] text-[#515151] hover:border-[#0042bb] hover:text-[#0042bb] transition"
+      >
+        ✎
+      </button>
+      <button
+        onClick={e => { e.stopPropagation(); onRewind() }}
+        title="Rewind draft to this pick"
+        className="text-[11px] w-6 h-6 rounded-md border border-[#eeeeee] text-[#515151] hover:border-[#c8102e] hover:text-[#c8102e] transition"
+      >
+        ↶
+      </button>
+    </div>
+  )
+}
+
+// ── EditPickModal ─────────────────────────────────────────────────────────────
+
+interface EditPickModalProps {
+  leagueId: string
+  pick: Pick
+  onClose: () => void
+  onSaved: () => void
+}
+
+interface PlayerSearchResult {
+  id: number
+  name: string
+  teamId: string
+  position: string
+}
+
+function EditPickModal({ leagueId, pick, onClose, onSaved }: EditPickModalProps) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<PlayerSearchResult[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (query.trim().length < 2) { setResults([]); return }
+    const handle = setTimeout(async () => {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch(`/api/players?q=${encodeURIComponent(query.trim())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setResults(data.players ?? [])
+      }
+    }, 200)
+    return () => clearTimeout(handle)
+  }, [query])
+
+  async function choose(playerId: number) {
+    setSaving(true)
+    setError('')
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch(`/api/leagues/${leagueId}/draft/picks/${pick.pickNumber}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Edit failed')
+        return
+      }
+      onSaved()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl max-h-[80vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-base font-black text-[#121212] mb-1">
+          Edit pick #{pick.pickNumber}
+        </h2>
+        <p className="text-xs text-[#515151] mb-3">
+          {pick.teamName} — currently <span className="font-bold">{pick.player.name}</span>.
+          Pick a replacement.
+        </p>
+        <input
+          autoFocus
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search player…"
+          className="w-full border border-[#eeeeee] rounded-lg px-3 py-2 text-sm mb-3"
+        />
+        <div className="flex-1 overflow-y-auto -mx-5 px-5">
+          {results.length === 0 && query.trim().length >= 2 && (
+            <p className="text-xs text-[#98989e]">No matches.</p>
+          )}
+          {results.map(r => (
+            <button
+              key={r.id}
+              onClick={() => choose(r.id)}
+              disabled={saving}
+              className="w-full flex items-center gap-2 text-left py-2 border-b border-[#f5f5f5] hover:bg-[#f8f8f8] transition disabled:opacity-50"
+            >
+              <span className="text-sm font-semibold truncate">{r.name}</span>
+              <PositionBadge position={r.position === 'G' ? 'G' : r.position === 'D' ? 'D' : 'F'} />
+              <span className="text-[10px] text-[#98989e]">{r.teamId}</span>
+            </button>
+          ))}
+        </div>
+        {error && <p className="text-xs text-[#c8102e] font-semibold mt-3">{error}</p>}
+        <button
+          onClick={onClose}
+          disabled={saving}
+          className="w-full mt-3 py-2 text-xs text-[#98989e] font-semibold hover:text-[#515151] disabled:opacity-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── RewindPickModal ───────────────────────────────────────────────────────────
+
+interface RewindPickModalProps {
+  leagueId: string
+  pick: Pick
+  laterPickCount: number
+  onClose: () => void
+  onDone: () => void
+}
+
+function RewindPickModal({ leagueId, pick, laterPickCount, onClose, onDone }: RewindPickModalProps) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function confirm() {
+    setSaving(true)
+    setError('')
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch(`/api/leagues/${leagueId}/draft/picks/${pick.pickNumber}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Rewind failed')
+        return
+      }
+      onDone()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const willDelete = laterPickCount + 1
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-base font-black text-[#121212] mb-1">Rewind to pick #{pick.pickNumber}?</h2>
+        <p className="text-xs text-[#515151] mb-4">
+          Deletes pick #{pick.pickNumber} ({pick.player.name}) and {laterPickCount}{' '}
+          pick{laterPickCount === 1 ? '' : 's'} after it ({willDelete} total). The draft
+          will be paused so you can review before resuming.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={confirm}
+            disabled={saving}
+            className="w-full py-2.5 rounded-lg font-bold text-sm bg-[#c8102e] text-white hover:bg-[#a80d27] disabled:opacity-50"
+          >
+            {saving ? 'Working…' : `Delete ${willDelete} pick${willDelete === 1 ? '' : 's'} & rewind`}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="w-full py-2 text-xs text-[#98989e] font-semibold hover:text-[#515151] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+        {error && <p className="text-xs text-[#c8102e] font-semibold mt-3">{error}</p>}
+      </div>
+    </div>
+  )
 }
 
 function RestartDraftModal({ onCancel, onConfirm, saving }: RestartModalProps) {
