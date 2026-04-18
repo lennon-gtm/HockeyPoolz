@@ -562,6 +562,39 @@ function PreDraft({
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [startLoading, setStartLoading] = useState(false)
   const [startError, setStartError] = useState('')
+  const [bulletin, setBulletin] = useState<{ content: string; recapDate: string } | null>(null)
+  const [bulletinSaving, setBulletinSaving] = useState(false)
+
+  async function loadBulletin() {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    const res = await fetch(`/api/leagues/${leagueId}/league-recap`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    setBulletin(data.recap ?? null)
+  }
+
+  useEffect(() => { loadBulletin() }, [leagueId])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function regenerateBulletin() {
+    setBulletinSaving(true)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch(`/api/leagues/${leagueId}/league-recap/regenerate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setBulletin(data.recap ?? null)
+      }
+    } finally {
+      setBulletinSaving(false)
+    }
+  }
 
   async function startDraftNow() {
     setStartLoading(true)
@@ -713,6 +746,40 @@ function PreDraft({
             {startError && (
               <p className="text-xs text-[#c8102e] mt-2 font-semibold">{startError}</p>
             )}
+          </div>
+        )}
+
+        {/* League bulletin — shown whenever one exists for the league */}
+        {bulletin && (
+          <div className="bg-[#fff7ed] rounded-xl border border-[#fed7aa] p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-black tracking-[2px] uppercase text-[#f97316]">📣 League Bulletin</span>
+              <span className="text-[9px] text-[#fb923c] font-semibold">
+                {new Date(bulletin.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-[#431407]">{bulletin.content}</p>
+            {isCommissioner && (
+              <button
+                onClick={regenerateBulletin}
+                disabled={bulletinSaving}
+                className="mt-3 text-[10px] font-bold text-[#c2410c] hover:underline disabled:opacity-50"
+              >
+                {bulletinSaving ? 'Regenerating…' : '↻ Regenerate bulletin'}
+              </button>
+            )}
+          </div>
+        )}
+        {!bulletin && isCommissioner && (
+          <div className="rounded-xl border border-dashed border-[#fed7aa] bg-[#fff7ed]/40 p-3 mb-4 flex items-center justify-between">
+            <span className="text-xs text-[#c2410c] font-semibold">No league bulletin yet.</span>
+            <button
+              onClick={regenerateBulletin}
+              disabled={bulletinSaving}
+              className="text-[11px] font-bold text-white bg-[#f97316] rounded-md px-2.5 py-1 hover:bg-[#ea580c] disabled:opacity-50"
+            >
+              {bulletinSaving ? 'Generating…' : '📣 Generate now'}
+            </button>
           </div>
         )}
 

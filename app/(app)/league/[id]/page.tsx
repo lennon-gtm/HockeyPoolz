@@ -70,13 +70,11 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
             setMyMemberId(standingsData.myMemberId ?? null)
           }
         }
-        // Fetch league bulletin (shown for draft/active/complete leagues)
-        if (leagueData.league.status === 'draft' || leagueData.league.status === 'active' || leagueData.league.status === 'complete') {
-          const leagueRecapRes = await fetch(`/api/leagues/${id}/league-recap`, { headers })
-          if (leagueRecapRes.ok) {
-            const leagueRecapData = await leagueRecapRes.json()
-            setLeagueRecap(leagueRecapData.recap)
-          }
+        // Fetch league bulletin whenever one may exist (survives a draft restart).
+        const leagueRecapRes = await fetch(`/api/leagues/${id}/league-recap`, { headers })
+        if (leagueRecapRes.ok) {
+          const leagueRecapData = await leagueRecapRes.json()
+          setLeagueRecap(leagueRecapData.recap)
         }
       }
       if (meRes?.ok) {
@@ -277,8 +275,8 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* League Bulletin */}
-      {leagueRecap && (league.status === 'draft' || league.status === 'active' || league.status === 'complete') && (
+      {/* League Bulletin — always shown when one exists, regardless of league status. */}
+      {leagueRecap && (
         <div className="bg-[#fff7ed] rounded-xl border border-[#fed7aa] p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[9px] font-black tracking-[2px] uppercase text-[#f97316]">📣 League Bulletin</span>
