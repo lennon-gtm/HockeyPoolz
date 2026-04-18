@@ -22,14 +22,6 @@ export async function PATCH(
     if (league.commissionerId !== user.id) return NextResponse.json({ error: 'Commissioner only' }, { status: 403 })
     if (league.status !== 'setup') return NextResponse.json({ error: 'Settings are locked once the draft has started' }, { status: 400 })
 
-    // If a draft already exists and is scheduled within 60 seconds, block edits
-    if (league.draft?.scheduledStartAt) {
-      const msToStart = league.draft.scheduledStartAt.getTime() - Date.now()
-      if (msToStart < 60_000) {
-        return NextResponse.json({ error: 'Too close to draft start — settings are locked' }, { status: 400 })
-      }
-    }
-
     const body = await request.json().catch(() => ({}))
     const { rosterForwards, rosterDefense, rosterGoalies, scheduledStartAt, pickTimeLimitSecs } = body
 
