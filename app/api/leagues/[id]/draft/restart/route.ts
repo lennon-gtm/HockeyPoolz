@@ -61,9 +61,9 @@ export async function POST(
         },
       })
 
-      // If the league was promoted to 'active' when the draft completed, push
-      // it back to 'setup' so members see the pre-draft view.
-      if (league.status === 'active') {
+      // Any post-setup status (draft in progress, completed, or frozen)
+      // needs to go back to 'setup' so the commissioner can start fresh.
+      if (league.status !== 'setup') {
         await tx.league.update({
           where: { id: leagueId },
           data: { status: 'setup' },

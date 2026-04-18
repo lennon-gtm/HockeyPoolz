@@ -184,6 +184,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
         setPreDraftTab={setPreDraftTab}
         autodraftEnabled={autodraftEnabled}
         setAutodraftEnabled={setAutodraftEnabled}
+        isCommissioner={state.isCommissioner}
+        onDraftStarted={fetchState}
       />
     )
   }
@@ -490,6 +492,8 @@ interface PreDraftProps {
   setPreDraftTab: (t: 'rankings' | 'wishlist') => void
   autodraftEnabled: boolean
   setAutodraftEnabled: (v: boolean) => void
+  isCommissioner: boolean
+  onDraftStarted: () => void
 }
 
 interface PostDraftProps {
@@ -506,11 +510,44 @@ function PreDraft({
   leagueId, draft, myColor,
   preDraftTab, setPreDraftTab,
   autodraftEnabled, setAutodraftEnabled,
+  isCommissioner, onDraftStarted,
 }: PreDraftProps) {
   const [wishlistCount, setWishlistCount] = useState(0)
   const [countdown, setCountdown] = useState('TBD')
   const [wishlist, setWishlist] = useState<WishlistEntry[]>([])
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [startLoading, setStartLoading] = useState(false)
+  const [startError, setStartError] = useState('')
+
+  async function startDraftNow() {
+    setStartLoading(true)
+    setStartError('')
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      // Ensure a draft row exists (safe on re-launch after restart; restart leaves it in place).
+      if (!draft) {
+        await fetch(`/api/leagues/${leagueId}/draft`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+      }
+      const res = await fetch(`/api/leagues/${leagueId}/draft`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setStartError(data.error ?? 'Failed to start draft')
+        return
+      }
+      onDraftStarted()
+    } finally {
+      setStartLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!draft?.scheduledStartAt) { setCountdown('TBD'); return }
@@ -617,6 +654,23 @@ function PreDraft({
             <p className="text-[9px] text-[#98989e] mt-0.5">{autodraftEnabled ? "On — we'll pick top 2025-26 points" : 'Off'}</p>
           </div>
         </div>
+
+        {/* Commissioner: launch the draft now */}
+        {isCommissioner && (
+          <div className="mb-4">
+            <button
+              onClick={startDraftNow}
+              disabled={startLoading}
+              style={{ backgroundColor: myColor }}
+              className="w-full py-3 text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
+            >
+              {startLoading ? 'Starting…' : '🚀 Start Draft Now'}
+            </button>
+            {startError && (
+              <p className="text-xs text-[#c8102e] mt-2 font-semibold">{startError}</p>
+            )}
+          </div>
+        )}
 
         {/* Sub-tabs */}
         <div className="flex border-b border-[#eeeeee] mb-4">
