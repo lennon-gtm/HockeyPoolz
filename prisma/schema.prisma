@@ -81,6 +81,7 @@ model LeagueMember {
   joinedAt          DateTime          @default(now()) @map("joined_at")
   whatsappPhone     String?           @map("whatsapp_phone")
   whatsappOptedIn   Boolean           @default(false) @map("whatsapp_opted_in")
+  draftLobbyReady   Boolean           @default(false) @map("draft_lobby_ready")
 
   league       League              @relation(fields: [leagueId], references: [id])
   user         User                @relation(fields: [userId], references: [id])

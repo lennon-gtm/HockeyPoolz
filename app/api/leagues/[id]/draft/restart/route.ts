@@ -29,6 +29,12 @@ export async function POST(
       // Wipe picks.
       await tx.draftPick.deleteMany({ where: { draftId: draft.id } })
 
+      // Reset "I'm ready" flags so members re-confirm for the new draft.
+      await tx.leagueMember.updateMany({
+        where: { leagueId, draftLobbyReady: true },
+        data: { draftLobbyReady: false },
+      })
+
       // Optional: reshuffle draft order (Fisher–Yates).
       if (randomize) {
         const members = await tx.leagueMember.findMany({

@@ -67,11 +67,13 @@ export async function GET(
       leagueMemberId: m.id,
       teamName: m.teamName,
       teamIcon: m.teamIcon,
+      userName: m.user.displayName,
       draftPosition: m.draftPosition,
       pickCount: picks.filter(p => p.leagueMemberId === m.id).length,
       autodraftEnabled: m.autodraftEnabled,
       isCommissioner: league.commissionerId === m.userId,
       colorPrimary: m.favoriteTeam?.colorPrimary ?? null,
+      draftLobbyReady: m.draftLobbyReady,
     }))
 
     const myMemberRow = members.find(m => m.id === myMember.id)

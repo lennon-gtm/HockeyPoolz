@@ -21,8 +21,10 @@ interface Pick {
 }
 interface MemberSummary {
   leagueMemberId: string; teamName: string; teamIcon: string | null
+  userName?: string
   draftPosition: number; pickCount: number; autodraftEnabled: boolean; isCommissioner: boolean
   colorPrimary: string | null
+  draftLobbyReady?: boolean
 }
 interface DraftState {
   draft: {
@@ -220,6 +222,9 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
           setAutodraftEnabled={setAutodraftEnabled}
           isCommissioner={state.isCommissioner}
           onDraftStarted={fetchState}
+          members={state.members}
+          myLeagueMemberId={state.myLeagueMemberId}
+          refetchState={fetchState}
         />
       </>
     )
@@ -535,6 +540,9 @@ interface PreDraftProps {
   setAutodraftEnabled: (v: boolean) => void
   isCommissioner: boolean
   onDraftStarted: () => void
+  members: MemberSummary[]
+  myLeagueMemberId: string | null
+  refetchState: () => Promise<void> | void
 }
 
 interface PostDraftProps {
@@ -555,6 +563,7 @@ function PreDraft({
   preDraftTab, setPreDraftTab,
   autodraftEnabled, setAutodraftEnabled,
   isCommissioner, onDraftStarted,
+  members, myLeagueMemberId, refetchState,
 }: PreDraftProps) {
   const [wishlistCount, setWishlistCount] = useState(0)
   const [countdown, setCountdown] = useState('TBD')
@@ -564,6 +573,27 @@ function PreDraft({
   const [startError, setStartError] = useState('')
   const [bulletin, setBulletin] = useState<{ content: string; recapDate: string } | null>(null)
   const [bulletinSaving, setBulletinSaving] = useState(false)
+  const [readyToggling, setReadyToggling] = useState(false)
+
+  const myMember = members.find(m => m.leagueMemberId === myLeagueMemberId)
+  const readyCount = members.filter(m => m.draftLobbyReady).length
+
+  async function toggleReady() {
+    if (!myMember) return
+    setReadyToggling(true)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return
+      const res = await fetch(`/api/leagues/${leagueId}/members/me`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftLobbyReady: !myMember.draftLobbyReady }),
+      })
+      if (res.ok) await refetchState()
+    } finally {
+      setReadyToggling(false)
+    }
+  }
 
   async function loadBulletin() {
     const token = await auth.currentUser?.getIdToken()
@@ -780,6 +810,70 @@ function PreDraft({
             >
               {bulletinSaving ? 'Generating…' : '📣 Generate now'}
             </button>
+          </div>
+        )}
+
+        {/* Draft lobby — ready check-in */}
+        {members.length > 0 && (
+          <div className="rounded-xl border border-[#eeeeee] bg-white mb-4">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5f5f5]">
+              <div>
+                <p className="text-[9px] font-black tracking-[2px] uppercase text-[#98989e]">Draft Lobby</p>
+                <p className="text-sm font-bold text-[#121212] mt-0.5">
+                  {readyCount} of {members.length} ready
+                </p>
+              </div>
+              {myMember && (
+                <button
+                  onClick={toggleReady}
+                  disabled={readyToggling}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition disabled:opacity-50 ${
+                    myMember.draftLobbyReady
+                      ? 'bg-[#2db944] text-white hover:bg-[#259537]'
+                      : 'bg-[#f8f8f8] text-[#121212] border-2 border-[#eeeeee] hover:border-gray-400'
+                  }`}
+                >
+                  {readyToggling
+                    ? 'Saving…'
+                    : myMember.draftLobbyReady
+                      ? '✓ I’m Ready'
+                      : "I’m Ready"}
+                </button>
+              )}
+            </div>
+            <ul className="divide-y divide-[#f5f5f5]">
+              {[...members]
+                .sort((a, b) => (a.draftPosition ?? 999) - (b.draftPosition ?? 999))
+                .map(m => {
+                  const isMe = m.leagueMemberId === myLeagueMemberId
+                  return (
+                    <li key={m.leagueMemberId} className="flex items-center gap-2 px-4 py-2">
+                      <span className="text-[10px] text-[#98989e] w-5 text-right flex-shrink-0">
+                        {m.draftPosition ?? '—'}
+                      </span>
+                      <TeamIcon icon={m.teamIcon} />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-xs font-bold truncate ${isMe ? '' : 'text-[#121212]'}`}
+                          style={isMe ? { color: m.colorPrimary ?? myColor } : undefined}
+                        >
+                          {m.teamName}{isMe && ' (you)'}
+                        </p>
+                        {m.userName && <p className="text-[10px] text-[#98989e] truncate">{m.userName}</p>}
+                      </div>
+                      {m.draftLobbyReady ? (
+                        <span className="text-[9px] font-black text-[#2db944] bg-green-100 px-2 py-0.5 rounded uppercase tracking-widest">
+                          Ready
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-semibold text-[#98989e] uppercase tracking-widest">
+                          Waiting
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
+            </ul>
           </div>
         )}
 

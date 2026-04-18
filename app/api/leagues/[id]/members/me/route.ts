@@ -55,6 +55,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.whatsappOptedIn = Boolean(body.whatsappOptedIn)
     }
 
+    if (body.draftLobbyReady !== undefined) {
+      updates.draftLobbyReady = Boolean(body.draftLobbyReady)
+    }
+
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 })
     }
