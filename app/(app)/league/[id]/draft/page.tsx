@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, use } from 'react'
+import { useState, useEffect, useCallback, useRef, use } from 'react'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
 import { TeamIcon } from '@/components/team-icon'
@@ -11,6 +11,31 @@ function toBucket(pos: string): 'F' | 'D' | 'G' {
   if (pos === 'G') return 'G'
   if (pos === 'D') return 'D'
   return 'F'
+}
+
+/**
+ * Snake-draft picker index (0-indexed) for a given pick. Mirrors the pure
+ * helper in lib/draft-engine.ts — kept inline here so the client bundle
+ * doesn't pull Prisma in.
+ */
+function pickerIndexFor(pickNumber: number, memberCount: number): number {
+  const round = Math.ceil(pickNumber / memberCount)
+  const posInRound = (pickNumber - 1) % memberCount
+  return round % 2 === 1 ? posInRound : memberCount - 1 - posInRound
+}
+
+function picksUntilDraftPosition(
+  currentPickNumber: number,
+  myDraftPosition: number,
+  memberCount: number,
+  totalPicks: number,
+): number | null {
+  for (let p = currentPickNumber; p <= totalPicks; p++) {
+    if (pickerIndexFor(p, memberCount) + 1 === myDraftPosition) {
+      return p - currentPickNumber
+    }
+  }
+  return null
 }
 
 interface Pick {
@@ -60,6 +85,22 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [restartSaving, setRestartSaving] = useState(false)
   const [editingPick, setEditingPick] = useState<Pick | null>(null)
   const [rewindingPick, setRewindingPick] = useState<Pick | null>(null)
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default')
+  const prevIsMyTurnRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotifPermission('unsupported')
+      return
+    }
+    setNotifPermission(Notification.permission)
+  }, [])
+
+  async function requestNotifPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    const result = await Notification.requestPermission()
+    setNotifPermission(result)
+  }
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -84,6 +125,25 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     const interval = setInterval(fetchState, 5000)
     return () => clearInterval(interval)
   }, [fetchState])
+
+  // Fire a browser notification the first tick my turn starts.
+  useEffect(() => {
+    const isMyTurn = !!state?.currentPicker?.isMe && state?.draft?.status === 'active'
+    if (!isMyTurn) {
+      prevIsMyTurnRef.current = false
+      return
+    }
+    if (prevIsMyTurnRef.current) return
+    prevIsMyTurnRef.current = true
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification("🏒 You're on the clock!", {
+          body: `Pick ${state!.draft!.currentPickNumber} · ${state!.draft!.pickTimeLimitSecs}s to draft`,
+          tag: 'hockeypoolz-on-clock',
+        })
+      } catch { /* some browsers throw if page is hidden — ignore */ }
+    }
+  }, [state?.currentPicker?.isMe, state?.draft?.status, state?.draft?.currentPickNumber, state])
 
   // Countdown timer
   useEffect(() => {
@@ -255,6 +315,11 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const timerColor = secondsLeft !== null && secondsLeft <= 15 ? '#ef4444' : '#f97316'
   const pickerColor = currentPicker?.colorPrimary ?? '#FF6B00'
 
+  const myDraftPosition = members.find(m => m.leagueMemberId === myLeagueMemberId)?.draftPosition ?? null
+  const picksUntilMyTurn = myDraftPosition
+    ? picksUntilDraftPosition(draft.currentPickNumber, myDraftPosition, members.length, draft.totalPicks)
+    : null
+
   return (
     <div className="bg-white min-h-screen">
       {commissionerModals}
@@ -333,6 +398,44 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       )}
+
+      {/* Pick alert banner — 'You're up in N picks' + enable-notifications */}
+      {myLeagueMemberId && draft.status !== 'complete' && (() => {
+        const myColor = state.myColor ?? '#FF6B00'
+        let label: string
+        if (isMyTurn) label = "🏒 You're on the clock — pick now!"
+        else if (picksUntilMyTurn === null) label = 'All your picks are in — enjoy the rest of the draft.'
+        else if (picksUntilMyTurn === 0) label = "🏒 You're up next!"
+        else if (picksUntilMyTurn === 1) label = 'On deck — you pick after this one.'
+        else label = `You're up in ${picksUntilMyTurn} picks.`
+        const showEnableNotifs = notifPermission === 'default'
+        return (
+          <div
+            className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl mb-3"
+            style={{
+              backgroundColor: isMyTurn ? myColor + '20' : '#f8f8f8',
+              border: isMyTurn ? `2px solid ${myColor}` : '1px solid transparent',
+            }}
+          >
+            <p className="text-sm font-bold text-[#121212]">{label}</p>
+            {showEnableNotifs && (
+              <button
+                onClick={requestNotifPermission}
+                className="text-[11px] font-bold text-white bg-[#0042bb] rounded-md px-2.5 py-1.5 hover:bg-[#003399] whitespace-nowrap"
+                title="Get a browser alert when it's your turn"
+              >
+                🔔 Alert me
+              </button>
+            )}
+            {notifPermission === 'denied' && (
+              <span className="text-[10px] text-[#98989e]">Notifications blocked · enable in site settings</span>
+            )}
+            {notifPermission === 'granted' && !isMyTurn && (
+              <span className="text-[10px] text-[#2db944] font-bold">🔔 Alerts on</span>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Mid-draft autodraft toggle */}
       {state.myLeagueMemberId && (
