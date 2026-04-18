@@ -54,6 +54,8 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
   const [autodraftEnabled, setAutodraftEnabled] = useState(false)
   const [liveAutodraft, setLiveAutodraft] = useState(false)
   const [autodraftSaving, setAutodraftSaving] = useState(false)
+  const [restartOpen, setRestartOpen] = useState(false)
+  const [restartSaving, setRestartSaving] = useState(false)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -139,6 +141,28 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  async function restartDraft(randomize: boolean) {
+    setRestartSaving(true)
+    setError('')
+    try {
+      const token = await getToken()
+      const res = await fetch(`/api/leagues/${leagueId}/draft/restart`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ randomize }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Restart failed')
+        return
+      }
+      setRestartOpen(false)
+      await fetchState()
+    } finally {
+      setRestartSaving(false)
+    }
+  }
+
   async function commissionerAction(action: 'pause' | 'resume') {
     const token = await getToken()
     await fetch(`/api/leagues/${leagueId}/draft`, {
@@ -185,6 +209,13 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="bg-white min-h-screen">
+      {restartOpen && (
+        <RestartDraftModal
+          onCancel={() => { if (!restartSaving) setRestartOpen(false) }}
+          onConfirm={restartDraft}
+          saving={restartSaving}
+        />
+      )}
       <div className="p-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="border-b border-gray-200 pb-3 mb-3 flex items-center justify-between">
@@ -198,17 +229,25 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
             {draft.status === 'complete' && ' · ✓ COMPLETE'}
           </p>
         </div>
-        {isCommissioner && draft.status === 'active' && (
-          <button onClick={() => commissionerAction('pause')}
-            className="text-xs border border-gray-300 px-3 py-1.5 rounded-lg font-bold hover:bg-gray-100">
-            ⏸ Pause
-          </button>
-        )}
-        {isCommissioner && draft.status === 'paused' && (
-          <button onClick={() => commissionerAction('resume')}
-            className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-orange-600">
-            ▶ Resume
-          </button>
+        {isCommissioner && (
+          <div className="flex items-center gap-2">
+            {draft.status === 'active' && (
+              <button onClick={() => commissionerAction('pause')}
+                className="text-xs border border-gray-300 px-3 py-1.5 rounded-lg font-bold hover:bg-gray-100">
+                ⏸ Pause
+              </button>
+            )}
+            {draft.status === 'paused' && (
+              <button onClick={() => commissionerAction('resume')}
+                className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-orange-600">
+                ▶ Resume
+              </button>
+            )}
+            <button onClick={() => setRestartOpen(true)}
+              className="text-xs border border-[#c8102e] text-[#c8102e] px-3 py-1.5 rounded-lg font-bold hover:bg-[#c8102e]/10">
+              ↻ Restart
+            </button>
+          </div>
         )}
       </div>
 
@@ -261,7 +300,7 @@ export default function DraftRoomPage({ params }: { params: Promise<{ id: string
               {liveAutodraft ? '🤖 Autodraft on' : 'Autodraft off'}
             </p>
             <p className="text-[10px] text-[#98989e]">
-              {liveAutodraft ? "We'll pick for you going forward" : "Switch on and we'll pick by ADP"}
+              {liveAutodraft ? "We'll pick for you going forward" : "Switch on and we'll pick top 2025-26 points"}
             </p>
           </div>
           <button
@@ -575,7 +614,7 @@ function PreDraft({
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autodraftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-            <p className="text-[9px] text-[#98989e] mt-0.5">{autodraftEnabled ? "On — we'll pick by ADP" : 'Off'}</p>
+            <p className="text-[9px] text-[#98989e] mt-0.5">{autodraftEnabled ? "On — we'll pick top 2025-26 points" : 'Off'}</p>
           </div>
         </div>
 
@@ -839,3 +878,55 @@ function PostDraft({ draft, picks, members, myLeagueMemberId, myColor }: PostDra
     </div>
   )
 }
+
+// ── RestartDraftModal ─────────────────────────────────────────────────────────
+
+interface RestartModalProps {
+  onCancel: () => void
+  onConfirm: (randomize: boolean) => void
+  saving: boolean
+}
+
+function RestartDraftModal({ onCancel, onConfirm, saving }: RestartModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-base font-black text-[#121212] mb-1">Restart draft?</h2>
+        <p className="text-xs text-[#515151] mb-4">
+          All picks will be wiped and the draft returns to the pre-draft lobby. This
+          can&apos;t be undone.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => onConfirm(false)}
+            disabled={saving}
+            className="w-full py-2.5 rounded-lg font-bold text-sm bg-[#f8f8f8] text-[#121212] hover:bg-gray-200 disabled:opacity-50"
+          >
+            {saving ? 'Working…' : 'Keep current order'}
+          </button>
+          <button
+            onClick={() => onConfirm(true)}
+            disabled={saving}
+            className="w-full py-2.5 rounded-lg font-bold text-sm bg-[#c8102e] text-white hover:bg-[#a80d27] disabled:opacity-50"
+          >
+            {saving ? 'Working…' : 'Randomize draft order'}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="w-full py-2 text-xs text-[#98989e] font-semibold hover:text-[#515151] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+

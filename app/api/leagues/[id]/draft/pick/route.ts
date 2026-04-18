@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIdToken, getBearerToken, AuthError } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPickerIndex, getRound, getTotalPicks, getAutoPickPlayerId } from '@/lib/draft-engine'
+import { getPickerIndex, getRound, getTotalPicks, getAutoPickPlayerId, assertPositionCap } from '@/lib/draft-engine'
 import { rosterTotal } from '@/lib/roster'
 
 export async function POST(
@@ -57,6 +57,12 @@ export async function POST(
       }
     }
 
+    const caps = {
+      rosterForwards: league.rosterForwards,
+      rosterDefense: league.rosterDefense,
+      rosterGoalies: league.rosterGoalies,
+    }
+
     // Execute picks in a transaction — cascades through consecutive autodraft members
     const result = await prisma.$transaction(async (tx) => {
       let currentPickNum = draft.currentPickNumber
@@ -73,10 +79,10 @@ export async function POST(
         const isFirstPick = currentPickNum === draft.currentPickNumber
 
         if (isFirstPick && autoPickExpired) {
-          selectedPlayerId = await getAutoPickPlayerId(draft.id, picker.id, picker.autodraftStrategy, tx)
+          selectedPlayerId = await getAutoPickPlayerId(draft.id, picker.id, picker.autodraftStrategy, caps, tx)
           pickSource = 'timed_autopick'
         } else if (picker.autodraftEnabled && !isFirstPick) {
-          selectedPlayerId = await getAutoPickPlayerId(draft.id, picker.id, picker.autodraftStrategy, tx)
+          selectedPlayerId = await getAutoPickPlayerId(draft.id, picker.id, picker.autodraftStrategy, caps, tx)
           pickSource = 'autodraft'
         } else if (isFirstPick && !autoPickExpired) {
           if (typeof playerId !== 'number') throw new Error('playerId is required')
@@ -90,6 +96,12 @@ export async function POST(
         // Validate player exists and is available
         const player = await tx.nhlPlayer.findUnique({ where: { id: selectedPlayerId } })
         if (!player) throw new Error('Player not found')
+
+        // Enforce commissioner's position caps on manual picks (autodraft
+        // already filters ineligible positions inside getAutoPickPlayerId).
+        if (pickSource === 'manual') {
+          await assertPositionCap(draft.id, picker.id, player.position, caps, tx)
+        }
 
         const round = getRound(currentPickNum, allMembers.length)
 
@@ -149,6 +161,11 @@ export async function POST(
       return NextResponse.json({ error: 'Pick already recorded' }, { status: 409 })
     }
     const msg = error instanceof Error ? error.message : 'Internal server error'
+    // User-facing validation failures (position caps, missing playerId) should
+    // surface as 400s so the UI can show the message instead of a generic error.
+    if (/slots are full|playerId is required|Player not found/.test(msg)) {
+      return NextResponse.json({ error: msg }, { status: 400 })
+    }
     console.error('POST /api/leagues/[id]/draft/pick error:', error)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
