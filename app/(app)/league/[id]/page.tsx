@@ -9,6 +9,7 @@ import { StatCard } from '@/components/stat-card'
 interface Member {
   id: string; teamName: string; teamIcon: string | null
   draftPosition: number | null; autodraftEnabled: boolean
+  draftLobbyReady?: boolean
   user: { displayName: string; id: string }
   favoriteTeam?: { colorPrimary: string; colorSecondary: string; name: string } | null
 }
@@ -36,6 +37,7 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   const [orderLoading, setOrderLoading] = useState(false)
   const [startLoading, setStartLoading] = useState(false)
   const [autodraftLoading, setAutodraftLoading] = useState(false)
+  const [readyLoading, setReadyLoading] = useState(false)
   const [error, setError] = useState('')
   const [pendingCount, setPendingCount] = useState(0)
   const [standings, setStandings] = useState<{
@@ -177,6 +179,21 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
     } finally { setAutodraftLoading(false) }
   }
 
+  async function toggleReady() {
+    if (!myMember) return
+    setReadyLoading(true)
+    try {
+      const token = await getToken()
+      await fetch(`/api/leagues/${id}/members/me`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftLobbyReady: !myMember.draftLobbyReady }),
+      })
+      const res = await fetch(`/api/leagues/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) setLeague((await res.json()).league)
+    } finally { setReadyLoading(false) }
+  }
+
   const draftActive = draft?.status === 'active' || draft?.status === 'paused'
 
   return (
@@ -232,29 +249,65 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      {/* Draft order (setup phase) */}
-      {league.status === 'setup' && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Draft Order</p>
-          </div>
-          {sortedMembers.map((m, i) => (
-            <div key={m.id} className="flex items-center gap-3 p-3 border-b border-gray-100">
-              <span className="text-sm font-black text-gray-400 w-6 text-right">
-                {m.draftPosition ?? '—'}
-              </span>
-              <TeamIcon icon={m.teamIcon} />
-              <div className="flex-1">
-                <p className="font-semibold text-sm">{m.teamName}</p>
-                <p className="text-xs text-gray-400">{m.user.displayName}</p>
+      {/* Draft lobby — readiness check-in (setup + live draft phases) */}
+      {(league.status === 'setup' || league.status === 'draft') && (() => {
+        const readyCount = sortedMembers.filter(m => m.draftLobbyReady).length
+        return (
+          <div className="mb-6 border border-[#eeeeee] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5f5f5] bg-[#fafafa]">
+              <div>
+                <p className="text-[9px] font-black tracking-[2px] uppercase text-[#98989e]">Draft Lobby</p>
+                <p className="text-sm font-bold text-[#121212] mt-0.5">
+                  {readyCount} of {sortedMembers.length} ready
+                </p>
               </div>
-              {m.autodraftEnabled && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">AUTO</span>
+              {myMember && (
+                <button
+                  onClick={toggleReady}
+                  disabled={readyLoading}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition disabled:opacity-50 ${
+                    myMember.draftLobbyReady
+                      ? 'bg-[#2db944] text-white hover:bg-[#259537]'
+                      : 'bg-white text-[#121212] border-2 border-[#eeeeee] hover:border-gray-400'
+                  }`}
+                >
+                  {readyLoading
+                    ? 'Saving…'
+                    : myMember.draftLobbyReady
+                      ? '✓ I’m Ready'
+                      : "I’m Ready"}
+                </button>
               )}
             </div>
-          ))}
-        </div>
-      )}
+            <ul className="divide-y divide-[#f5f5f5]">
+              {sortedMembers.map(m => (
+                <li key={m.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <span className="text-sm font-black text-gray-400 w-6 text-right">
+                    {m.draftPosition ?? '—'}
+                  </span>
+                  <TeamIcon icon={m.teamIcon} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{m.teamName}</p>
+                    <p className="text-xs text-gray-400 truncate">{m.user.displayName}</p>
+                  </div>
+                  {m.autodraftEnabled && (
+                    <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">AUTO</span>
+                  )}
+                  {m.draftLobbyReady ? (
+                    <span className="text-[9px] font-black text-[#2db944] bg-green-100 px-2 py-0.5 rounded uppercase tracking-widest">
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-semibold text-[#98989e] uppercase tracking-widest">
+                      Waiting
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      })()}
 
       {/* My autodraft toggle */}
       {myMember && league.status === 'setup' && (
