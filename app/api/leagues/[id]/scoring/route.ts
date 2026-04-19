@@ -28,6 +28,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (league.commissionerId !== user.id) {
       return NextResponse.json({ error: 'Only the commissioner can update scoring settings' }, { status: 403 })
     }
+    if (league.status === 'active' || league.status === 'complete') {
+      return NextResponse.json({ error: 'Cannot change scoring after the draft' }, { status: 400 })
+    }
 
     const body = await request.json()
     const allowedFields = [
