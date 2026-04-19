@@ -67,6 +67,14 @@ export function buildGameSummaryPrompt(input: GameSummaryPromptInput): string {
 
 const NHL_API = 'https://api-web.nhle.com/v1'
 
+const NHL_FETCH_INIT: RequestInit = {
+  headers: {
+    'User-Agent':
+      'Mozilla/5.0 (compatible; HockeyPoolz/1.0; +https://hockey-poolz.vercel.app)',
+    Accept: 'application/json',
+  },
+}
+
 const GAME_SUMMARY_SYSTEM_PROMPT = `You are the host of a fantasy hockey radio show — loud, punchy, and fun. Write up to 4 sentences about this game. Give the game real color: the result, the momentum, a key moment or turning point, series context if relevant. End with a callout of the fantasy winner from this league — their team name, point total, and the player who delivered. More detail is better. Use the same voice throughout — enthusiastic, specific, a little bit of edge. No filler. No "In conclusion." Just the take.`
 
 // --- NHL API ---
@@ -86,7 +94,7 @@ interface NhlStoryBlock {
 }
 
 async function fetchYesterdayGames(date: string): Promise<NhlGame[]> {
-  const res = await fetch(`${NHL_API}/score/${date}`)
+  const res = await fetch(`${NHL_API}/score/${date}`, NHL_FETCH_INIT)
   if (!res.ok) return []
   const data = await res.json()
   return data.games ?? []
@@ -94,7 +102,7 @@ async function fetchYesterdayGames(date: string): Promise<NhlGame[]> {
 
 async function fetchGameStory(gameId: number): Promise<{ headline: string; excerpt: string; url: string | null }> {
   try {
-    const res = await fetch(`${NHL_API}/gamecenter/${gameId}/story`)
+    const res = await fetch(`${NHL_API}/gamecenter/${gameId}/story`, NHL_FETCH_INIT)
     if (!res.ok) return { headline: '', excerpt: '', url: null }
     const data = await res.json()
     const headline = data.summary?.headline ?? data.headline ?? ''

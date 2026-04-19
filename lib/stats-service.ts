@@ -7,6 +7,16 @@ import { prisma } from './prisma'
 
 const NHL_API_BASE = 'https://api-web.nhle.com/v1'
 
+// Cloudflare (which fronts api-web.nhle.com) 429s the default undici UA
+// Node's fetch uses on Vercel egress. A browser-style UA gets through.
+const NHL_FETCH_INIT: RequestInit = {
+  headers: {
+    'User-Agent':
+      'Mozilla/5.0 (compatible; HockeyPoolz/1.0; +https://hockey-poolz.vercel.app)',
+    Accept: 'application/json',
+  },
+}
+
 // --- Types ---
 
 export interface GameStats {
@@ -144,7 +154,7 @@ interface NhlGameLogEntry {
 /** Fetch OT assists from a game's play-by-play. Returns Map<playerId, assistCount>. */
 async function fetchOTAssists(gameId: number): Promise<Map<number, number>> {
   try {
-    const res = await fetch(`${NHL_API_BASE}/gamecenter/${gameId}/play-by-play`)
+    const res = await fetch(`${NHL_API_BASE}/gamecenter/${gameId}/play-by-play`, NHL_FETCH_INIT)
     if (!res.ok) return new Map()
     const data = await res.json()
     const otAssists = new Map<number, number>()
@@ -168,7 +178,7 @@ async function fetchOTAssists(gameId: number): Promise<Map<number, number>> {
 
 /** Fetch completed playoff games for a given date. */
 export async function fetchCompletedPlayoffGames(date: string): Promise<NhlGameSummary[]> {
-  const res = await fetch(`${NHL_API_BASE}/score/${date}`)
+  const res = await fetch(`${NHL_API_BASE}/score/${date}`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API /score/${date} returned ${res.status}`)
   const data = await res.json()
   return (data.games ?? []).filter(
@@ -181,7 +191,7 @@ export async function fetchBoxScore(gameId: number): Promise<{
   skaters: NhlBoxScorePlayer[]
   goalies: NhlBoxScorePlayer[]
 }> {
-  const res = await fetch(`${NHL_API_BASE}/gamecenter/${gameId}/boxscore`)
+  const res = await fetch(`${NHL_API_BASE}/gamecenter/${gameId}/boxscore`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API boxscore/${gameId} returned ${res.status}`)
   const data = await res.json()
 
@@ -207,7 +217,7 @@ export async function fetchBoxScore(gameId: number): Promise<{
 
 /** Fetch a player's playoff game log for extended stats. */
 export async function fetchPlayerGameLog(playerId: number, season: string = '20252026'): Promise<NhlGameLogEntry[]> {
-  const res = await fetch(`${NHL_API_BASE}/player/${playerId}/game-log/${season}/3`)
+  const res = await fetch(`${NHL_API_BASE}/player/${playerId}/game-log/${season}/3`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API game-log/${playerId} returned ${res.status}`)
   const data = await res.json()
   return data.gameLog ?? []
@@ -215,7 +225,7 @@ export async function fetchPlayerGameLog(playerId: number, season: string = '202
 
 /** Fetch playoff bracket to detect eliminated teams. */
 export async function fetchPlayoffBracket(year: number = 2026): Promise<{ losingTeamId: number; losingTeamAbbrev: string }[]> {
-  const res = await fetch(`${NHL_API_BASE}/playoff-bracket/${year}`)
+  const res = await fetch(`${NHL_API_BASE}/playoff-bracket/${year}`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API playoff-bracket/${year} returned ${res.status}`)
   const data = await res.json()
 
@@ -238,7 +248,7 @@ export async function fetchPlayoffBracket(year: number = 2026): Promise<{ losing
 export async function fetchTeamRoster(teamAbbrev: string): Promise<{
   id: number; firstName: string; lastName: string; positionCode: string; headshot: string
 }[]> {
-  const res = await fetch(`${NHL_API_BASE}/roster/${teamAbbrev}/current`)
+  const res = await fetch(`${NHL_API_BASE}/roster/${teamAbbrev}/current`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API roster/${teamAbbrev} returned ${res.status}`)
   const data = await res.json()
 
