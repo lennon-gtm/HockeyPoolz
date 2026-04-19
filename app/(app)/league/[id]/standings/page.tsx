@@ -125,7 +125,7 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
                 return (
                   <div key={key} className="flex justify-between">
                     <span>{label}</span>
-                    <span className="font-bold text-orange-500">{val.toFixed(1)}</span>
+                    <span className="font-bold text-orange-500">{val.toFixed(2)}</span>
                   </div>
                 )
               })}
