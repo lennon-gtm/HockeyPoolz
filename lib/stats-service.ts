@@ -334,6 +334,13 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
 
   const draftedPlayerIds = await getDraftedPlayerIds()
 
+  // Track which players actually appeared in today's box scores and which
+  // gameIds we processed, so we only fetch extended-stat game logs for the
+  // drafted players who played today (~dozens) instead of every drafted
+  // player across every active league (hundreds — triggers NHL 429s).
+  const playedPlayerIds = new Set<number>()
+  const syncedGameIds = new Set<string>()
+
   for (const game of games) {
     try {
       const [{ skaters, goalies }, otAssistMap] = await Promise.all([
@@ -372,6 +379,7 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
             overtimeAssists: otA,
           },
         })
+        playedPlayerIds.add(s.playerId)
         result.playersUpdated++
       }
 
@@ -397,37 +405,45 @@ export async function syncGameStats(date: string): Promise<SyncResult> {
             savePct: g.savePctg ? Number(g.savePctg) : 0,
           },
         })
+        playedPlayerIds.add(g.playerId)
         result.playersUpdated++
       }
 
+      syncedGameIds.add(String(game.id))
       result.gamesProcessed++
     } catch (err) {
       result.errors.push(`Failed to process game ${game.id}: ${err}`)
     }
   }
 
-  // Fetch extended stats from player game logs for drafted players only
-  for (const playerId of draftedPlayerIds) {
+  // Only drafted players who actually skated in a game we just synced need
+  // their game log pulled for extended stats (PPP, SHG, GWG, OT goals, SO).
+  const targets: number[] = []
+  for (const pid of playedPlayerIds) {
+    if (draftedPlayerIds.has(pid)) targets.push(pid)
+  }
+
+  for (const playerId of targets) {
     try {
       const gameLog = await fetchPlayerGameLog(playerId)
+      // Only care about entries for games we synced this run.
       for (const entry of gameLog) {
-        const existing = await prisma.playerGameStats.findUnique({
-          where: { playerId_gameId: { playerId, gameId: String(entry.gameId) } },
+        const gid = String(entry.gameId)
+        if (!syncedGameIds.has(gid)) continue
+        await prisma.playerGameStats.update({
+          where: { playerId_gameId: { playerId, gameId: gid } },
+          data: {
+            powerPlayPoints: entry.powerPlayPoints ?? 0,
+            shorthandedGoals: entry.shorthandedGoals ?? 0,
+            shorthandedPoints: entry.shorthandedPoints ?? 0,
+            gameWinningGoals: entry.gameWinningGoals ?? 0,
+            overtimeGoals: entry.otGoals ?? 0,
+            ...(entry.shutouts !== undefined ? { shutouts: entry.shutouts } : {}),
+          },
         })
-        if (existing) {
-          await prisma.playerGameStats.update({
-            where: { playerId_gameId: { playerId, gameId: String(entry.gameId) } },
-            data: {
-              powerPlayPoints: entry.powerPlayPoints ?? 0,
-              shorthandedGoals: entry.shorthandedGoals ?? 0,
-              shorthandedPoints: entry.shorthandedPoints ?? 0,
-              gameWinningGoals: entry.gameWinningGoals ?? 0,
-              overtimeGoals: entry.otGoals ?? 0,
-              ...(entry.shutouts !== undefined ? { shutouts: entry.shutouts } : {}),
-            },
-          })
-        }
       }
+      // Pace ourselves so we don't trip NHL's rate limiter.
+      await new Promise(r => setTimeout(r, 150))
     } catch (err) {
       result.errors.push(`Failed to fetch game log for player ${playerId}: ${err}`)
     }
