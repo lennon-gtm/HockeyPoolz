@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateLeagueRecaps, generateLeagueRecap } from '@/lib/recap-service'
 import { generateLeagueScoreSummaries } from '@/lib/scores-service'
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET

@@ -132,7 +132,7 @@ async function calcMemberScores(
   nhlGameId: number,
   weights: ScoringWeights
 ): Promise<MemberGameScore[]> {
-  const gameId = `po-${nhlGameId}`
+  const gameId = String(nhlGameId)
 
   const picks = await prisma.draftPick.findMany({
     where: { leagueMember: { leagueId } },

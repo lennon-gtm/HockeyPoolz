@@ -30,8 +30,15 @@ export async function GET(request: NextRequest) {
       statsResults.push({ date, ...result })
     }
 
-    // 3. Check for newly eliminated teams
-    const newEliminations = await checkEliminations()
+    // 3. Check for newly eliminated teams — NHL bracket API occasionally 429s;
+    // don't let that abort the rest of the sync.
+    let newEliminations: Awaited<ReturnType<typeof checkEliminations>> | { error: string }
+    try {
+      newEliminations = await checkEliminations()
+    } catch (err) {
+      console.error('checkEliminations failed:', err)
+      newEliminations = { error: String(err) }
+    }
 
     // 4. Recalculate scores for all active leagues
     const activeLeagues = await prisma.league.findMany({
