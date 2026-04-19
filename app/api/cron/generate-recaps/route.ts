@@ -11,14 +11,37 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const force = new URL(request.url).searchParams.get('force') === 'true'
+
   try {
     const activeLeagues = await prisma.league.findMany({
       where: { status: 'active' },
       select: { id: true, name: true },
     })
 
+    const todayDate = new Date(new Date().toISOString().split('T')[0])
+    const yesterday = new Date()
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
+    const yesterdayDate = new Date(yesterdayStr)
+
     const results = []
     for (const league of activeLeagues) {
+      // With ?force=true, delete today's existing recaps so the generators
+      // don't short-circuit on their dedup checks. Use when an earlier run
+      // produced stale content (e.g. stats hadn't synced yet).
+      if (force) {
+        await prisma.leagueRecap.deleteMany({
+          where: { leagueId: league.id, recapDate: todayDate },
+        })
+        await prisma.recap.deleteMany({
+          where: { leagueId: league.id, recapDate: todayDate },
+        })
+        await prisma.leagueGameSummary.deleteMany({
+          where: { leagueId: league.id, gameDate: yesterdayDate },
+        })
+      }
+
       const result = await generateLeagueRecaps(league.id)
       // Generate league-wide bulletin after per-member recaps
       try {
@@ -27,9 +50,6 @@ export async function GET(request: NextRequest) {
         result.errors.push(`League recap failed: ${err}`)
       }
       // Generate yesterday's game summaries
-      const yesterday = new Date()
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1)
-      const yesterdayStr = yesterday.toISOString().split('T')[0]
       try {
         await generateLeagueScoreSummaries(league.id, yesterdayStr)
       } catch (err) {
