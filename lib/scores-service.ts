@@ -94,10 +94,12 @@ interface NhlStoryBlock {
 }
 
 async function fetchYesterdayGames(date: string): Promise<NhlGame[]> {
-  const res = await fetch(`${NHL_API}/score/${date}`, NHL_FETCH_INIT)
+  // Use /schedule; /score is rate-limited from Vercel egress IPs.
+  const res = await fetch(`${NHL_API}/schedule/${date}`, NHL_FETCH_INIT)
   if (!res.ok) return []
   const data = await res.json()
-  return data.games ?? []
+  const day = (data.gameWeek ?? []).find((d: { date: string }) => d.date === date)
+  return day?.games ?? []
 }
 
 async function fetchGameStory(gameId: number): Promise<{ headline: string; excerpt: string; url: string | null }> {

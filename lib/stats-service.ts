@@ -176,12 +176,20 @@ async function fetchOTAssists(gameId: number): Promise<Map<number, number>> {
   }
 }
 
-/** Fetch completed playoff games for a given date. */
+/**
+ * Fetch completed playoff games for a given date.
+ *
+ * Primary source is /schedule/<date> (gameWeek structure). We used to use
+ * /score/<date> but NHL's Cloudflare layer rate-limits /score harder on
+ * Vercel egress; /schedule returns the same game-level fields.
+ */
 export async function fetchCompletedPlayoffGames(date: string): Promise<NhlGameSummary[]> {
-  const res = await fetch(`${NHL_API_BASE}/score/${date}`, NHL_FETCH_INIT)
-  if (!res.ok) throw new Error(`NHL API /score/${date} returned ${res.status}`)
+  const res = await fetch(`${NHL_API_BASE}/schedule/${date}`, NHL_FETCH_INIT)
+  if (!res.ok) throw new Error(`NHL API /schedule/${date} returned ${res.status}`)
   const data = await res.json()
-  return (data.games ?? []).filter(
+  const day = (data.gameWeek ?? []).find((d: { date: string }) => d.date === date)
+  const games = day?.games ?? []
+  return games.filter(
     (g: NhlGameSummary) => g.gameType === 3 && g.gameState === 'OFF'
   )
 }
