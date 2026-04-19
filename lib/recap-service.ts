@@ -208,7 +208,10 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
           player: {
             include: {
               team: { select: { abbreviation: true, eliminatedAt: true } },
-              gameStats: { orderBy: { gameDate: 'desc' } },
+              gameStats: {
+                where: { NOT: { gameId: { startsWith: 'rs-' } } },
+                orderBy: { gameDate: 'desc' },
+              },
             },
           },
         },

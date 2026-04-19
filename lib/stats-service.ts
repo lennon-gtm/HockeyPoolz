@@ -613,6 +613,9 @@ export async function recalculateScores(leagueId: string): Promise<void> {
       const gameStats = await prisma.playerGameStats.findMany({
         where: {
           playerId: pick.playerId,
+          // Exclude regular-season backfill rows (gameId prefix "rs-").
+          // Playoff rows are stored with the raw NHL gameId (no prefix).
+          NOT: { gameId: { startsWith: 'rs-' } },
           ...(eliminatedAt ? { gameDate: { lte: eliminatedAt } } : {}),
         },
       })

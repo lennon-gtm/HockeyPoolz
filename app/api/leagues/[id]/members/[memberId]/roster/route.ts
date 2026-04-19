@@ -54,7 +54,7 @@ export async function GET(
             player: {
               include: {
                 team: { select: { abbreviation: true, eliminatedAt: true } },
-                gameStats: true,
+                gameStats: { where: { NOT: { gameId: { startsWith: 'rs-' } } } },
               },
             },
           },

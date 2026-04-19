@@ -27,7 +27,10 @@ export async function GET(
       where: { id: playerIdNum },
       include: {
         team: { select: { id: true, abbreviation: true, name: true, eliminatedAt: true } },
-        gameStats: { orderBy: { gameDate: 'desc' } },
+        gameStats: {
+          where: { NOT: { gameId: { startsWith: 'rs-' } } },
+          orderBy: { gameDate: 'desc' },
+        },
       },
     })
     if (!player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
