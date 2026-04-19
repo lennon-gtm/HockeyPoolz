@@ -7,6 +7,7 @@ import { RosterSliders, type RosterValues } from '@/components/roster-sliders'
 
 interface LeagueDetail {
   id: string
+  name: string
   commissionerId: string
   rosterForwards: number
   rosterDefense: number
@@ -32,6 +33,9 @@ export default function DraftSettingsPage({ params }: { params: Promise<{ id: st
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -72,6 +76,26 @@ export default function DraftSettingsPage({ params }: { params: Promise<{ id: st
   const lockedByTime = !!league.draft?.scheduledStartAt
     && new Date(league.draft.scheduledStartAt).getTime() - Date.now() < 60_000
   const disabled = !isCommissioner || locked || lockedByTime
+
+  async function deleteLeague() {
+    if (!league || deleteConfirm !== league.name) return
+    setDeleting(true)
+    setError('')
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) { setError('Not signed in'); return }
+      const res = await fetch(`/api/leagues/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Failed to delete league')
+        return
+      }
+      router.push('/')
+    } finally { setDeleting(false) }
+  }
 
   async function save() {
     setSaving(true)
@@ -172,6 +196,52 @@ export default function DraftSettingsPage({ params }: { params: Promise<{ id: st
           >
             {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Settings'}
           </button>
+        )}
+
+        {isCommissioner && (
+          <section className="mt-10 border-2 border-red-200 rounded-xl p-4 bg-red-50">
+            <p className="text-xs font-black uppercase tracking-widest text-red-700 mb-1">Danger Zone</p>
+            <p className="text-xs text-red-900/70 mb-3">
+              Deleting the league is permanent — all members, picks, recaps, and stats are erased and can&apos;t be recovered.
+            </p>
+            {!showDelete ? (
+              <button
+                onClick={() => setShowDelete(true)}
+                className="w-full py-2.5 rounded-lg border-2 border-red-300 bg-white text-sm font-bold text-red-700 hover:bg-red-100 transition"
+              >
+                Delete League
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-red-900">
+                  To confirm, type the league name: <span className="font-bold">{league.name}</span>
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={e => setDeleteConfirm(e.target.value)}
+                  placeholder="League name"
+                  className="w-full px-3 py-2 border-2 border-red-200 rounded-lg text-sm bg-white focus:border-red-500 focus:outline-none"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setShowDelete(false); setDeleteConfirm('') }}
+                    disabled={deleting}
+                    className="py-2.5 rounded-lg border-2 border-[#eeeeee] bg-white text-sm font-bold text-[#121212] hover:border-gray-400 transition disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteLeague}
+                    disabled={deleting || deleteConfirm !== league.name}
+                    className="py-2.5 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-40"
+                  >
+                    {deleting ? 'Deleting…' : 'Delete Permanently'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
         )}
       </div>
     </div>

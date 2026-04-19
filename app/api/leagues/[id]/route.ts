@@ -28,6 +28,45 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+/** DELETE /api/leagues/[id] — commissioner-only, cascades all dependent rows. */
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const token = getBearerToken(request.headers.get('authorization'))
+    const decoded = await verifyIdToken(token)
+
+    const user = await prisma.user.findUnique({ where: { firebaseUid: decoded.uid } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    const league = await prisma.league.findUnique({ where: { id } })
+    if (!league) return NextResponse.json({ error: 'League not found' }, { status: 404 })
+    if (league.commissionerId !== user.id) {
+      return NextResponse.json({ error: 'Only the commissioner can delete the league' }, { status: 403 })
+    }
+
+    // Cascade order: leaf rows first, then parents. Schema has no FK cascades.
+    await prisma.$transaction([
+      prisma.memberDailyScore.deleteMany({ where: { member: { leagueId: id } } }),
+      prisma.autodraftWishlist.deleteMany({ where: { leagueMember: { leagueId: id } } }),
+      prisma.draftPick.deleteMany({ where: { leagueMember: { leagueId: id } } }),
+      prisma.recap.deleteMany({ where: { leagueId: id } }),
+      prisma.leagueRecap.deleteMany({ where: { leagueId: id } }),
+      prisma.leagueGameSummary.deleteMany({ where: { leagueId: id } }),
+      prisma.pendingJoinRequest.deleteMany({ where: { leagueId: id } }),
+      prisma.draft.deleteMany({ where: { leagueId: id } }),
+      prisma.scoringSettings.deleteMany({ where: { leagueId: id } }),
+      prisma.leagueMember.deleteMany({ where: { leagueId: id } }),
+      prisma.league.delete({ where: { id } }),
+    ])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: 401 })
+    console.error('DELETE /api/leagues/[id] error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 /** PATCH /api/leagues/[id] — commissioner-only updates (e.g. connSmytheWinnerId) */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

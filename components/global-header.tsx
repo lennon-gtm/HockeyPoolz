@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/lib/firebase/client'
 import { TeamIcon } from '@/components/team-icon'
 
@@ -10,19 +11,29 @@ interface CurrentUser {
   favoriteTeam?: { colorPrimary: string; colorSecondary: string } | null
 }
 
+interface LeagueSummary {
+  id: string
+  name: string
+  status: string
+}
+
 export function GlobalHeader() {
   const router = useRouter()
   const [user, setUser] = useState<CurrentUser | null>(null)
+  const [leagues, setLeagues] = useState<LeagueSummary[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
       const token = await auth.currentUser?.getIdToken()
       if (!token) return
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      if (!res.ok) return
-      const data = await res.json()
-      setUser(data.user)
+      const headers = { Authorization: `Bearer ${token}` }
+      const [meRes, leaguesRes] = await Promise.all([
+        fetch('/api/auth/me', { headers }),
+        fetch('/api/leagues', { headers }),
+      ])
+      if (meRes.ok) setUser((await meRes.json()).user)
+      if (leaguesRes.ok) setLeagues((await leaguesRes.json()).leagues ?? [])
     }
     load()
   }, [])
@@ -57,7 +68,37 @@ export function GlobalHeader() {
             <span className="text-white text-xs font-semibold">{user?.displayName ?? ''} ▾</span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg py-1 min-w-[140px] z-50">
+            <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg py-1 min-w-[200px] z-50">
+              <Link
+                href="/"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-[#98989e] hover:bg-[#f8f8f8]"
+              >
+                All Leagues
+              </Link>
+              {leagues.length > 0 && (
+                <>
+                  <div className="border-t border-[#f0f0f0] my-1" />
+                  <div className="px-3 pt-1 pb-0.5 text-[9px] font-black uppercase tracking-widest text-[#c8c8c8]">
+                    Switch League
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {leagues.map(l => (
+                      <Link
+                        key={l.id}
+                        href={`/league/${l.id}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-3 py-2 text-xs text-[#121212] hover:bg-[#f8f8f8] truncate"
+                        title={l.name}
+                      >
+                        <span className="font-semibold">{l.name}</span>
+                        <span className="ml-2 text-[9px] text-[#98989e] uppercase tracking-wide">{l.status}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="border-t border-[#f0f0f0] my-1" />
               <button
                 onClick={signOut}
                 className="w-full text-left px-3 py-2 text-xs font-semibold text-[#121212] hover:bg-[#f8f8f8]"
