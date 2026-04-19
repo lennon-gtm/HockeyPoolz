@@ -249,6 +249,130 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
+      {/* Active season — hero card first, bulletin immediately below, then standings preview */}
+      {(() => {
+        const seasonStarted = league.status === 'active' || league.status === 'complete'
+        const mySt = seasonStarted && standings.length > 0
+          ? standings.find(s => s.memberId === myMemberId) ?? null
+          : null
+        const sorted = standings.length > 0
+          ? [...standings].sort((a, b) => b.totalScore - a.totalScore)
+          : []
+        const lead = mySt
+          ? mySt.rank === 1
+            ? mySt.totalScore - (sorted[1]?.totalScore ?? 0)
+            : mySt.totalScore - sorted[0].totalScore
+          : null
+
+        return (
+          <>
+            {/* Hero "Your Standing" card */}
+            {mySt && (
+              <div
+                className="bg-[#1a1a1a] rounded-xl p-4 mb-4"
+                style={{ borderLeft: `4px solid ${mySt.colorPrimary ?? myColor}` }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">Your Standing</div>
+                    <div className="text-3xl font-black text-white">{mySt.rank}{ordinalSuffix(mySt.rank)}</div>
+                    <div className="text-xs text-white/70 mt-0.5">of {standings.length} teams</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black" style={{ color: mySt.colorPrimary ?? myColor }}>
+                      {mySt.totalScore.toFixed(1)}
+                    </div>
+                    <div className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Total FPTS</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10">
+                  <div className="text-center">
+                    <div className={`text-sm font-black ${mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? 'text-[#2db944]' : 'text-white/50'}`}>
+                      {mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? `+${mySt.yesterdayFpts.toFixed(1)}` : mySt.yesterdayFpts === 0 ? '0.0' : '—'}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Yesterday</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-sm font-black ${lead !== null && lead > 0 ? 'text-[#2db944]' : lead !== null && lead < 0 ? 'text-[#c8102e]' : 'text-white/50'}`}>
+                      {lead !== null ? (lead >= 0 ? `+${lead.toFixed(1)}` : lead.toFixed(1)) : '—'}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">
+                      {mySt.rank === 1 ? 'Lead' : 'Deficit'}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm font-black text-white">
+                      {myMember ? league.rosterForwards + league.rosterDefense + league.rosterGoalies : '—'}
+                    </div>
+                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Players</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* League Bulletin — directly below the Your Standing card */}
+            {leagueRecap && (
+              <div className="bg-[#fff7ed] rounded-xl border border-[#fed7aa] p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[9px] font-black tracking-[2px] uppercase text-[#f97316]">📣 League Bulletin</span>
+                  <span className="text-[9px] text-[#fb923c] font-semibold">
+                    {league.status === 'draft'
+                      ? `Draft Day · ${new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                      : new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                    }
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-[#431407]">{leagueRecap.content}</p>
+              </div>
+            )}
+
+            {/* Top-3 standings preview */}
+            {seasonStarted && standings.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Standings</p>
+                  <Link href={`/league/${id}/standings`} className="text-xs text-orange-500 font-bold hover:text-orange-700">
+                    View all →
+                  </Link>
+                </div>
+                <div className="flex items-center px-4 py-1.5 bg-[#f8f8f8] rounded-t-lg border border-b-0 border-[#eeeeee]">
+                  <span className="w-7 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">RK</span>
+                  <span className="w-6 mx-2" />
+                  <span className="flex-1 text-[9px] font-bold uppercase tracking-widest text-[#98989e]">Team</span>
+                  <span className="w-12 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">YDAY</span>
+                  <span className="w-14 text-[9px] font-bold uppercase tracking-widest text-[#0042bb] text-right">TOTAL</span>
+                </div>
+                <div className="border border-[#eeeeee] rounded-b-lg overflow-hidden">
+                  {standings.slice(0, 3).map(s => {
+                    const isMe = s.memberId === myMemberId
+                    return (
+                      <div
+                        key={s.memberId}
+                        className="flex items-center px-4 py-3 border-b border-[#f5f5f5] last:border-0"
+                        style={isMe ? { borderLeft: `3px solid ${s.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
+                      >
+                        <span className="w-7 text-sm font-black text-gray-300 text-right">{s.rank}</span>
+                        <span className="mx-2"><TeamIcon icon={s.teamIcon} /></span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm truncate">{s.teamName}</p>
+                          <p className="text-xs text-gray-400 truncate">{s.userName}</p>
+                        </div>
+                        <span className="w-12 text-right text-xs font-semibold text-[#2db944]">
+                          {s.yesterdayFpts !== null && s.yesterdayFpts > 0 ? `+${s.yesterdayFpts.toFixed(1)}` : s.yesterdayFpts === 0 ? '0.0' : '—'}
+                        </span>
+                        <span className="w-14 text-right text-sm font-black text-[#0042bb]">
+                          {s.totalScore.toFixed(1)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
+
       {/* Draft lobby — readiness check-in (setup + live draft phases) */}
       {(league.status === 'setup' || league.status === 'draft') && (() => {
         const readyCount = sortedMembers.filter(m => m.draftLobbyReady).length
@@ -327,123 +451,6 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       )}
-
-      {/* League Bulletin — always shown when one exists, regardless of league status. */}
-      {leagueRecap && (
-        <div className="bg-[#fff7ed] rounded-xl border border-[#fed7aa] p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[9px] font-black tracking-[2px] uppercase text-[#f97316]">📣 League Bulletin</span>
-            <span className="text-[9px] text-[#fb923c] font-semibold">
-              {league.status === 'draft'
-                ? `Draft Day · ${new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                : new Date(leagueRecap.recapDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-              }
-            </span>
-          </div>
-          <p className="text-sm leading-relaxed text-[#431407]">{leagueRecap.content}</p>
-        </div>
-      )}
-
-      {/* Active season — hero card + standings */}
-      {(league.status === 'active' || league.status === 'complete') && standings.length > 0 && (() => {
-        const mySt = standings.find(s => s.memberId === myMemberId)
-        const sorted = [...standings].sort((a, b) => b.totalScore - a.totalScore)
-        const lead = mySt
-          ? mySt.rank === 1
-            ? mySt.totalScore - (sorted[1]?.totalScore ?? 0)
-            : mySt.totalScore - sorted[0].totalScore
-          : null
-
-        return (
-          <>
-            {/* Hero card */}
-            {mySt && (
-              <div
-                className="bg-[#1a1a1a] rounded-xl p-4 mb-4"
-                style={{ borderLeft: `4px solid ${mySt.colorPrimary ?? myColor}` }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">Your Standing</div>
-                    <div className="text-3xl font-black text-white">{mySt.rank}{ordinalSuffix(mySt.rank)}</div>
-                    <div className="text-xs text-white/70 mt-0.5">of {standings.length} teams</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-black" style={{ color: mySt.colorPrimary ?? myColor }}>
-                      {mySt.totalScore.toFixed(1)}
-                    </div>
-                    <div className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Total FPTS</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10">
-                  <div className="text-center">
-                    <div className={`text-sm font-black ${mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? 'text-[#2db944]' : 'text-white/50'}`}>
-                      {mySt.yesterdayFpts !== null && mySt.yesterdayFpts > 0 ? `+${mySt.yesterdayFpts.toFixed(1)}` : mySt.yesterdayFpts === 0 ? '0.0' : '—'}
-                    </div>
-                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Yesterday</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-sm font-black ${lead !== null && lead > 0 ? 'text-[#2db944]' : lead !== null && lead < 0 ? 'text-[#c8102e]' : 'text-white/50'}`}>
-                      {lead !== null ? (lead >= 0 ? `+${lead.toFixed(1)}` : lead.toFixed(1)) : '—'}
-                    </div>
-                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">
-                      {mySt.rank === 1 ? 'Lead' : 'Deficit'}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-black text-white">
-                      {myMember ? league.rosterForwards + league.rosterDefense + league.rosterGoalies : '—'}
-                    </div>
-                    <div className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Players</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Top-3 standings preview */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Standings</p>
-                <Link href={`/league/${id}/standings`} className="text-xs text-orange-500 font-bold hover:text-orange-700">
-                  View all →
-                </Link>
-              </div>
-              <div className="flex items-center px-4 py-1.5 bg-[#f8f8f8] rounded-t-lg border border-b-0 border-[#eeeeee]">
-                <span className="w-7 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">RK</span>
-                <span className="w-6 mx-2" />
-                <span className="flex-1 text-[9px] font-bold uppercase tracking-widest text-[#98989e]">Team</span>
-                <span className="w-12 text-[9px] font-bold uppercase tracking-widest text-[#98989e] text-right">YDAY</span>
-                <span className="w-14 text-[9px] font-bold uppercase tracking-widest text-[#0042bb] text-right">TOTAL</span>
-              </div>
-              <div className="border border-[#eeeeee] rounded-b-lg overflow-hidden">
-                {standings.slice(0, 3).map(s => {
-                  const isMe = s.memberId === myMemberId
-                  return (
-                    <div
-                      key={s.memberId}
-                      className="flex items-center px-4 py-3 border-b border-[#f5f5f5] last:border-0"
-                      style={isMe ? { borderLeft: `3px solid ${s.colorPrimary ?? '#FF6B00'}`, backgroundColor: '#fff8f8' } : undefined}
-                    >
-                      <span className="w-7 text-sm font-black text-gray-300 text-right">{s.rank}</span>
-                      <span className="mx-2"><TeamIcon icon={s.teamIcon} /></span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate">{s.teamName}</p>
-                        <p className="text-xs text-gray-400 truncate">{s.userName}</p>
-                      </div>
-                      <span className="w-12 text-right text-xs font-semibold text-[#2db944]">
-                        {s.yesterdayFpts !== null && s.yesterdayFpts > 0 ? `+${s.yesterdayFpts.toFixed(1)}` : s.yesterdayFpts === 0 ? '0.0' : '—'}
-                      </span>
-                      <span className="w-14 text-right text-sm font-black text-[#0042bb]">
-                        {s.totalScore.toFixed(1)}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </>
-        )
-      })()}
 
       {/* Members list (draft phase only) */}
       {league.status === 'draft' && (

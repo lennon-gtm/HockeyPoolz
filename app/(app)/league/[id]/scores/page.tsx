@@ -63,37 +63,37 @@ export default function ScoresPage({ params }: { params: Promise<{ id: string }>
             return (
               <div key={game.id} className="bg-white rounded-2xl border border-[#eeeeee] overflow-hidden">
                 {/* Score header */}
-                <div className="px-4 pt-4 pb-3 border-b border-[#f2f2f2]">
-                  <div className="flex items-center justify-between mb-2.5">
+                <div className="px-4 pt-5 pb-4 border-b border-[#f2f2f2]">
+                  <div className="flex items-center justify-between gap-3 mb-3">
                     {/* Away team */}
-                    <div className="flex items-center gap-2 flex-1">
+                    <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={`https://assets.nhle.com/logos/nhl/svg/${game.awayTeamId}_light.svg`}
                         alt={game.awayTeamId}
-                        className="w-9 h-9 object-contain"
+                        className="w-20 h-20 object-contain"
                       />
-                      <span className="text-[11px] font-black uppercase tracking-wide text-[#121212]">{game.awayTeamId}</span>
+                      <span className="text-lg font-black uppercase tracking-wide text-[#121212] leading-none">{game.awayTeamId}</span>
                     </div>
                     {/* Score */}
-                    <div className="flex items-center gap-2 px-2">
-                      <span className={`text-2xl font-black leading-none ${!homeWon ? 'text-[#121212]' : 'text-[#c8c8c8]'}`}>
+                    <div className="flex items-center gap-3 px-1">
+                      <span className={`text-5xl font-black leading-none tabular-nums ${!homeWon ? 'text-[#121212]' : 'text-[#c8c8c8]'}`}>
                         {game.awayScore}
                       </span>
-                      <span className="text-base text-[#d8d8d8] font-light">–</span>
-                      <span className={`text-2xl font-black leading-none ${homeWon ? 'text-[#121212]' : 'text-[#c8c8c8]'}`}>
+                      <span className="text-2xl text-[#d8d8d8] font-light">–</span>
+                      <span className={`text-5xl font-black leading-none tabular-nums ${homeWon ? 'text-[#121212]' : 'text-[#c8c8c8]'}`}>
                         {game.homeScore}
                       </span>
                     </div>
                     {/* Home team */}
-                    <div className="flex items-center gap-2 flex-1 flex-row-reverse">
+                    <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={`https://assets.nhle.com/logos/nhl/svg/${game.homeTeamId}_light.svg`}
                         alt={game.homeTeamId}
-                        className="w-9 h-9 object-contain"
+                        className="w-20 h-20 object-contain"
                       />
-                      <span className="text-[11px] font-black uppercase tracking-wide text-[#121212]">{game.homeTeamId}</span>
+                      <span className="text-lg font-black uppercase tracking-wide text-[#121212] leading-none">{game.homeTeamId}</span>
                     </div>
                   </div>
                   {/* Badges */}
