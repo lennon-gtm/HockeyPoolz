@@ -3,7 +3,7 @@ import { syncRosters, syncGameStats, checkEliminations, recalculateScores, write
 import { syncInjuries, type InjurySyncResult } from '@/lib/injury-service'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
