@@ -166,6 +166,10 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
 
   const today = new Date()
   const recapDate = new Date(today.toISOString().split('T')[0]) // midnight UTC today
+  // Recap always covers yesterday's games. Fixed window — don't rely on
+  // "last recap date" logic; the route wipes and regenerates every run.
+  const yesterdayDate = new Date(recapDate)
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1)
 
   // Load scoring settings for weight calculations
   const settings = await prisma.scoringSettings.findUnique({ where: { leagueId } })
@@ -209,14 +213,16 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
             include: {
               team: { select: { abbreviation: true, eliminatedAt: true } },
               gameStats: {
-                where: { NOT: { gameId: { startsWith: 'rs-' } } },
+                where: {
+                  NOT: { gameId: { startsWith: 'rs-' } },
+                  gameDate: { gte: yesterdayDate },
+                },
                 orderBy: { gameDate: 'desc' },
               },
             },
           },
         },
       },
-      recaps: { orderBy: { recapDate: 'desc' }, take: 1 },
     },
     orderBy: { totalScore: 'desc' },
   })
@@ -231,14 +237,11 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
 
   for (const member of members) {
     const currentRank = standings.findIndex(s => s.teamName === member.teamName) + 1
-    const lastRecapDate = member.recaps[0]?.recapDate ?? null
 
-    // Check if any drafted players had games since last recap
+    // gameStats is already scoped to yesterday+ by the Prisma query above.
     const recentPlayerStats: MemberPlayerStat[] = []
     for (const pick of member.draftPicks) {
-      const recentGames = pick.player.gameStats.filter(gs =>
-        lastRecapDate ? gs.gameDate > lastRecapDate : true
-      )
+      const recentGames = pick.player.gameStats
       for (const gs of recentGames) {
         const score = calculatePlayerScore({
           goals: gs.goals, assists: gs.assists, plusMinus: gs.plusMinus,
@@ -277,9 +280,7 @@ export async function generateLeagueRecaps(leagueId: string): Promise<RecapGener
     for (const otherMember of members) {
       if (otherMember.id === member.id) continue
       for (const pick of otherMember.draftPicks) {
-        const recentGames = pick.player.gameStats.filter(gs =>
-          lastRecapDate ? gs.gameDate > lastRecapDate : true
-        )
+        const recentGames = pick.player.gameStats
         for (const gs of recentGames) {
           const score = calculatePlayerScore({
             goals: gs.goals, assists: gs.assists, plusMinus: gs.plusMinus,
@@ -364,13 +365,8 @@ export async function generateLeagueRecap(leagueId: string): Promise<void> {
   })
   if (scoreCount === 0) return
 
-  // Skip if already generated today
   const todayStr = new Date().toISOString().split('T')[0]
   const todayDate = new Date(todayStr)
-  const existing = await prisma.leagueRecap.findUnique({
-    where: { leagueId_recapDate: { leagueId, recapDate: todayDate } },
-  })
-  if (existing) return
 
   const league = await prisma.league.findUnique({ where: { id: leagueId }, select: { name: true } })
   if (!league) return

@@ -3,15 +3,21 @@ import { prisma } from '@/lib/prisma'
 import { generateLeagueRecaps, generateLeagueRecap } from '@/lib/recap-service'
 import { generateLeagueScoreSummaries } from '@/lib/scores-service'
 
+/**
+ * GET /api/cron/generate-recaps — fires daily via Vercel Cron at 4am ET.
+ *
+ * Each run wipes the previous day's recap artifacts for every active
+ * league (per-member recaps, league bulletin, per-game score summaries)
+ * and regenerates them fresh from the just-synced stats. This keeps the
+ * content aligned with the latest point totals and avoids stale
+ * mid-day generations lingering in the DB.
+ */
 export async function GET(request: NextRequest) {
-  // Verify cron secret
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const force = new URL(request.url).searchParams.get('force') === 'true'
 
   try {
     const activeLeagues = await prisma.league.findMany({
@@ -27,29 +33,35 @@ export async function GET(request: NextRequest) {
 
     const results = []
     for (const league of activeLeagues) {
-      // With ?force=true, delete today's existing recaps so the generators
-      // don't short-circuit on their dedup checks. Use when an earlier run
-      // produced stale content (e.g. stats hadn't synced yet).
-      if (force) {
-        await prisma.leagueRecap.deleteMany({
-          where: { leagueId: league.id, recapDate: todayDate },
-        })
-        await prisma.recap.deleteMany({
-          where: { leagueId: league.id, recapDate: todayDate },
-        })
-        await prisma.leagueGameSummary.deleteMany({
-          where: { leagueId: league.id, gameDate: yesterdayDate },
-        })
-      }
+      // Wipe previous outputs for this league so regeneration writes
+      // clean rows without having to reason about dedup/upsert behavior.
+      //
+      // Recap + LeagueRecap are keyed by recapDate; kill today's and
+      // yesterday's rows (yesterday's catch any mid-day stale runs).
+      // LeagueGameSummary is keyed by gameDate = yesterday, so kill
+      // those and let the generator rewrite them with current scores.
+      await prisma.recap.deleteMany({
+        where: {
+          leagueId: league.id,
+          recapDate: { in: [yesterdayDate, todayDate] },
+        },
+      })
+      await prisma.leagueRecap.deleteMany({
+        where: {
+          leagueId: league.id,
+          recapDate: { in: [yesterdayDate, todayDate] },
+        },
+      })
+      await prisma.leagueGameSummary.deleteMany({
+        where: { leagueId: league.id, gameDate: yesterdayDate },
+      })
 
       const result = await generateLeagueRecaps(league.id)
-      // Generate league-wide bulletin after per-member recaps
       try {
         await generateLeagueRecap(league.id)
       } catch (err) {
         result.errors.push(`League recap failed: ${err}`)
       }
-      // Generate yesterday's game summaries
       try {
         await generateLeagueScoreSummaries(league.id, yesterdayStr)
       } catch (err) {

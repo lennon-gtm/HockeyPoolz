@@ -226,12 +226,7 @@ export async function generateLeagueScoreSummaries(leagueId: string, date: strin
   const gameDate = new Date(date)
 
   for (const game of completedGames) {
-    // Skip if already generated
     const existingKey = String(game.id)
-    const exists = await prisma.leagueGameSummary.findUnique({
-      where: { leagueId_gameId: { leagueId, gameId: existingKey } },
-    })
-    if (exists) continue
 
     const [story, memberScores] = await Promise.all([
       fetchGameStory(game.id),
