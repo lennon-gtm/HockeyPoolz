@@ -28,7 +28,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
     if (!member) return NextResponse.json({ error: 'Not a league member' }, { status: 403 })
 
-    const today = new Date().toISOString().split('T')[0]
+    // NHL schedules every game by Eastern date — if we ask for today in UTC
+    // we'd miss all the late ET-night games once UTC rolls past midnight.
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date())
     const syncResult = await syncGameStats(today, { includeLive: true, scopedToLeagueId: id })
     await recalculateScores(id)
 
