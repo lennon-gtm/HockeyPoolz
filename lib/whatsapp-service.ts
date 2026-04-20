@@ -14,6 +14,10 @@ export async function sendWhatsAppRecap(
   leagueName: string,
   content: string
 ): Promise<void> {
+  // Hard kill-switch — set to "false" while waiting on Meta business
+  // number approval so recap runs don't spew (#131030) sandbox errors.
+  if (process.env.WHATSAPP_ENABLED === 'false') return
+
   const token = process.env.META_WHATSAPP_TOKEN
   const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID
 
