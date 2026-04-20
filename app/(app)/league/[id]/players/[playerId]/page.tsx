@@ -111,7 +111,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
             </p>
           </div>
           <div className="ml-auto text-right">
-            <p className="text-3xl font-black text-orange-500">{player.totals.weightedTotal.toFixed(1)}</p>
+            <p className="text-3xl font-black text-orange-500">{player.totals.weightedTotal.toFixed(2)}</p>
             <p className="text-xs text-gray-400">Total Points</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                     </td>
                   ))}
                   <td className="text-right py-2 pl-4 font-bold text-orange-500">
-                    {game.weightedScore.toFixed(1)}
+                    {game.weightedScore.toFixed(2)}
                   </td>
                 </tr>
               ))}

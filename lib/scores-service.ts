@@ -52,7 +52,7 @@ export function buildGameSummaryPrompt(input: GameSummaryPromptInput): string {
   prompt += `Article: ${articleHeadline}. ${articleExcerpt}\n`
 
   if (benefactor) {
-    prompt += `\nLeague fantasy winner: ${benefactor.teamName} — ${benefactor.fpts.toFixed(1)} pts`
+    prompt += `\nLeague fantasy winner: ${benefactor.teamName} — ${benefactor.fpts.toFixed(2)} pts`
     if (benefactor.topPlayers.length > 0) {
       prompt += ` (${benefactor.topPlayers.join(', ')})`
     }
@@ -181,7 +181,7 @@ async function calcMemberScores(
 
     const teamName = pick.leagueMember.teamName
     const existing = memberMap.get(teamName)
-    const playerLine = `${pick.player.name}: ${stats.goals}G ${stats.assists}A (${fpts.toFixed(1)} pts)`
+    const playerLine = `${pick.player.name}: ${stats.goals}G ${stats.assists}A (${fpts.toFixed(2)} pts)`
 
     if (existing) {
       existing.fpts = Math.round((existing.fpts + fpts) * 100) / 100

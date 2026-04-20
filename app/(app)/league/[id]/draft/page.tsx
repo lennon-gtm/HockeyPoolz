@@ -1064,7 +1064,7 @@ function PreDraft({
                       <div className="flex gap-4 items-center flex-shrink-0">
                         {entry.player.proj !== undefined && (
                           <div className="text-right">
-                            <div className="text-[10px] font-black bg-[#eef3ff] text-[#0042bb] px-2 py-0.5 rounded">{entry.player.proj.toFixed(1)}</div>
+                            <div className="text-[10px] font-black bg-[#eef3ff] text-[#0042bb] px-2 py-0.5 rounded">{entry.player.proj.toFixed(2)}</div>
                             <div className="text-[9px] text-[#98989e] font-semibold text-center">PROJ</div>
                           </div>
                         )}

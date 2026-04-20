@@ -47,7 +47,7 @@ function ordinal(n: number): string {
 
 function fmtFpts(v: number | null): string {
   if (v === null) return '—'
-  return v >= 0 ? `+${v.toFixed(1)}` : v.toFixed(1)
+  return v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2)
 }
 
 function isForward(pos: string) { return ['C', 'LW', 'RW'].includes(pos) }
@@ -207,7 +207,7 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-black" style={{ color: myColor }}>{member.totalScore.toFixed(1)}</div>
+          <div className="text-2xl font-black" style={{ color: myColor }}>{member.totalScore.toFixed(2)}</div>
           <div className="text-[9px] text-[#98989e] font-bold uppercase tracking-widest">Total FPTS</div>
         </div>
       </div>
@@ -305,6 +305,8 @@ export default function MyTeamPage({ params }: { params: Promise<{ id: string }>
                         display = Number(val) > 0 ? Number(val).toFixed(3) : '—'
                       } else if (isYday) {
                         display = fmtFpts(val as number)
+                      } else if (isFpts) {
+                        display = Number(val).toFixed(2)
                       } else if (isPlusMinus) {
                         display = Number(val) >= 0 ? `+${val}` : String(val)
                       } else {

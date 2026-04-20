@@ -84,10 +84,8 @@ export function calculatePlayerScore(stats: GameStats, weights: ScoringWeights):
     stats.hits * weights.hits +
     stats.blockedShots * weights.blockedShots +
     stats.powerPlayGoals * weights.powerPlayGoals +
-    stats.powerPlayPoints * weights.powerPlayPoints +
     stats.powerPlayAssists * weights.powerPlayAssists +
     stats.shorthandedGoals * weights.shorthandedGoals +
-    stats.shorthandedPoints * weights.shorthandedPoints +
     stats.shorthandedAssists * weights.shorthandedAssists +
     stats.gameWinningGoals * weights.gameWinningGoals +
     stats.overtimeGoals * weights.overtimeGoals +

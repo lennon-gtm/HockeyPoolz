@@ -102,7 +102,7 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
           <div className="text-right">
-            <div className="text-base font-black" style={{ color: myColor }}>{myStanding.totalScore.toFixed(1)}</div>
+            <div className="text-base font-black" style={{ color: myColor }}>{myStanding.totalScore.toFixed(2)}</div>
             <div className="text-[9px] text-[#98989e] font-bold uppercase tracking-widest">Total FPTS</div>
           </div>
         </div>
@@ -171,15 +171,15 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
                       : 'text-[#98989e]'
                   }`}>
                     {member.yesterdayFpts !== null && member.yesterdayFpts > 0
-                      ? `+${member.yesterdayFpts.toFixed(1)}`
+                      ? `+${member.yesterdayFpts.toFixed(2)}`
                       : member.yesterdayFpts === 0
-                      ? '0.0'
+                      ? '0.00'
                       : member.yesterdayFpts !== null
-                      ? member.yesterdayFpts.toFixed(1)
+                      ? member.yesterdayFpts.toFixed(2)
                       : '—'}
                   </span>
                   <span className="w-16 text-right text-sm font-black text-[#0042bb]">
-                    {member.totalScore.toFixed(1)}
+                    {member.totalScore.toFixed(2)}
                   </span>
                 </button>
 
@@ -206,7 +206,7 @@ export default function StandingsPage({ params }: { params: Promise<{ id: string
                             <p className="text-xs text-gray-400">{player.position} · {player.teamAbbrev}</p>
                           </div>
                           <span className={`text-sm font-bold ${player.isEliminated ? 'text-gray-400' : 'text-[#0042bb]'}`}>
-                            {player.totalPoints.toFixed(1)}
+                            {player.totalPoints.toFixed(2)}
                           </span>
                         </Link>
                       ))}

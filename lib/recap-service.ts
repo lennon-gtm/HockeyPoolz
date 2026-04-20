@@ -108,7 +108,7 @@ export function buildRecapPrompt(input: RecapPromptInput): string {
   if (memberPlayerStats.length > 0) {
     prompt += '\nYour players last night:\n'
     for (const p of memberPlayerStats) {
-      prompt += `- ${p.name} vs ${p.opponent}: ${p.goals}G ${p.assists}A ${p.plusMinus > 0 ? '+' : ''}${p.plusMinus} | ${p.weightedScore.toFixed(1)} fantasy pts\n`
+      prompt += `- ${p.name} vs ${p.opponent}: ${p.goals}G ${p.assists}A ${p.plusMinus > 0 ? '+' : ''}${p.plusMinus} | ${p.weightedScore.toFixed(2)} fantasy pts\n`
     }
   } else {
     prompt += '\nNone of your players had games last night.\n'
@@ -116,13 +116,13 @@ export function buildRecapPrompt(input: RecapPromptInput): string {
 
   prompt += '\nFull standings:\n'
   for (const s of standings) {
-    prompt += `${s.rank}. ${s.teamName} (${s.userName}) — ${s.totalScore.toFixed(1)} pts\n`
+    prompt += `${s.rank}. ${s.teamName} (${s.userName}) — ${s.totalScore.toFixed(2)} pts\n`
   }
 
   if (topLeaguePlayers.length > 0) {
     prompt += '\nTop performers across the league last night:\n'
     for (const p of topLeaguePlayers) {
-      prompt += `- ${p.name} (${p.ownerTeam}): ${p.goals}G ${p.assists}A | ${p.weightedScore.toFixed(1)} fantasy pts\n`
+      prompt += `- ${p.name} (${p.ownerTeam}): ${p.goals}G ${p.assists}A | ${p.weightedScore.toFixed(2)} fantasy pts\n`
     }
   }
 
@@ -133,11 +133,11 @@ export function buildRecapPrompt(input: RecapPromptInput): string {
 export function buildLeagueRecapPrompt(input: LeagueRecapPromptInput): string {
   let prompt = `League: ${input.leagueName}\n\nYesterday's scores (best to worst):\n`
   for (const s of input.dailyScores) {
-    prompt += `- ${s.teamName}: ${s.fpts.toFixed(1)} pts\n`
+    prompt += `- ${s.teamName}: ${s.fpts.toFixed(2)} pts\n`
   }
   prompt += '\nCurrent standings:\n'
   for (const s of input.standings) {
-    prompt += `${s.rank}. ${s.teamName} — ${s.totalScore.toFixed(1)} total pts\n`
+    prompt += `${s.rank}. ${s.teamName} — ${s.totalScore.toFixed(2)} total pts\n`
   }
   return prompt
 }
