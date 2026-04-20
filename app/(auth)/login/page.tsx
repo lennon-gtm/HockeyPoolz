@@ -123,7 +123,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#0d0d0d', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#0d0d0d', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}>
 
       {/* ── Header ── */}
       <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 48px' }}>
@@ -267,25 +267,105 @@ export default function LoginPage() {
       </section>
 
       {/* ── How it works strip ── */}
-      <section id="steps" style={{ flexShrink: 0, background: '#fff', borderTop: '2px solid #f3f4f6', padding: '20px 40px 22px' }}>
-        <div style={{ display: 'flex', maxWidth: 780, margin: '0 auto', alignItems: 'center' }}>
+      <section id="steps" className="steps-strip">
+        <div className="steps-row">
           {STEPS.map((step, i) => (
-            <div key={step.num} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', borderLeft: i > 0 ? '1px solid #f3f4f6' : 'none' }}>
-              <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, border: '2px solid #fed7aa' }}>
-                {step.icon}
-              </div>
+            <div key={step.num} className="step" data-first={i === 0}>
+              <div className="step-icon">{step.icon}</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-fredoka, Fredoka, sans-serif)', fontSize: 10, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: '#f97316', marginBottom: 2 }}>
-                  {step.num}
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#374151', lineHeight: 1.2 }}>
-                  {step.label}
-                </div>
+                <div className="step-num">{step.num}</div>
+                <div className="step-label">{step.label}</div>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* ── Footer ── */}
+      <footer style={{ flexShrink: 0, background: '#0d0d0d', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '8px 20px', display: 'flex', justifyContent: 'flex-end' }}>
+        <a
+          href="https://signyl.gg"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}
+        >
+          Powered by <span style={{ color: '#f97316' }}>Signyl</span>
+        </a>
+      </footer>
+
+      <style jsx>{`
+        .steps-strip {
+          flex-shrink: 0;
+          background: #fff;
+          border-top: 2px solid #f3f4f6;
+          padding: 20px 40px 22px;
+        }
+        .steps-row {
+          display: flex;
+          max-width: 780px;
+          margin: 0 auto;
+          align-items: center;
+        }
+        .step {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 0 20px;
+          border-left: 1px solid #f3f4f6;
+        }
+        .step[data-first='true'] { border-left: none; }
+        .step-icon {
+          width: 52px;
+          height: 52px;
+          flex-shrink: 0;
+          border-radius: 50%;
+          background: #fff7ed;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          border: 2px solid #fed7aa;
+        }
+        .step-num {
+          font-family: var(--font-fredoka, Fredoka, sans-serif);
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: #f97316;
+          margin-bottom: 2px;
+        }
+        .step-label {
+          font-size: 14px;
+          font-weight: 700;
+          color: #374151;
+          line-height: 1.2;
+        }
+
+        /* Tablet — tighten horizontal padding */
+        @media (max-width: 768px) {
+          .steps-strip { padding: 16px 16px 18px; }
+          .step { padding: 0 10px; gap: 10px; }
+          .step-icon { width: 44px; height: 44px; font-size: 20px; }
+          .step-label { font-size: 12px; }
+        }
+
+        /* Phone — stack vertically, left-aligned rows */
+        @media (max-width: 520px) {
+          .steps-strip { padding: 14px 18px; }
+          .steps-row { flex-direction: column; gap: 10px; }
+          .step {
+            width: 100%;
+            padding: 0;
+            border-left: none !important;
+            gap: 12px;
+          }
+          .step-icon { width: 40px; height: 40px; font-size: 20px; }
+          .step-num { font-size: 9px; letter-spacing: 1.5px; }
+          .step-label { font-size: 13px; }
+        }
+      `}</style>
     </div>
   )
 }

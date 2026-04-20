@@ -177,20 +177,29 @@ async function fetchOTAssists(gameId: number): Promise<Map<number, number>> {
 }
 
 /**
- * Fetch completed playoff games for a given date.
+ * Fetch playoff games for a given date.
  *
  * Primary source is /schedule/<date> (gameWeek structure). We used to use
  * /score/<date> but NHL's Cloudflare layer rate-limits /score harder on
  * Vercel egress; /schedule returns the same game-level fields.
+ *
+ * By default returns only completed ("OFF") games. Pass `includeLive` to
+ * also pick up LIVE/CRIT/FINAL/OFFICIAL — needed for mid-day manual syncs.
  */
-export async function fetchCompletedPlayoffGames(date: string): Promise<NhlGameSummary[]> {
+export async function fetchCompletedPlayoffGames(
+  date: string,
+  opts?: { includeLive?: boolean },
+): Promise<NhlGameSummary[]> {
   const res = await fetch(`${NHL_API_BASE}/schedule/${date}`, NHL_FETCH_INIT)
   if (!res.ok) throw new Error(`NHL API /schedule/${date} returned ${res.status}`)
   const data = await res.json()
   const day = (data.gameWeek ?? []).find((d: { date: string }) => d.date === date)
   const games = day?.games ?? []
+  const allowedStates = opts?.includeLive
+    ? new Set(['LIVE', 'CRIT', 'OFF', 'FINAL', 'OFFICIAL'])
+    : new Set(['OFF'])
   return games.filter(
-    (g: NhlGameSummary) => g.gameType === 3 && g.gameState === 'OFF'
+    (g: NhlGameSummary) => g.gameType === 3 && allowedStates.has(g.gameState)
   )
 }
 
@@ -325,32 +334,45 @@ export async function syncRosters(): Promise<{ teamsUpdated: number; playersUpse
   return { teamsUpdated: teams.length, playersUpserted }
 }
 
-/** Get all drafted player IDs across active leagues, excluding eliminated teams. */
-async function getDraftedPlayerIds(): Promise<Set<number>> {
+/** Get drafted player IDs. Scoped to one league if provided, else every active league. */
+async function getDraftedPlayerIds(leagueId?: string): Promise<Set<number>> {
   const picks = await prisma.draftPick.findMany({
-    where: {
-      draft: { league: { status: 'active' } },
-      player: { team: { eliminatedAt: null } },
-    },
+    where: leagueId
+      ? { leagueMember: { leagueId } }
+      : {
+          draft: { league: { status: 'active' } },
+          player: { team: { eliminatedAt: null } },
+        },
     select: { playerId: true },
     distinct: ['playerId'],
   })
   return new Set(picks.map(p => p.playerId))
 }
 
-/** Sync game stats for a given date. */
-export async function syncGameStats(date: string): Promise<SyncResult> {
+/**
+ * Sync game stats for a given date.
+ *
+ * Options:
+ *   - includeLive: pick up LIVE/CRIT games in addition to completed ones.
+ *     Default false (cron only wants final box scores).
+ *   - scopedToLeagueId: only pull extended game-log stats for players
+ *     drafted in this league. Default: all active-league drafted players.
+ */
+export async function syncGameStats(
+  date: string,
+  opts?: { includeLive?: boolean; scopedToLeagueId?: string },
+): Promise<SyncResult> {
   const result: SyncResult = { gamesProcessed: 0, playersUpdated: 0, errors: [] }
 
   let games: NhlGameSummary[]
   try {
-    games = await fetchCompletedPlayoffGames(date)
+    games = await fetchCompletedPlayoffGames(date, { includeLive: opts?.includeLive })
   } catch (err) {
     result.errors.push(`Failed to fetch games for ${date}: ${err}`)
     return result
   }
 
-  const draftedPlayerIds = await getDraftedPlayerIds()
+  const draftedPlayerIds = await getDraftedPlayerIds(opts?.scopedToLeagueId)
 
   // Track which players actually appeared in today's box scores and which
   // gameIds we processed, so we only fetch extended-stat game logs for the

@@ -47,6 +47,9 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
   }[]>([])
   const [myMemberId, setMyMemberId] = useState<string | null>(null)
   const [leagueRecap, setLeagueRecap] = useState<{ id: string; recapDate: string; content: string; createdAt: string } | null>(null)
+  const [syncingToday, setSyncingToday] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
 
   async function getToken() { return await auth.currentUser?.getIdToken() ?? '' }
 
@@ -177,6 +180,49 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
       const res = await fetch(`/api/leagues/${id}`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) setLeague((await res.json()).league)
     } finally { setAutodraftLoading(false) }
+  }
+
+  async function syncTodayGames() {
+    // Client-side throttle: 60s between presses. Server has no rate limit,
+    // but the sync does real NHL work per press so pacing matters.
+    if (syncingToday) return
+    if (lastSyncedAt && Date.now() - lastSyncedAt < 60_000) {
+      const left = Math.ceil((60_000 - (Date.now() - lastSyncedAt)) / 1000)
+      setSyncMsg(`Wait ${left}s before syncing again`)
+      return
+    }
+    setSyncingToday(true)
+    setSyncMsg(null)
+    try {
+      const token = await getToken()
+      const res = await fetch(`/api/leagues/${id}/sync-today`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setSyncMsg(data.error ?? 'Sync failed')
+        return
+      }
+      setLastSyncedAt(Date.now())
+      const { gamesProcessed, playersUpdated } = data
+      setSyncMsg(
+        gamesProcessed === 0
+          ? 'No games today yet'
+          : `Updated ${playersUpdated} players across ${gamesProcessed} game${gamesProcessed === 1 ? '' : 's'}`
+      )
+      // Refresh standings so the user sees the new totals
+      const headers = { Authorization: `Bearer ${token}` }
+      const standingsRes = await fetch(`/api/leagues/${id}/standings`, { headers })
+      if (standingsRes.ok) {
+        const standingsData = await standingsRes.json()
+        setStandings(standingsData.standings)
+      }
+    } catch (err) {
+      setSyncMsg(`Sync failed: ${String(err)}`)
+    } finally {
+      setSyncingToday(false)
+    }
   }
 
   async function toggleReady() {
@@ -323,6 +369,22 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
                   </span>
                 </div>
                 <p className="text-sm leading-relaxed text-[#431407]">{leagueRecap.content}</p>
+              </div>
+            )}
+
+            {/* Today's sync — any member can pull live/completed games */}
+            {seasonStarted && (
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <button
+                  onClick={syncTodayGames}
+                  disabled={syncingToday}
+                  className="flex-1 py-2.5 px-3 rounded-lg border-2 border-[#eeeeee] bg-white text-xs font-bold text-[#121212] hover:border-orange-300 transition disabled:opacity-50"
+                >
+                  {syncingToday ? 'Syncing…' : '↻ Sync today’s games'}
+                </button>
+                {syncMsg && (
+                  <span className="text-[11px] text-[#515151] font-semibold max-w-[55%] text-right">{syncMsg}</span>
+                )}
               </div>
             )}
 

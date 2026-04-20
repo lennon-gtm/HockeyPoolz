@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/lib/firebase/client'
 import { GlobalHeader } from '@/components/global-header'
+import { PoweredBySignyl } from '@/components/powered-by-signyl'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -36,9 +37,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const hideHeader = pathname?.startsWith('/join/')
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       {!hideHeader && <GlobalHeader />}
-      {children}
+      <div className="flex-1">{children}</div>
+      <PoweredBySignyl />
     </div>
   )
 }
