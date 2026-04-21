@@ -16,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     auth.authStateReady().then(() => {
       unsub = onAuthStateChanged(auth, async (user) => {
         if (!user) {
-          router.push('/login')
+          router.push('/')
           return
         }
         const token = await user.getIdToken()
