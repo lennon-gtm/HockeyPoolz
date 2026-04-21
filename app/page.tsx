@@ -1,9 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   signInWithPopup, GoogleAuthProvider,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
+  sendPasswordResetEmail, onAuthStateChanged,
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
@@ -17,7 +17,9 @@ const STEPS = [
   { icon: '🏆', num: 'Step 3', label: 'Track every goal live' },
 ]
 
-export default function LoginPage() {
+type AuthPhase = 'checking' | 'unauth' | 'auth'
+
+export default function LandingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -26,6 +28,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [info, setInfo] = useState('')
+  const [phase, setPhase] = useState<AuthPhase>('checking')
+  const [currentUser, setCurrentUser] = useState<import('firebase/auth').User | null>(null)
+
+  useEffect(() => {
+    let unsub: (() => void) | undefined
+    auth.authStateReady().then(() => {
+      unsub = onAuthStateChanged(auth, (user) => {
+        setCurrentUser(user)
+        setPhase(user ? 'auth' : 'unauth')
+      })
+    })
+    return () => unsub?.()
+  }, [])
 
   async function finishSignIn(user: { getIdToken: () => Promise<string> }) {
     const token = await user.getIdToken()
@@ -169,99 +184,107 @@ export default function LoginPage() {
             Pick your NHL playoff roster, compete with friends, and get play by play updates straight to your phone.
           </p>
 
-          {/* Error / Info */}
-          {error && (
-            <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{error}</p>
+          {/* CTA — gated on auth phase */}
+          {(phase === 'checking' || phase === 'auth') && (
+            <div className="w-full h-[52px] rounded-full bg-white/10 animate-pulse" style={{ maxWidth: 280 }} />
           )}
-          {info && (
-            <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 12 }}>{info}</p>
-          )}
+          {phase === 'unauth' && (
+            <>
+              {/* Error / Info */}
+              {error && (
+                <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{error}</p>
+              )}
+              {info && (
+                <p style={{ color: '#16a34a', fontSize: 13, marginBottom: 12 }}>{info}</p>
+              )}
 
-          {/* Auth — idle */}
-          {mode === 'idle' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
-              <button onClick={signInWithGoogle} disabled={loading} style={{ ...pillBase, background: '#fff', color: '#222', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}>
-                <GoogleSVG />
-                Continue with Google
-              </button>
+              {/* Auth — idle */}
+              {mode === 'idle' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
+                  <button onClick={signInWithGoogle} disabled={loading} style={{ ...pillBase, background: '#fff', color: '#222', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}>
+                    <GoogleSVG />
+                    Continue with Google
+                  </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#9ca3af', fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>
-                <span style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-                or
-                <span style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
-              </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#9ca3af', fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>
+                    <span style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+                    or
+                    <span style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+                  </div>
 
-              <button onClick={() => setMode('email')} disabled={loading} style={{ ...pillBase, background: '#fff7ed', color: '#c2410c', border: '2px solid #fed7aa' }}>
-                <EmailSVG />
-                Continue with Email
-              </button>
-            </div>
-          )}
+                  <button onClick={() => setMode('email')} disabled={loading} style={{ ...pillBase, background: '#fff7ed', color: '#c2410c', border: '2px solid #fed7aa' }}>
+                    <EmailSVG />
+                    Continue with Email
+                  </button>
+                </div>
+              )}
 
-          {/* Auth — email form */}
-          {mode === 'email' && (
-            <form onSubmit={submitEmail} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
-              {/* Sign in / Sign up toggle */}
-              <div style={{ display: 'flex', background: '#fff', borderRadius: 9999, padding: 4, gap: 4 }}>
-                {(['signIn', 'signUp'] as const).map(a => (
+              {/* Auth — email form */}
+              {mode === 'email' && (
+                <form onSubmit={submitEmail} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 280 }}>
+                  {/* Sign in / Sign up toggle */}
+                  <div style={{ display: 'flex', background: '#fff', borderRadius: 9999, padding: 4, gap: 4 }}>
+                    {(['signIn', 'signUp'] as const).map(a => (
+                      <button
+                        type="button"
+                        key={a}
+                        onClick={() => { setEmailAction(a); setError(''); setInfo('') }}
+                        style={{
+                          flex: 1, padding: '8px 12px', borderRadius: 9999, border: 'none',
+                          fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                          background: emailAction === a ? '#f97316' : 'transparent',
+                          color: emailAction === a ? '#fff' : '#6b7280',
+                          fontFamily: 'var(--font-nunito, Nunito, sans-serif)',
+                        }}
+                      >
+                        {a === 'signIn' ? 'Sign in' : 'Sign up'}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    style={inputStyle}
+                  />
+                  <input
+                    type="password"
+                    placeholder={emailAction === 'signUp' ? 'Password (6+ characters)' : 'Password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    minLength={emailAction === 'signUp' ? 6 : undefined}
+                    autoComplete={emailAction === 'signUp' ? 'new-password' : 'current-password'}
+                    style={inputStyle}
+                  />
+                  <button type="submit" disabled={loading} style={{ ...pillBase, background: '#f97316', color: '#fff', boxShadow: '0 4px 16px rgba(249,115,22,0.3)' }}>
+                    {loading
+                      ? (emailAction === 'signUp' ? 'Creating account…' : 'Signing in…')
+                      : (emailAction === 'signUp' ? 'Create Account' : 'Sign In')}
+                  </button>
+                  {emailAction === 'signIn' && (
+                    <button
+                      type="button"
+                      onClick={resetPassword}
+                      disabled={loading}
+                      style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', textAlign: 'left', padding: '2px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                   <button
                     type="button"
-                    key={a}
-                    onClick={() => { setEmailAction(a); setError(''); setInfo('') }}
-                    style={{
-                      flex: 1, padding: '8px 12px', borderRadius: 9999, border: 'none',
-                      fontSize: 13, fontWeight: 800, cursor: 'pointer',
-                      background: emailAction === a ? '#f97316' : 'transparent',
-                      color: emailAction === a ? '#fff' : '#6b7280',
-                      fontFamily: 'var(--font-nunito, Nunito, sans-serif)',
-                    }}
+                    onClick={() => { setMode('idle'); setError(''); setInfo('') }}
+                    style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: '4px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
                   >
-                    {a === 'signIn' ? 'Sign in' : 'Sign up'}
+                    ← Back
                   </button>
-                ))}
-              </div>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                style={inputStyle}
-              />
-              <input
-                type="password"
-                placeholder={emailAction === 'signUp' ? 'Password (6+ characters)' : 'Password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={emailAction === 'signUp' ? 6 : undefined}
-                autoComplete={emailAction === 'signUp' ? 'new-password' : 'current-password'}
-                style={inputStyle}
-              />
-              <button type="submit" disabled={loading} style={{ ...pillBase, background: '#f97316', color: '#fff', boxShadow: '0 4px 16px rgba(249,115,22,0.3)' }}>
-                {loading
-                  ? (emailAction === 'signUp' ? 'Creating account…' : 'Signing in…')
-                  : (emailAction === 'signUp' ? 'Create Account' : 'Sign In')}
-              </button>
-              {emailAction === 'signIn' && (
-                <button
-                  type="button"
-                  onClick={resetPassword}
-                  disabled={loading}
-                  style={{ background: 'none', border: 'none', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', textAlign: 'left', padding: '2px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
-                >
-                  Forgot password?
-                </button>
+                </form>
               )}
-              <button
-                type="button"
-                onClick={() => { setMode('idle'); setError(''); setInfo('') }}
-                style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, cursor: 'pointer', textAlign: 'left', padding: '4px 0', fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
-              >
-                ← Back
-              </button>
-            </form>
+            </>
           )}
         </div>
       </section>
