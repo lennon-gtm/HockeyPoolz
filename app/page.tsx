@@ -80,6 +80,7 @@ export default function LandingPage() {
     let cancelled = false
     async function loadLeagues() {
       const token = await currentUser!.getIdToken()
+      document.cookie = `session=${token}; path=/; max-age=3600; SameSite=Strict`
       const res = await fetch('/api/leagues', { headers: { Authorization: `Bearer ${token}` } })
       if (!res.ok) {
         if (!cancelled) setLeagues([])
