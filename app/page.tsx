@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   signInWithPopup, GoogleAuthProvider,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -36,6 +36,7 @@ export default function LandingPage() {
   const [leagues, setLeagues] = useState<PoolSummary[] | null>(null)
   const [defaultPoolId, setDefaultPoolId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -44,6 +45,7 @@ export default function LandingPage() {
   }, [])
 
   function togglePin(poolId: string, poolName: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     if (defaultPoolId === poolId) {
       localStorage.removeItem(DEFAULT_POOL_KEY)
       setDefaultPoolId(null)
@@ -53,8 +55,14 @@ export default function LandingPage() {
       setDefaultPoolId(poolId)
       setToast(`HockeyPoolz will open ${poolName} next time.`)
     }
-    setTimeout(() => setToast(null), 3000)
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000)
   }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     let unsub: (() => void) | undefined
@@ -274,7 +282,7 @@ export default function LandingPage() {
                   <div key={l.id} className="flex items-center gap-2">
                     <button
                       onClick={() => router.push(`/league/${l.id}`)}
-                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-full transition text-left px-6"
+                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-full transition text-left px-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                       style={{ fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
                     >
                       Enter {l.name} →
@@ -282,7 +290,7 @@ export default function LandingPage() {
                     <button
                       onClick={(e) => { e.stopPropagation(); togglePin(l.id, l.name) }}
                       aria-label={isDefault ? `Clear ${l.name} as default pool` : `Set ${l.name} as default pool`}
-                      className="w-11 h-11 rounded-full flex items-center justify-center transition flex-shrink-0"
+                      className="w-11 h-11 rounded-full flex items-center justify-center transition flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                       style={{
                         background: isDefault ? '#c8a060' : 'transparent',
                         border: `1.5px solid ${isDefault ? '#c8a060' : 'rgba(255,255,255,0.35)'}`,
