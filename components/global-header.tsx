@@ -41,7 +41,7 @@ export function GlobalHeader() {
   async function signOut() {
     await auth.signOut()
     document.cookie = 'session=; path=/; max-age=0'
-    router.push('/login')
+    router.push('/')
   }
 
   const avatarGradient = user?.favoriteTeam
@@ -70,7 +70,15 @@ export function GlobalHeader() {
           {menuOpen && (
             <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg py-1 min-w-[200px] z-50">
               <Link
-                href="/"
+                href="/league/create"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2 text-xs font-black uppercase tracking-widest text-[#f97316] hover:bg-[#fff7ed]"
+              >
+                + Create Pool
+              </Link>
+              <div className="border-t border-[#f0f0f0] my-1" />
+              <Link
+                href="/?pick=1"
                 onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2 text-xs font-bold uppercase tracking-widest text-[#98989e] hover:bg-[#f8f8f8]"
               >
