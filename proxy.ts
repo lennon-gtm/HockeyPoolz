@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/join', '/api/auth/me', '/api/nhl-teams', '/api/nhl-players', '/api/leagues/by-code/', '/api/cron/', '/api/admin/']
+const PUBLIC_PATHS = ['/join', '/api/auth/me', '/api/nhl-teams', '/api/nhl-players', '/api/leagues/by-code/', '/api/cron/', '/api/admin/']
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -19,8 +19,8 @@ export function proxy(request: NextRequest) {
 
   // Pages: check session cookie (set by client after Firebase login)
   const session = request.cookies.get('session')
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!session && pathname !== '/') {
+    return NextResponse.redirect(new URL('/', request.url))
   }
   return NextResponse.next()
 }

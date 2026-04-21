@@ -72,7 +72,7 @@ export function GlobalHeader() {
               <Link
                 href="/league/create"
                 onClick={() => setMenuOpen(false)}
-                className="block px-3 py-2 text-xs font-black uppercase tracking-widest text-[#f97316] hover:bg-[#fff7ed]"
+                className="block px-3 py-2 text-xs font-black uppercase tracking-widest text-[#c2410c] hover:bg-[#fff7ed]"
               >
                 + Create Pool
               </Link>
