@@ -7,6 +7,9 @@ import {
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase/client'
 import { useRouter } from 'next/navigation'
+import { decideLandingAction, type PoolSummary } from '@/lib/pool-selection'
+
+const DEFAULT_POOL_KEY = 'hockeypoolz:defaultPoolId'
 
 type Mode = 'idle' | 'email'
 type EmailAction = 'signIn' | 'signUp'
@@ -30,6 +33,7 @@ export default function LandingPage() {
   const [info, setInfo] = useState('')
   const [phase, setPhase] = useState<AuthPhase>('checking')
   const [currentUser, setCurrentUser] = useState<import('firebase/auth').User | null>(null)
+  const [leagues, setLeagues] = useState<PoolSummary[] | null>(null)
 
   useEffect(() => {
     let unsub: (() => void) | undefined
@@ -41,6 +45,41 @@ export default function LandingPage() {
     })
     return () => unsub?.()
   }, [])
+
+  useEffect(() => {
+    if (phase !== 'auth' || !currentUser) return
+    let cancelled = false
+    async function loadLeagues() {
+      const token = await currentUser!.getIdToken()
+      const res = await fetch('/api/leagues', { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) {
+        if (!cancelled) setLeagues([])
+        return
+      }
+      const data = await res.json()
+      if (!cancelled) {
+        setLeagues((data.leagues ?? []).map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
+      }
+    }
+    loadLeagues()
+    return () => { cancelled = true }
+  }, [phase, currentUser])
+
+  useEffect(() => {
+    if (phase !== 'auth' || leagues === null) return
+    const params = new URLSearchParams(window.location.search)
+    const pickMode = params.get('pick') === '1'
+    const defaultId = typeof window !== 'undefined' ? localStorage.getItem(DEFAULT_POOL_KEY) : null
+    const decision = decideLandingAction(leagues, defaultId, pickMode)
+
+    if (decision.action === 'redirect') {
+      router.replace(`/league/${decision.poolId}`)
+      return
+    }
+    if (decision.action === 'show-selector' && decision.clearDefault) {
+      localStorage.removeItem(DEFAULT_POOL_KEY)
+    }
+  }, [phase, leagues, router])
 
   async function finishSignIn(user: { getIdToken: () => Promise<string> }) {
     const token = await user.getIdToken()
@@ -185,9 +224,42 @@ export default function LandingPage() {
           </p>
 
           {/* CTA — gated on auth phase */}
-          {(phase === 'checking' || phase === 'auth') && (
+          {phase === 'checking' && (
             <div className="w-full h-[52px] rounded-full bg-white/10 animate-pulse" style={{ maxWidth: 280 }} />
           )}
+
+          {phase === 'auth' && leagues === null && (
+            <div className="w-full h-[52px] rounded-full bg-white/10 animate-pulse" style={{ maxWidth: 280 }} />
+          )}
+
+          {phase === 'auth' && leagues !== null && leagues.length === 0 && (
+            <div className="w-full flex flex-col gap-3" style={{ maxWidth: 280 }}>
+              <button
+                onClick={() => router.push('/league/create')}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-full transition"
+                style={{ fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
+              >
+                Create a Pool
+              </button>
+              <p className="text-xs text-gray-400 text-center">Got an invite link? Open it to join a pool.</p>
+            </div>
+          )}
+
+          {phase === 'auth' && leagues !== null && leagues.length > 0 && (
+            <div className="w-full flex flex-col gap-2" style={{ maxWidth: 280 }}>
+              {leagues.map(l => (
+                <button
+                  key={l.id}
+                  onClick={() => router.push(`/league/${l.id}`)}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-full transition text-left px-6"
+                  style={{ fontFamily: 'var(--font-nunito, Nunito, sans-serif)' }}
+                >
+                  Enter {l.name} →
+                </button>
+              ))}
+            </div>
+          )}
+
           {phase === 'unauth' && (
             <>
               {/* Error / Info */}
