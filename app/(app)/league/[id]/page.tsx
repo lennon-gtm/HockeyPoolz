@@ -261,6 +261,13 @@ export default function LeagueLobbyPage({ params }: { params: Promise<{ id: stri
         </Link>
       </div>
 
+      {/* System-wide stats-update notice — auto-hides at 2026-05-03 16:00 UTC (noon ET). */}
+      {new Date() < new Date('2026-05-03T16:00:00Z') && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2.5 text-sm text-yellow-900">
+          Stats updated. All player and team totals are now current.
+        </div>
+      )}
+
       {league.status === 'setup' && (
         <div className="grid grid-cols-3 gap-1.5 mb-4">
           <StatCard value={`${league.members.length}/${league.maxTeams}`} label="Teams" />
